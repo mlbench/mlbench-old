@@ -11,7 +11,7 @@ import org.apache.spark.rdd.RDD
 object SGD{
 	def run_SGD(train_data: RDD[LabeledPoint], test_data: RDD[LabeledPoint])
 	{
-		val ridge_regression = new RidgeRegressionWithSGD()
+		val ridge_regression = new RidgeRegressionWithSGD(1.0, 100, 0.1, 1.0)
 		val model = ridge_regression.run(train_data)
 		val valAndPreds = test_data.map{ 
 			point => 
