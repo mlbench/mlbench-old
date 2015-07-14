@@ -7,16 +7,26 @@ import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.mllib.optimization.{LBFGS, LogisticGradient, SquaredL2Updater}
 import org.apache.spark.rdd.RDD
+import MLbenchmark.utils._
+import breeze.linalg.DenseVector
+
 
 object SGD{
-	def run_SGD(train_data: RDD[LabeledPoint], test_data: RDD[LabeledPoint])
+	def run_SGD(trainData: RDD[MLbenchmark.utils.LabeledPoint], testData: RDD[MLbenchmark.utils.LabeledPoint], Iter:Int)
 	{
-		val ridge_regression = new RidgeRegressionWithSGD(1.0, 100, 0.1, 1.0)
-		val model = ridge_regression.run(train_data)
-		val valAndPreds = test_data.map{ 
+		val numFeatures = trainData.take(1)(0).features.size
+		val initialWeights = Vectors.dense(new Array[Double](numFeatures))
+		//val ridge_regression = new RidgeRegressionWithSGD()
+		val training = trainData.map(point => org.apache.spark.mllib.regression.LabeledPoint(point.label, Vectors.sparse(numFeatures, point.features.index, point.features.data))).cache()
+		val model = RidgeRegressionWithSGD.train(training, Iter,1.0, 1.0, 0.1)
+		val weightsVector = new DenseVector(model.weights.toArray)
+
+
+
+		val valAndPreds = testData.map{ 
 			point => 
-			val prediction = model.predict(point.features)
-			(point.label, prediction)
+			val prediction = model.predict(Vectors.sparse(numFeatures, point.features.index, point.features.data))
+      	(point.label, prediction)
 		}
 		val MSE = valAndPreds.map{case(v,p) => math.pow((v-p),2)}.mean()
 		println("SGD training Mean Squared Error = " + MSE)
