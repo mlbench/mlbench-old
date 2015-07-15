@@ -6,31 +6,6 @@ import breeze.linalg.DenseVector
 import org.apache.spark.mllib.util.MLUtils
 
 object driver {
-	// def main(args: Array[String]) {
-	// 	val sc = new SparkContext("local","MLbenchmark","/Users/mac/Desktop/summer_project/spark-1.4.0/bin/",List("target/scala-2.10/driver_2.10-1.0.jar"))
-
-	// 	val train_file = "data/small_train.dat" 
-	// 	val test_file = "data/small_test.dat"
-	// 	val numFeatures = 9947
-	// 	val debugIter = 10
-	// 	val seed = 0
-	// 	val chkptIter = 201
-	// 	//read in
-	// 	val train_data = OptUtils.loadLIBSVMData(sc, train_file, 4, numFeatures).cache()
-	// 	val test_data = OptUtils.loadLIBSVMData(sc, test_file, 4, numFeatures).cache()
-
-	// 	val LocalIterFrac = 0.1
-	// 	val loss = OptUtils.hingeLoss _
-	// 	val n = train_data.count().toInt
-	// 	val wInit = DenseVector.zeros[Double](numFeatures)
-
-	// 	val numRounds = 200
-	// 	val localIters =  (LocalIterFrac * n/ train_data.partitions.size).toInt
-	// 	val lambda = 0.001 
-	// 	val beta = 1.0
-	// 	val gamma = 1.0
-	// 	val params = Params(loss, n, wInit, numRounds, localIters, lambda, beta, gamma)
-	// 	val debug = DebugParams(test_data, debugIter, seed, chkptIter)
 	def main(args: Array[String]) {
 
     val options =  args.map { arg =>
@@ -101,13 +76,14 @@ object driver {
     // set to solve hingeloss SVM
     val loss = OptUtils.hingeLoss _
     val params = Params(loss, n, wInit, numRounds, localIters, lambda, beta, gamma)
-    val debug = DebugParams(test_data, debugIter, seed, chkptIter)
-     for(iter <- 1 to 5){
-         SGD.run_SGD(train_data, test_data,iter*1000)
-     }
-     for(iter <- 1 to 20){
-         Lbfgs.run_LBFGS(train_data, test_data, iter * 10)
-     }
+    val debug = DebugParams(test_data, 2, seed, chkptIter)
+    val debugML = new DebugParamsML(train_data, test_data)
+
+    //MLlib sgd
+    SGD.run_SGD(train_data, test_data, 100, 2, debugML)
+    //MLlib l-bfgs
+    Lbfgs.run_LBFGS(train_data, test_data, 100, 2, debugML)
+
 	val (finalwCoCoA, finalalphaCoCoA) = CoCoA_ridge.runCoCoA(train_data, params, debug, plus = false)
 	OptUtils.printSummaryStatsPrimalDual("CoCoA", train_data, finalwCoCoA, finalalphaCoCoA, lambda, test_data)
 	sc.stop

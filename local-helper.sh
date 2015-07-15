@@ -45,7 +45,7 @@ else
 fi
 
 # Set SPARK_MEM if it isn't already set since we also use it for this process
-SPARK_MEM=${SPARK_MEM:-512m}
+SPARK_MEM=${SPARK_MEM:-2048m}
 export SPARK_MEM
 
 JAVA_OPTS="$JAVA_OPTS -Xms$SPARK_MEM -Xmx$SPARK_MEM ""$SPARK_JAVA_OPTS"

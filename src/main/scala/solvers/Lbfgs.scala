@@ -11,42 +11,35 @@ import MLbenchmark.utils._
 import breeze.linalg.DenseVector
 
 object Lbfgs{
-    def run_LBFGS(trainData: RDD[LabeledPoint], testData: RDD[LabeledPoint],maxNumIterations:Int){
+    def run_LBFGS(trainData: RDD[LabeledPoint], testData: RDD[LabeledPoint],maxNumIterations:Int, chkptIter:Int,debugML:DebugParamsML){
+
       val numFeatures = trainData.take(1)(0).features.size
 
       // Run training algorithm to build the model
       val numCorrections = 20
       val convergenceTol = 1e-4
       val regParam = 1.0
-      val initialWeights = Vectors.dense(new Array[Double](numFeatures))
-
+      var initialWeights = Vectors.dense(new Array[Double](numFeatures))
       val training = trainData.map(point => (point.label, Vectors.sparse(numFeatures, point.features.index, point.features.data)))
-      val (weights, loss) = LBFGS.runLBFGS(
-        training,
-        new LeastSquaresGradient(),
-        new SquaredL2Updater(),
-        numCorrections,
-        convergenceTol,
-        maxNumIterations,
-        regParam,
-        initialWeights)
 
-      val weightsVector = new DenseVector(weights.toArray)
-      val testError = OptUtils.computeClassificationError(testData, weightsVector)
-      println("test Error:" + testError)
-      val objectFunctionCheck = OptUtils.computeObjective(weightsVector)
-      println("object function" + objectFunctionCheck)
-      val model = new RidgeRegressionModel(
-        Vectors.dense(weights.toArray),
-        0)
+      val chkptNum = math.floor(maxNumIterations/chkptIter).toInt
+      var totalTime: Long = 0
+      for(iter<-1 to chkptNum) {
+        val curTime = System.nanoTime()
+        val (weights, loss) = LBFGS.runLBFGS(
+          training,
+          new LeastSquaresGradient(),
+          new SquaredL2Updater(),
+          numCorrections,
+          convergenceTol,
+          chkptIter,
+          0.001,
+          initialWeights)
+          totalTime += System.nanoTime() - curTime
 
-      
-      val valAndPreds = testData.map{ 
-      point => 
-      val prediction = model.predict(Vectors.sparse(numFeatures,point.features.index, point.features.data))
-      (point.label, prediction)
+          val weightsVector = new DenseVector(weights.toArray)
+          initialWeights = Vectors.dense(weights.toArray)
+          debugML.testError(weightsVector, iter*chkptIter,"Lbfgs", math.floor(totalTime/1e6).toLong)
       }
-      val MSE = valAndPreds.map{case(v,p) => math.pow((v-p),2)}.mean()
-      println("LBFGS training Mean Squared Error = " + MSE)
   }
 }

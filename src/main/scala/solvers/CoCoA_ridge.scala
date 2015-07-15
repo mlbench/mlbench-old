@@ -35,9 +35,10 @@ object CoCoA_ridge {
     var dataArr = data.mapPartitions(x => Iterator(x.toArray))
     var w = params.wInit.copy
     var scaling = if (plus) params.gamma else params.beta/parts
+    var totalTime: Long = 0
 
-    for(t <- 1 to 200) {
-
+    for(t <- 1 to 100) {
+      val curTime = System.nanoTime()
       // zip alpha with data
       val zipData = alpha.zip(dataArr)
 
@@ -46,7 +47,7 @@ object CoCoA_ridge {
       alpha = updates.map(kv => kv._2)
       val primalUpdates = updates.map(kv => kv._1).reduce(_ + _)
       w += (primalUpdates * scaling)
-
+      totalTime += System.nanoTime() - curTime
       // optionally calculate errors
       if (debug.debugIter > 0 && t % debug.debugIter == 0) {
         println("Iteration: " + t)
@@ -54,7 +55,10 @@ object CoCoA_ridge {
         println("primal-dual gap: " + OptUtils.computeDualityGap(data, w, alpha, params.lambda))
         val objectFunctionCheck = OptUtils.computeObjective(w)
 //        println("object function" + objectFunctionCheck)
-        if (debug.testData != null) { println("Classsification error: " + OptUtils.computeClassificationError(debug.testData, w)) }
+        //if (debug.testData != null) { println("Classsification error: " + OptUtils.computeClassificationError(debug.testData, w)) }
+
+//        debugML.testError(w, t,"Cocoa")
+        TestError.testError(w,t,"Cocoa",debug.testData,math.floor(totalTime/1e6).toLong)
       }
 
       // optionally checkpoint RDDs
@@ -73,7 +77,6 @@ object CoCoA_ridge {
    * here locaSDCA. Will perform localIters many updates per worker.
    *
    * @param zipData
-   * @param winit
    * @param localIters
    * @param lambda
    * @param n

@@ -5,6 +5,6 @@
 --numRounds=100 \
 --localIterFrac=0.1 \
 --numSplits=4 \
---lambda=2.0 \
+--lambda=0.002 \
 --chkptDir=dir/ \
 --justCoCoA=false

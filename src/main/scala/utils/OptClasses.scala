@@ -2,6 +2,7 @@ package MLbenchmark.utils
 
 import org.apache.spark.rdd.RDD
 import breeze.linalg.{SparseVector, Vector}
+import java.io._
 
 
 // Labeled point with sparse features for classification or regression tasks
@@ -43,9 +44,65 @@ case class DebugParams(
 
 class DebugParamsML(trainData: RDD[LabeledPoint], testData: RDD[LabeledPoint])
 {
-    def testError(weights:Vector[Double], iterNum: Int) = {
+    def testError(weights:Vector[Double], iterNum: Int, name: String,time:Long) = {
+      val MSE_error = OptUtils.computeMSE(testData, weights)
+      val classify_error = OptUtils.computeClassificationError(testData, weights)
+      var pw = new PrintWriter(new BufferedWriter(new FileWriter("output/MSE_" +name+".txt", true)))
+      pw.println(MSE_error)
+      pw.flush()
+      pw.close
+
+      pw = new PrintWriter(new BufferedWriter(new FileWriter("output/Classify_" +name+".txt", true)))
+      pw.println(classify_error)
+      pw.flush()
+      pw.close
+
+      pw = new PrintWriter(new BufferedWriter(new FileWriter("output/Iter_" +name+".txt", true)))
+      pw.println(iterNum)
+      pw.flush()
+      pw.close
+
+      pw = new PrintWriter(new BufferedWriter(new FileWriter("output/time_" +name+".txt", true)))
+      pw.println(time)
+      pw.flush()
+      pw.close
+
       println("Classsification error: " + OptUtils.computeClassificationError(testData, weights))
       println("MSE: " + OptUtils.computeMSE(testData, weights))
-      println("iterations" + iterNum)
+      println("iterations: " + iterNum)
+      println("time: " + time + "ms")
+
     }
+}
+
+object TestError
+{
+  def testError(weights:Vector[Double], iterNum: Int, name: String, testData: RDD[LabeledPoint], time:Long) = {
+    val MSE_error = OptUtils.computeMSE(testData, weights)
+    val classify_error = OptUtils.computeClassificationError(testData, weights)
+    var pw = new PrintWriter(new BufferedWriter(new FileWriter("output/MSE_" +name+".txt", true)))
+    pw.println(MSE_error)
+    pw.flush()
+    pw.close
+
+    pw = new PrintWriter(new BufferedWriter(new FileWriter("output/Classify_" +name+".txt", true)))
+    pw.println(classify_error)
+    pw.flush()
+    pw.close
+
+    pw = new PrintWriter(new BufferedWriter(new FileWriter("output/Iter_" +name+".txt", true)))
+    pw.println(iterNum)
+    pw.flush()
+    pw.close
+
+    pw = new PrintWriter(new BufferedWriter(new FileWriter("output/time_" +name+".txt", true)))
+    pw.println(time)
+    pw.flush()
+    pw.close
+
+    println("Classsification error: " + OptUtils.computeClassificationError(testData, weights))
+    println("MSE: " + OptUtils.computeMSE(testData, weights))
+    println("iterations: " + iterNum)
+    println("time: " + time + "ms")
+  }
 }

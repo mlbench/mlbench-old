@@ -12,23 +12,23 @@ import breeze.linalg.DenseVector
 
 
 object SGD{
-	def run_SGD(trainData: RDD[MLbenchmark.utils.LabeledPoint], testData: RDD[MLbenchmark.utils.LabeledPoint], Iter:Int)
+	def run_SGD(trainData: RDD[MLbenchmark.utils.LabeledPoint], testData: RDD[MLbenchmark.utils.LabeledPoint], maxIter:Int, chkptIter:Int,debugML:DebugParamsML)
 	{
 		val numFeatures = trainData.take(1)(0).features.size
-		val initialWeights = Vectors.dense(new Array[Double](numFeatures))
-		//val ridge_regression = new RidgeRegressionWithSGD()
+		var initialWeights = Vectors.dense(new Array[Double](numFeatures))
+		val chkptNum = math.floor(maxIter/chkptIter).toInt
 		val training = trainData.map(point => org.apache.spark.mllib.regression.LabeledPoint(point.label, Vectors.sparse(numFeatures, point.features.index, point.features.data))).cache()
-		val model = RidgeRegressionWithSGD.train(training, Iter,1.0, 1.0, 0.1)
-		val weightsVector = new DenseVector(model.weights.toArray)
+		var totalTime: Long = 0
+		for(iter <- 1 to chkptNum) {
+			val curTime = System.nanoTime()
+			//train(RDD<LabeledPoint> input, int numIterations, double stepSize, double regParam, double miniBatchFraction, Vector initialWeights)
+			val model = RidgeRegressionWithSGD.train(training, iter * chkptIter, 1.0, 0.001, 1.0 , initialWeights)
+			totalTime += System.nanoTime() - curTime
 
-
-
-		val valAndPreds = testData.map{ 
-			point => 
-			val prediction = model.predict(Vectors.sparse(numFeatures, point.features.index, point.features.data))
-      	(point.label, prediction)
+			val weightsArray = model.weights.toArray
+			initialWeights = Vectors.dense(weightsArray)
+			val weightsVector = new DenseVector(model.weights.toArray)
+			debugML.testError(weightsVector,iter * chkptIter,"SGD", math.floor(totalTime/1e6).toLong)
 		}
-		val MSE = valAndPreds.map{case(v,p) => math.pow((v-p),2)}.mean()
-		println("SGD training Mean Squared Error = " + MSE)
 	}
 }
