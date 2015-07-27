@@ -1,4 +1,6 @@
 package MLbenchmark
+
+import _root_.solvers.CoCoA
 import org.apache.spark.{SparkContext, SparkConf}
 import MLbenchmark.solvers._
 import MLbenchmark.utils._
@@ -56,9 +58,10 @@ object driver {
       chkptIter = numRounds + 1
     }
 
+
     // read in data
     val train_data = OptUtils.loadLIBSVMData(sc,trainFile,numSplits,numFeatures).cache()
-
+    val optimalVal = OptUtils.calOptimalVal(train_data,2)
     val n = train_data.count().toInt // number of data examples
     val test_data = {
       if (testFile != ""){ OptUtils.loadLIBSVMData(sc,testFile,numSplits,numFeatures).cache() }
@@ -77,15 +80,21 @@ object driver {
     val loss = OptUtils.hingeLoss _
     val params = Params(loss, n, wInit, numRounds, localIters, lambda, beta, gamma)
     val debug = DebugParams(test_data, 2, seed, chkptIter)
-    val debugML = new DebugParamsML(train_data, test_data)
 
     //MLlib sgd
-    SGD.run_SGD(train_data, test_data, 100, 2, debugML)
+    SGD.run_SGD(train_data, test_data, numRounds, 2, optimalVal, 2)
     //MLlib l-bfgs
-    Lbfgs.run_LBFGS(train_data, test_data, 100, 2, debugML)
+    Lbfgs.run_LBFGS(train_data, test_data, numRounds, 2, optimalVal, 2)
 
-	val (finalwCoCoA, finalalphaCoCoA) = CoCoA_ridge.runCoCoA(train_data, params, debug, plus = false)
-	OptUtils.printSummaryStatsPrimalDual("CoCoA", train_data, finalwCoCoA, finalalphaCoCoA, lambda, test_data)
-	sc.stop
+  	val (finalwCoCoA, finalalphaCoCoA) =
+    CoCoA.runCoCoA(
+      train_data,
+      params,
+      debug,
+      plus = false,
+      optimalVal,
+      localIterFrac,
+      lossType = 0)
+  	sc.stop
 	}
 }

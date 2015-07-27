@@ -2,7 +2,7 @@
 --trainFile=data/small_train.dat \
 --testFile=data/small_test.dat \
 --numFeatures=9947 \
---numRounds=100 \
+--numRounds=400 \
 --localIterFrac=0.1 \
 --numSplits=4 \
 --lambda=0.002 \

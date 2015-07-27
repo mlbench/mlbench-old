@@ -1,5 +1,7 @@
 package MLbenchmark.utils
 
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.optimization._
 import org.apache.spark.rdd.RDD
 import breeze.linalg.{SparseVector, Vector}
 import java.io._
@@ -42,11 +44,26 @@ case class DebugParams(
     seed: Int,
     chkptIter: Int)
 
-class DebugParamsML(trainData: RDD[LabeledPoint], testData: RDD[LabeledPoint])
+object DebugParamsML
 {
-    def testError(weights:Vector[Double], iterNum: Int, name: String,time:Long) = {
+    //lossType 0:hinge Loss, 1:square loss
+    def testError(weights:Vector[Double], iterNum: Int, name: String,time:Long,lambda:Double,optimalVal:Double,lossType:Int, trainData: RDD[LabeledPoint], testData: RDD[LabeledPoint],fraction:Double) = {
       val MSE_error = OptUtils.computeMSE(testData, weights)
       val classify_error = OptUtils.computeClassificationError(testData, weights)
+      //val primalObjective = OptUtils.computePrimalObjective(trainData, weights, lambda, lossType)
+      val weightsVector = Vectors.dense(weights.toArray)
+      val training = trainData.map(point => (point.label, Vectors.sparse(point.features.length, point.features.index, point.features.data)))
+
+      val primalObjective =
+      lossType match {
+        case 0 => CostFun.calculate (weightsVector, training, new HingeGradient, new SquaredL2Updater (), 0.001, trainData.count () )
+        case 1 => CostFun.calculate (weightsVector, training, new LeastSquaresGradient, new SquaredL2Updater (), 0.001, trainData.count () )
+        case 2 => CostFun.calculate (weightsVector, training, new LeastSquaresGradient, new L1Updater(), 0.001, trainData.count () )
+        case _ => 0.0
+      }
+
+      val subObjective:Double = primalObjective - optimalVal
+
       var pw = new PrintWriter(new BufferedWriter(new FileWriter("output/MSE_" +name+".txt", true)))
       pw.println(MSE_error)
       pw.flush()
@@ -62,47 +79,35 @@ class DebugParamsML(trainData: RDD[LabeledPoint], testData: RDD[LabeledPoint])
       pw.flush()
       pw.close
 
+      pw = new PrintWriter(new BufferedWriter(new FileWriter("output/primal_" +name+".txt", true)))
+      pw.println(primalObjective)
+      pw.flush()
+      pw.close
+
+      pw = new PrintWriter(new BufferedWriter(new FileWriter("output/sub_" +name+".txt", true)))
+      pw.println(subObjective)
+      pw.flush()
+      pw.close
+
       pw = new PrintWriter(new BufferedWriter(new FileWriter("output/time_" +name+".txt", true)))
       pw.println(time)
       pw.flush()
       pw.close
-
+      if(math.floor(iterNum.toDouble * fraction)-math.floor((iterNum-1).toDouble*fraction)==1) {
+        pw = new PrintWriter(new BufferedWriter(new FileWriter("output/pass_primal_" + name + ".txt", true)))
+        pw.println(primalObjective)
+        pw.flush()
+        pw.close
+        pw = new PrintWriter(new BufferedWriter(new FileWriter("output/pass_sub_" + name + ".txt", true)))
+        pw.println(subObjective)
+        pw.flush()
+        pw.close
+      }
+      println("PrimalObjective: "  + primalObjective)
+      println("subObjective: " + subObjective)
       println("Classsification error: " + OptUtils.computeClassificationError(testData, weights))
       println("MSE: " + OptUtils.computeMSE(testData, weights))
       println("iterations: " + iterNum)
       println("time: " + time + "ms")
-
     }
-}
-
-object TestError
-{
-  def testError(weights:Vector[Double], iterNum: Int, name: String, testData: RDD[LabeledPoint], time:Long) = {
-    val MSE_error = OptUtils.computeMSE(testData, weights)
-    val classify_error = OptUtils.computeClassificationError(testData, weights)
-    var pw = new PrintWriter(new BufferedWriter(new FileWriter("output/MSE_" +name+".txt", true)))
-    pw.println(MSE_error)
-    pw.flush()
-    pw.close
-
-    pw = new PrintWriter(new BufferedWriter(new FileWriter("output/Classify_" +name+".txt", true)))
-    pw.println(classify_error)
-    pw.flush()
-    pw.close
-
-    pw = new PrintWriter(new BufferedWriter(new FileWriter("output/Iter_" +name+".txt", true)))
-    pw.println(iterNum)
-    pw.flush()
-    pw.close
-
-    pw = new PrintWriter(new BufferedWriter(new FileWriter("output/time_" +name+".txt", true)))
-    pw.println(time)
-    pw.flush()
-    pw.close
-
-    println("Classsification error: " + OptUtils.computeClassificationError(testData, weights))
-    println("MSE: " + OptUtils.computeMSE(testData, weights))
-    println("iterations: " + iterNum)
-    println("time: " + time + "ms")
-  }
 }

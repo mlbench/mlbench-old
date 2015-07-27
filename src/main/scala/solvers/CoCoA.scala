@@ -1,4 +1,4 @@
-package MLbenchmark.solvers
+package solvers
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -6,7 +6,7 @@ import MLbenchmark.utils._
 import breeze.linalg.{Vector, NumericOps, DenseVector, SparseVector}
 
 
-object CoCoA_ridge {
+object CoCoA{
 
   /**
    * CoCoA/CoCoA+ - Communication-efficient distributed dual Coordinate Ascent.
@@ -23,7 +23,10 @@ object CoCoA_ridge {
     data: RDD[LabeledPoint],
     params: Params,
     debug: DebugParams,
-    plus: Boolean) : (Vector[Double], RDD[Vector[Double]]) = {
+    plus: Boolean,
+    optimalVal:Double,
+    fraction:Double,
+    lossType: Int) : (Vector[Double], RDD[Vector[Double]]) = {
     
     val parts = data.partitions.size 	// number of partitions of the data, K in the paper
     val alg = if (plus) "CoCoA+" else "CoCoA"
@@ -37,13 +40,13 @@ object CoCoA_ridge {
     var scaling = if (plus) params.gamma else params.beta/parts
     var totalTime: Long = 0
 
-    for(t <- 1 to 100) {
+    for(t <- 1 to 400) {
       val curTime = System.nanoTime()
       // zip alpha with data
       val zipData = alpha.zip(dataArr)
 
       // find updates to alpha, w
-      val updates = zipData.mapPartitions(partitionUpdate(_, w, params.localIters, params.lambda, params.n, scaling, debug.seed + t, plus, parts * params.gamma), preservesPartitioning = true).persist()
+      val updates = zipData.mapPartitions(partitionUpdate(_, w, params.localIters, params.lambda, params.n, scaling, debug.seed + t, plus, parts * params.gamma,lossType), preservesPartitioning = true).persist()
       alpha = updates.map(kv => kv._2)
       val primalUpdates = updates.map(kv => kv._1).reduce(_ + _)
       w += (primalUpdates * scaling)
@@ -51,14 +54,23 @@ object CoCoA_ridge {
       // optionally calculate errors
       if (debug.debugIter > 0 && t % debug.debugIter == 0) {
         println("Iteration: " + t)
-        println("primal objective: " + OptUtils.computePrimalObjective(data, w, params.lambda))
-        println("primal-dual gap: " + OptUtils.computeDualityGap(data, w, alpha, params.lambda))
-        val objectFunctionCheck = OptUtils.computeObjective(w)
+//        println("primal-dual gap: " + OptUtils.computeDualityGap(data, w, alpha, params.lambda))
 //        println("object function" + objectFunctionCheck)
         //if (debug.testData != null) { println("Classsification error: " + OptUtils.computeClassificationError(debug.testData, w)) }
-
 //        debugML.testError(w, t,"Cocoa")
-        TestError.testError(w,t,"Cocoa",debug.testData,math.floor(totalTime/1e6).toLong)
+        //testError(weights:Vector[Double], iterNum: Int, name: String,time:Long,lambda:Double,optimalVal:Double,lossType:Int, trainData: RDD[LabeledPoint], testData: RDD[LabeledPoint]) = {
+        DebugParamsML.testError(
+          w,
+          t,
+          "Cocoa",
+          math.floor(totalTime/1e6).toLong,
+          params.lambda*0.5,
+          optimalVal,
+          lossType,
+          data,
+          debug.testData,
+          fraction
+        )
       }
 
       // optionally checkpoint RDDs
@@ -95,14 +107,15 @@ object CoCoA_ridge {
     scaling: Double,
     seed: Int,
     plus: Boolean,
-    sigma: Double): Iterator[(Vector[Double], Vector[Double])] = {
+    sigma: Double,
+    lossType: Int): Iterator[(Vector[Double], Vector[Double])] = {
 
     val zipPair = zipData.next()
     val localData = zipPair._2
     var alpha = zipPair._1
     val alphaOld = alpha.copy
 
-    val (deltaAlpha, deltaW) = localSDCA(localData, wInit, localIters, lambda, n, alpha, alphaOld, seed, plus, sigma)
+    val (deltaAlpha, deltaW) = localSDCA(localData, wInit, localIters, lambda, n, alpha, alphaOld, seed, plus, sigma,lossType)
     alpha = alphaOld + (deltaAlpha * scaling)
 
     return Iterator((deltaW, alpha))
@@ -141,7 +154,8 @@ object CoCoA_ridge {
     alphaOld: Vector[Double],
     seed: Int,
     plus: Boolean,
-    sigma: Double): (Vector[Double], Vector[Double]) = {
+    sigma: Double,
+    lossType: Int): (Vector[Double], Vector[Double]) = {
     
     var w = wInit
     val nLocal = localData.length
@@ -149,24 +163,72 @@ object CoCoA_ridge {
     var deltaW = DenseVector.zeros[Double](wInit.length)
 
     // perform local udpates
-    for (i <- 1 to localIters) {
+    lossType match{
+      //hinge loss
+      case 0 =>
+        for (i <- 1 to localIters) {
 
-      // randomly select a local example
-      val idx = r.nextInt(nLocal)
-      val currPt = localData(idx)
-      var y = currPt.label
-      val x = currPt.features
+          // randomly select a local example
+          val idx = r.nextInt(nLocal)
+          val currPt = localData(idx)
+          var y = currPt.label
+          val x = currPt.features
 
-      //calculate deltaAlpha
-      val xnorm = Math.pow(x.norm(2), 2)
-      val newAlpha = (y - x.dot(w) - 0.5 * alpha(idx))/(0.5 + xnorm/(lambda * n)) + alpha(idx)
+          // compute hinge loss gradient
+          val grad = {
+            if (plus) {
+              (y * (x.dot(w) + (sigma * x.dot(deltaW))) - 1.0) * (lambda * n)
+            } else {
+              (y * (x.dot(w)) - 1.0) * (lambda * n)
+            }
+          }
 
-      // update primal and dual variables
-      val update = x* (newAlpha - alpha(idx)) / (lambda * n)
-      w += update
-      deltaW += update
-      alpha(idx) = newAlpha
+          // compute projected gradient
+          var proj_grad = grad
+          if (alpha(idx) <= 0.0)
+            proj_grad = Math.min(grad, 0)
+          else if (alpha(idx) >= 1.0)
+            proj_grad = Math.max(grad, 0)
+
+          if (Math.abs(proj_grad) != 0.0 ) {
+            val xnorm = Math.pow(x.norm(2), 2)
+            val qii = if (plus) xnorm * sigma else xnorm
+            var newAlpha = 1.0
+            if (qii != 0.0) {
+              newAlpha = Math.min(Math.max((alpha(idx) - (grad / qii)), 0.0), 1.0)
+            }
+
+            // update primal and dual variables
+            val update = x * (y * (newAlpha - alpha(idx)) / (lambda * n))
+            if (!plus) {
+              w += update
+            }
+            deltaW += update
+            alpha(idx) = newAlpha
+          }
+        }
+      //square loss
+      case 1 =>
+        for (i <- 1 to localIters) {
+          // randomly select a local example
+          val idx = r.nextInt(nLocal)
+          val currPt = localData(idx)
+          var y = currPt.label
+          val x = currPt.features
+
+          //calculate deltaAlpha
+          val xnorm = Math.pow(x.norm(2), 2)
+          val newAlpha = (y - x.dot(w) - 0.5 * alpha(idx))/(0.5 + xnorm/(lambda * n)) + alpha(idx)
+
+          // update primal and dual variables
+          val update = x* (newAlpha - alpha(idx)) / (lambda * n)
+          w += update
+          deltaW += update
+          alpha(idx) = newAlpha
+        }
     }
+
+
 
     val deltaAlpha = alpha - alphaOld
     return (deltaAlpha, deltaW)
