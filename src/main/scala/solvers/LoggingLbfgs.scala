@@ -13,6 +13,8 @@ import MLbenchmark.utils
 /**
  * Created by xiyu on 15/7/24.
  */
+
+
 object LoggingLbfgs extends Logging{
 
   def runLBFGS(data: RDD[(Double, Vector)],
@@ -61,7 +63,8 @@ object LoggingLbfgs extends Logging{
 
 object CostFun {
   def calculate(w: Vector, data: RDD[(Double, Vector)], gradient: Gradient, updater: Updater,regParam: Double, numExamples: Long): Double = {
-    val usedTime = System.nanoTime()
+    var usedTime = System.nanoTime()
+
     val pw = new PrintWriter(new BufferedWriter(new FileWriter("output/time_" + "Lbfgs" + ".txt", true)))
     pw.println(usedTime / 1e6)
     pw.flush()
@@ -90,9 +93,9 @@ object CostFun {
      */
     val regVal = updater.compute(w, Vectors.zeros(n), 0, 1, regParam)._2
 
-    val loss = lossSum / numExamples + regVal
+    val objectiveValue = lossSum / numExamples + regVal
 
-    loss
+    objectiveValue
   }
 }
 
@@ -103,8 +106,8 @@ class CostFun(data: RDD[(Double, Vector)],
                        numExamples: Long) extends DiffFunction[BDV[Double]] {
 
   override def calculate(weights: BDV[Double]): (Double, BDV[Double]) = {
-    val usedTime = System.nanoTime()
-    val pw = new PrintWriter(new BufferedWriter(new FileWriter("output/time_" +"Lbfgs"+".txt", true)))
+    var usedTime = System.nanoTime()
+    var pw = new PrintWriter(new BufferedWriter(new FileWriter("output/time_" +"Lbfgs"+".txt", true)))
     pw.println(usedTime/1e6)
     pw.flush()
     pw.close
@@ -154,7 +157,11 @@ class CostFun(data: RDD[(Double, Vector)],
 
     // gradientTotal = gradientSum / numExamples + gradientTotal
     axpy(1.0 / numExamples, gradientSum, gradientTotal)
-
+    usedTime = System.nanoTime()
+    pw = new PrintWriter(new BufferedWriter(new FileWriter("output/time_" +"Lbfgs"+".txt", true)))
+    pw.println(usedTime/1e6)
+    pw.flush()
+    pw.close
     (loss, gradientTotal.toBreeze.asInstanceOf[BDV[Double]])
   }
 }

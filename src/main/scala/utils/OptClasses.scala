@@ -9,6 +9,7 @@ import java.io._
 
 // Labeled point with sparse features for classification or regression tasks
 case class LabeledPoint(val label: Double, val features: SparseVector[Double])
+case class DenseLabeledPoint(val label: Double, val features: org.apache.spark.mllib.linalg.Vector)
 
 
 /** Algorithm Params
@@ -47,9 +48,7 @@ case class DebugParams(
 object DebugParamsML
 {
     //lossType 0:hinge Loss, 1:square loss
-    def testError(weights:Vector[Double], iterNum: Int, name: String,time:Long,lambda:Double,optimalVal:Double,lossType:Int, trainData: RDD[LabeledPoint], testData: RDD[LabeledPoint],fraction:Double) = {
-      val MSE_error = OptUtils.computeMSE(testData, weights)
-      val classify_error = OptUtils.computeClassificationError(testData, weights)
+    def calError(weights:Vector[Double], iterNum: Int, name: String,time:Long,lambda:Double,optimalVal:Double,lossType:Int, trainData: RDD[LabeledPoint], testData: RDD[LabeledPoint],fraction:Double) = {
       //val primalObjective = OptUtils.computePrimalObjective(trainData, weights, lambda, lossType)
       val weightsVector = Vectors.dense(weights.toArray)
       val training = trainData.map(point => (point.label, Vectors.sparse(point.features.length, point.features.index, point.features.data)))
@@ -64,17 +63,7 @@ object DebugParamsML
 
       val subObjective:Double = primalObjective - optimalVal
 
-      var pw = new PrintWriter(new BufferedWriter(new FileWriter("output/MSE_" +name+".txt", true)))
-      pw.println(MSE_error)
-      pw.flush()
-      pw.close
-
-      pw = new PrintWriter(new BufferedWriter(new FileWriter("output/Classify_" +name+".txt", true)))
-      pw.println(classify_error)
-      pw.flush()
-      pw.close
-
-      pw = new PrintWriter(new BufferedWriter(new FileWriter("output/Iter_" +name+".txt", true)))
+      var pw = new PrintWriter(new BufferedWriter(new FileWriter("output/Iter_" +name+".txt", true)))
       pw.println(iterNum)
       pw.flush()
       pw.close
@@ -105,8 +94,6 @@ object DebugParamsML
       }
       println("PrimalObjective: "  + primalObjective)
       println("subObjective: " + subObjective)
-      println("Classsification error: " + OptUtils.computeClassificationError(testData, weights))
-      println("MSE: " + OptUtils.computeMSE(testData, weights))
       println("iterations: " + iterNum)
       println("time: " + time + "ms")
     }

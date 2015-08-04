@@ -1,11 +1,14 @@
 package MLbenchmark
 
 import _root_.solvers.CoCoA
+import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.{SparkContext, SparkConf}
 import MLbenchmark.solvers._
 import MLbenchmark.utils._
 import breeze.linalg.DenseVector
-import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.mllib.util.{LinearDataGenerator, MLUtils}
+import org.apache.spark.sql._
 
 object driver {
 	def main(args: Array[String]) {
@@ -45,7 +48,8 @@ object driver {
     println("lambda:       " + lambda);          println("numRounds:    " + numRounds);       
     println("localIterFrac:" + localIterFrac);   println("beta          " + beta);     
     println("gamma         " + beta);            println("debugIter     " + debugIter);       
-    println("seed          " + seed);   
+    println("seed          " + seed);
+
 
     // start spark context
     val conf = new SparkConf().setMaster(master)
@@ -60,13 +64,20 @@ object driver {
 
 
     // read in data
-    val train_data = OptUtils.loadLIBSVMData(sc,trainFile,numSplits,numFeatures).cache()
-    val optimalVal = OptUtils.calOptimalVal(train_data,2)
+    val train_data = OptUtils.loadLIBSVMData(sc,trainFile,numSplits,numFeatures)
+    val train_data_dense = OptUtils.loadDenseLIBSVMData(sc,trainFile,numSplits,numFeatures)
+    //val optimalVal = OptUtils.calOptimalVal(train_data,2)
+    val optimalVal = 0.0
     val n = train_data.count().toInt // number of data examples
     val test_data = {
       if (testFile != ""){ OptUtils.loadLIBSVMData(sc,testFile,numSplits,numFeatures).cache() }
       else { null }
     }
+
+
+    //create Data Frame which is used in OWLQN
+    val sqContext = new SQLContext(sc)
+    val dataset = sqContext.createDataFrame(train_data_dense)
 
     // compute H, # of local iterations
     var localIters = (localIterFrac * n / train_data.partitions.size).toInt
@@ -82,19 +93,34 @@ object driver {
     val debug = DebugParams(test_data, 2, seed, chkptIter)
 
     //MLlib sgd
-    SGD.run_SGD(train_data, test_data, numRounds, 2, optimalVal, 2)
-    //MLlib l-bfgs
-    Lbfgs.run_LBFGS(train_data, test_data, numRounds, 2, optimalVal, 2)
+    SGD.run_SGD(
+        trainData = train_data,
+        testData = test_data,
+        maxIter = numRounds,
+        chkptIter = 2,
+        optimalVal = optimalVal,
+        lossType = 2)
 
-  	val (finalwCoCoA, finalalphaCoCoA) =
-    CoCoA.runCoCoA(
+    //MLlib l-bfgs
+    Lbfgs.run_LBFGS(
       train_data,
-      params,
-      debug,
-      plus = false,
+      test_data,
+      dataset,
+      numRounds,
+      2,
       optimalVal,
-      localIterFrac,
-      lossType = 0)
+      2)
+
+
+//  	val (finalwCoCoA, finalalphaCoCoA) =
+//    CoCoA.runCoCoA(
+//      train_data,
+//      params,
+//      debug,
+//      plus = false,
+//      optimalVal,
+//      localIterFrac,
+//      lossType = 0)
   	sc.stop
 	}
 }

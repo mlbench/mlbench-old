@@ -57,6 +57,55 @@ object OptUtils {
     }
   }
 
+  def loadDenseLIBSVMData(sc: SparkContext, filename: String, numSplits: Int, numFeats: Int): RDD[DenseLabeledPoint] = {
+
+    // read in text file
+    val data = sc.textFile(filename, numSplits).coalesce(numSplits) // note: coalesce can result in data being sent over the network. avoid this for large datasets
+    val numEx = data.count()
+
+    // find number of elements per partition
+    val numParts = data.partitions.size
+    val sizes = data.mapPartitionsWithSplit { case (i, lines) =>
+      Iterator(i -> lines.length)
+    }.collect().sortBy(_._1)
+    val offsets = sizes.map(x => x._2).scanLeft(0)(_ + _).toArray
+
+    // parse input
+    data.mapPartitionsWithSplit { case (partition, lines) =>
+      lines.zipWithIndex.flatMap { case (line, idx) =>
+
+        // calculate index for line
+        val index = offsets(partition) + idx
+
+        if (index < numEx) {
+
+          // parse label
+          val parts = line.trim().split(' ')
+          var label = -1
+          if (parts(0).contains("+") || parts(0).toInt == 1)
+            label = 1
+
+          // parse features
+          val featureArray = parts.slice(1, parts.length)
+            .map(_.split(':')
+          match { case Array(i, j) => (i.toInt - 1, j.toDouble)
+          }).toArray
+          val features = new Array[Double](numFeats)
+          for(i <- featureArray) {
+            features(i._1) = i._2
+          }
+          val featureDense = Vectors.dense(features)
+
+          // create classification point
+          Iterator(DenseLabeledPoint(label, featureDense))
+        }
+        else {
+          Iterator()
+        }
+      }
+    }
+  }
+
 
   // calculate hinge loss
   def hingeLoss(point: LabeledPoint, w: Vector[Double]): Double = {
@@ -185,20 +234,19 @@ object OptUtils {
         //    OptUtils.computePrimalObjective(trainData, weightsVector, 0.0005, lossType)
       }
       case 2 => {
-//        val (weights, loss) = LoggingLbfgs.runLBFGS(
-//          training,
-//          new LeastSquaresGradient(),
-//          new L1Updater(),
-//          numCorrections,
-//          convergenceTol,
-//          400,
-//          0.001,
-//          initialWeights)
-//        val weightsVector = new DenseVector(weights.toArray)
-//        val optimalWeights = Vectors.dense(weights.toArray)
-//        val numExamples = training.count()
-//        println(CostFun.calculate(weights, training, new LeastSquaresGradient(), new L1Updater(), 0.001, numExamples))
-        0.2187374179350034
+        val (weights, loss) = LoggingLbfgs.runLBFGS(
+          training,
+          new LeastSquaresGradient(),
+          new L1Updater(),
+          numCorrections,
+          convergenceTol,
+          400,
+          0.001,
+          initialWeights)
+        val weightsVector = new DenseVector(weights.toArray)
+        val optimalWeights = Vectors.dense(weights.toArray)
+        val numExamples = training.count()
+        CostFun.calculate(weights, training, new LeastSquaresGradient(), new L1Updater(), 0.001, numExamples)
       }
     }
   }
