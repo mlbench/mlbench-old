@@ -1,4 +1,4 @@
-# distributed-ML-benchmark
-Distributed Machine Learning Benchmark - A Public and Reproducible Comparison of Distributed Solvers for Classification and Regression running on different software frameworks.
+# Distributed Machine Learning Benchmark
+A public and reproducible comparison of distributed machine learning systems. Benchmark for large scale classification and regression running on different software frameworks.
 
 Here is the [design doc](https://docs.google.com/document/d/1jM4zXRDezEJmIKwoDOKNlGvuNNJk5_FxcBrn1mfYp0E/edit#)
