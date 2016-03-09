@@ -11,6 +11,8 @@ import scala.math._
 
 //TODO: Appropriate choice of initial w?
 //TODO: Appropriate choice of ITERATIONS
+
+//Labels must be 0 and 1
 class LogisticRegression(data: RDD[LabeledPoint]) {
   val rand = new Random(10)
   val ITERATIONS = 50

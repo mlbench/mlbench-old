@@ -1,3 +1,4 @@
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem.Evaluation
 import org.apache.log4j.{Level, Logger}
 import java.util.Random
 
@@ -6,7 +7,6 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 
-import scala.math.exp
 import breeze.linalg.{DenseVector, Vector}
 import org.apache.spark._
 
@@ -33,10 +33,10 @@ object RUN {
     val LR = new LogisticRegression(points)
     val w = LR.train()
 
+    val eval = new Evaluation()
+    val objective = eval.getObjective(w, points)
+    println("Objective value: " + objective)
+
     sc.stop()
-  }
-
-  def getObjective(): Unit ={
-
   }
 }
