@@ -11,9 +11,9 @@ import org.apache.spark.rdd.RDD
 //TODO: Additional getters,setters?
 
 
-class Evaluation(L: (DenseVector[Double], DenseVector[Double], Double) => Double = Functions.logisticLoss,
+class Evaluation(L: (DenseVector[Double], DenseVector[Double], Double) => Double = Functions.binaryLogisticLoss,
                 R: DenseVector[Double] => Double = Functions.l2Regularizer,
-                lambda: Double = 0.1) extends Serializable{
+                lambda: Double = 0.01) extends Serializable{
 
   def getObjective(w: DenseVector[Double], x:  RDD[LabeledPoint]): Double ={
     val n = x.collect().length

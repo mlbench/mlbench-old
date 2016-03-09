@@ -1,4 +1,3 @@
-import org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem.Evaluation
 import org.apache.log4j.{Level, Logger}
 import java.util.Random
 
@@ -26,9 +25,9 @@ object RUN {
     rootLogger.setLevel(Level.ERROR)
 
 
-    val points : RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
+    val data : RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
       "/Users/amirreza/workspace/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
-    points.map(p => p.label == 0 || p.label == 1)//Binary classification
+    val points = data.filter(p => p.label == 0 || p.label == 1)//Binary classification
 
     val LR = new LogisticRegression(points)
     val w = LR.train()
@@ -37,6 +36,12 @@ object RUN {
     val objective = eval.getObjective(w, points)
     println("Objective value: " + objective)
 
+    val svm = new SVM(points)
+    val w2 = svm.train()
+
+    val eval2 = new Evaluation()
+    val object2 = eval2.getObjective(w2, points)
+    println("Ovjective value: "+ object2)
     sc.stop()
   }
 }
