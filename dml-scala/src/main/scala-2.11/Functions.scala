@@ -16,4 +16,8 @@ object Functions {
   def l2Regularizer(w: DenseVector[Double]): Double ={
     return 0.5 * w.dot(w);
   }
+
+  def none_reg(w: DenseVector[Double]): Double ={
+    return 0;
+  }
 }

@@ -32,16 +32,17 @@ object RUN {
     val LR = new LogisticRegression(points)
     val w = LR.train()
 
-    val eval = new Evaluation()
+    val eval = new Evaluation(R = Functions.none_reg)
     val objective = eval.getObjective(w, points)
     println("Objective value: " + objective)
 
     val svm = new SVM(points)
     val w2 = svm.train()
 
-    val eval2 = new Evaluation()
+    val eval2 = new Evaluation(R = Functions.none_reg)
     val object2 = eval2.getObjective(w2, points)
     println("Ovjective value: "+ object2)
+
     sc.stop()
   }
 }
