@@ -23,7 +23,7 @@ class SVM(data: RDD[LabeledPoint]) {
     for (i <- 1 to ITERATIONS) {
       val gradient = data.map { p =>
         if((2 * p.label - 1) * DenseVector(p.features.toArray).dot(w) < 1)
-          - ((2.0 * p.label) - 1.0) * DenseVector(p.features.toArray)
+          - (2.0 * p.label - 1.0) * DenseVector(p.features.toArray)
         else
           0.0 * DenseVector(p.features.toArray)
       }.reduce(_ + _)

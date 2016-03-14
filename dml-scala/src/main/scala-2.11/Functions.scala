@@ -8,7 +8,7 @@ import scala.math._
   */
 object Functions {
   def binaryLogisticLoss(w: DenseVector[Double], xi: DenseVector[Double], yi: Double): Double ={
-    //labels must be 1 and -1
+    //Change labels from 0,1 to -1,1
     val y:Double = 2 * yi - 1
     return log(1 + exp(-y * w.dot(xi)));
   }

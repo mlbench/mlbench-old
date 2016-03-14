@@ -26,8 +26,8 @@ class LogisticRegression(data: RDD[LabeledPoint]) {
 
     for (i <- 1 to ITERATIONS) {
       val gradient = data.map { p =>
-        DenseVector(p.features.toArray) * (1 / (1 + exp(-p.label * (w.dot(DenseVector(p.features.toArray))))) - 1) *
-          p.label
+        DenseVector(p.features.toArray) * (1 / (1 + exp(- (2.0 * p.label - 1.0) * (w.dot(DenseVector(p.features.toArray))))) - 1) *
+          (2.0 * p.label - 1.0)
       }.reduce(_ + _)
       w -= gradient
     }

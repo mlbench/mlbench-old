@@ -11,7 +11,7 @@ import org.apache.spark.rdd.RDD
 //TODO: Additional getters,setters?
 
 
-class Evaluation(L: (DenseVector[Double], DenseVector[Double], Double) => Double = Functions.binaryLogisticLoss,
+class Evaluation(L: (DenseVector[Double], DenseVector[Double], Double) => Double = Functions.hingeLoss,
                 R: DenseVector[Double] => Double = Functions.l2Regularizer,
                 lambda: Double = 0.01) extends Serializable{
 
