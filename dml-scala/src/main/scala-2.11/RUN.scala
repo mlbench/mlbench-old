@@ -1,18 +1,13 @@
 import org.apache.log4j.{Level, Logger}
-import java.util.Random
 
 //Load function
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 
-import breeze.linalg.{DenseVector, Vector}
 import org.apache.spark._
 
 object RUN {
-  val D = 4   // Numer of dimensions
-  val ITERATIONS = 50
-  val rand = new Random(10)
 
   def main(args: Array[String]) {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
@@ -24,11 +19,13 @@ object RUN {
     val rootLogger = Logger.getRootLogger()
     rootLogger.setLevel(Level.ERROR)
 
-
+    //Load data
     val data : RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
       "/Users/amirreza/workspace/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
-    val datac = data.map(p => LabeledPoint(p.label - 1, p.features))
-    val points = datac.filter(p => p.label == 0 || p.label == 1)//Binary classification
+
+    //Adjust labels
+    val datac = data.map(p => LabeledPoint(p.label - 2, p.features)) //Labels must be non negative integers:0,1,2,...
+    val points = datac.filter(p => p.label == 0 || p.label == 1)//Binary classification, take only 0 and 1
 
     val LR = new LogisticRegression(points)
     val w = LR.train()
