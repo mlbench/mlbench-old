@@ -9,7 +9,7 @@ class LinearRegression(data: RDD[LabeledPoint]) {
   val ITERATIONS = 50
 
   def train(): DenseVector[Double] ={
-    // Initialize w to a random value
+    // Initialize w to zero
     val D = data.first().features.size
     var w = DenseVector.fill(D){0.0}
     println("Initial w: " + w)

@@ -5,7 +5,6 @@ import org.apache.spark.rdd.RDD
 /**
   * Created by amirreza on 09/03/16.
   */
-//Labels must be 0 and 1
 class SVM(data: RDD[LabeledPoint]) {
   val ITERATIONS = 50
 
@@ -17,8 +16,8 @@ class SVM(data: RDD[LabeledPoint]) {
 
     for (i <- 1 to ITERATIONS) {
       val gradient = data.map { p =>
-        if((2.0 * p.label - 1.0) * DenseVector(p.features.toArray).dot(w) < 1)
-          - (2.0 * p.label - 1.0) * DenseVector(p.features.toArray)
+        if( p.label * DenseVector(p.features.toArray).dot(w) < 1)
+          - p.label * DenseVector(p.features.toArray)
         else
           0.0 * DenseVector(p.features.toArray)
       }.reduce(_ + _)

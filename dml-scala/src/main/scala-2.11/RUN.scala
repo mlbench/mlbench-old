@@ -23,9 +23,10 @@ object RUN {
     val data : RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
       "/Users/amirreza/workspace/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
 
-    //Adjust labels
-    val datac = data.map(p => LabeledPoint(p.label - 2, p.features)) //Labels must be non negative integers:0,1,2,...
-    val points = datac.filter(p => p.label == 0 || p.label == 1)//Binary classification, take only 0 and 1
+    //Take only two class with labels -1 and +1 for binary classification
+    val points = data.filter(p => p.label == 2.0 || p.label == 3.0).
+      map(p => if (p.label == 2.0) LabeledPoint(1.0, p.features)
+               else LabeledPoint(-1.0, p.features))
 
     val LR = new LogisticRegression(points)
     val w = LR.train()
