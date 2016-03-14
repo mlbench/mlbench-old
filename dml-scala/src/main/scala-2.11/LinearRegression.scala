@@ -1,3 +1,4 @@
+import Functions.Unregularized
 import breeze.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
@@ -5,7 +6,10 @@ import org.apache.spark.rdd.RDD
 /**
   * Created by amirreza on 09/03/16.
   */
-class LinearRegression(data: RDD[LabeledPoint]) {
+class LinearRegression(data: RDD[LabeledPoint],
+                       //No regularizer term by default
+                       reg_gradient: Functions.Regularizer = new Unregularized,
+                       lambda: Double = 0.01) {
   val ITERATIONS = 50
 
   def train(): DenseVector[Double] ={
@@ -18,7 +22,7 @@ class LinearRegression(data: RDD[LabeledPoint]) {
       val gradient = data.map { p =>
         (w.dot(DenseVector(p.features.toArray)) - p.label) * DenseVector(p.features.toArray)
       }.reduce(_ + _)
-      w -= gradient
+      w -= (gradient + lambda * reg_gradient.subgradient(w))
     }
     println("Final w: " + w)
     return w;

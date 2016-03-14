@@ -1,3 +1,4 @@
+import Functions.{Unregularized, L2Regularizer}
 import org.apache.log4j.{Level, Logger}
 
 //Load function
@@ -28,18 +29,18 @@ object RUN {
       map(p => if (p.label == 2.0) LabeledPoint(1.0, p.features)
                else LabeledPoint(-1.0, p.features))
 
-    val LR = new LogisticRegression(points)
-    val w = LR.train()
+    val lambda = 0.1
+    val reg = new L2Regularizer
+    val eval = new Evaluation(regularizer = reg, lambda = lambda)
 
-    val eval = new Evaluation(R = Functions.none_reg)
+    val LR = new LogisticRegression(points, regularizer = reg, lambda = lambda)
+    val w = LR.train()
     val objective = eval.getObjective(w, points)
     println("Objective value: " + objective)
 
-    val svm = new SVM(points)
+    val svm = new SVM(points, regularizer = reg, lambda = lambda)
     val w2 = svm.train()
-
-    val eval2 = new Evaluation(R = Functions.none_reg)
-    val object2 = eval2.getObjective(w2, points)
+    val object2 = eval.getObjective(w2, points)
     println("Ovjective value: "+ object2)
 
     sc.stop()

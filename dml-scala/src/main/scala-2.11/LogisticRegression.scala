@@ -1,3 +1,4 @@
+import Functions.{Unregularized, Regularizer}
 import breeze.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
@@ -7,10 +8,10 @@ import scala.math._
 /**
   * Created by amirreza on 09/03/16.
   */
-
-//TODO: Add the regularizer term
-
-class LogisticRegression(data: RDD[LabeledPoint]) {
+class LogisticRegression(data: RDD[LabeledPoint],
+                         //No regularizer term by default:
+                         regularizer: Regularizer = new Unregularized,
+                         lambda: Double = 0.01) {
   val ITERATIONS = 50
 
   def train(): DenseVector[Double] ={
@@ -25,7 +26,7 @@ class LogisticRegression(data: RDD[LabeledPoint]) {
           (1.0 / (1.0 + exp(- p.label * (w.dot(DenseVector(p.features.toArray))))) - 1.0) *
           p.label
       }.reduce(_ + _)
-      w -= gradient;
+      w -= (gradient + lambda * regularizer.subgradient(w))
     }
     println("Final w: " + w)
     return w;

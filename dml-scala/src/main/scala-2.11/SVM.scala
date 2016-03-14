@@ -1,3 +1,4 @@
+import Functions.{Unregularized, Regularizer}
 import breeze.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
@@ -5,9 +6,12 @@ import org.apache.spark.rdd.RDD
 /**
   * Created by amirreza on 09/03/16.
   */
-class SVM(data: RDD[LabeledPoint]) {
-  val ITERATIONS = 50
+class SVM(data: RDD[LabeledPoint],
+          //No regularizer term by default:
+          regularizer: Regularizer = new Unregularized,
+          lambda: Double = 0.01) {
 
+  val ITERATIONS = 50
   def train(): DenseVector[Double] ={
     // Initialize w to zero
     val D = data.first().features.size
@@ -21,7 +25,7 @@ class SVM(data: RDD[LabeledPoint]) {
         else
           0.0 * DenseVector(p.features.toArray)
       }.reduce(_ + _)
-      w -= gradient
+      w -= (gradient + lambda * regularizer.subgradient(w))
     }
     println("Final w: " + w)
     return w;
