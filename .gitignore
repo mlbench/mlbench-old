@@ -19,3 +19,6 @@ project/plugins/project/
 
 # large dataset
 /dml-scala/dataset/epsilon*
+
+# Mac file system
+.DS_Store
