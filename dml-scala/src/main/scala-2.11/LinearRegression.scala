@@ -16,7 +16,6 @@ class LinearRegression(data: RDD[LabeledPoint],
     // Initialize w to zero
     val D = data.first().features.size
     var w = DenseVector.fill(D){0.0}
-    println("Initial w: " + w)
 
     for (i <- 1 to ITERATIONS) {
       val gradient = data.map { p =>

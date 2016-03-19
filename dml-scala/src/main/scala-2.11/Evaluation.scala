@@ -16,8 +16,8 @@ class Evaluation(loss: LossFunction = new HingeLoss,
 
   def getObjective(w: DenseVector[Double], x:  RDD[LabeledPoint]): Double ={
     val n = x.collect().length
-    val ob = x.map(p => loss.loss(w, DenseVector(p.features.toArray), p.label)).reduce(_ + _)
-    return lambda * regularizer.value(w) + (1.0 / n * ob);
+    val sum = x.map(p => loss.loss(w, DenseVector(p.features.toArray), p.label)).reduce(_ + _)
+    return lambda * regularizer.value(w) + ( sum / n);
   }
 
 }

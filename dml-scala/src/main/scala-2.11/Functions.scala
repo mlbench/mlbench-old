@@ -24,21 +24,21 @@ object Functions {
 
   class BinaryLogistic extends LossFunction with Serializable  {
     def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double = {
-      return log(1 + exp(-y * w.dot(xi)));
+      return log(1.0 + exp(-y * w.dot(xi)));
     }
 
     def subgradient(w: DenseVector[Double], xi: DenseVector[Double], y: Double): DenseVector[Double] = {
-      return xi * (1.0 / (1.0 + exp(-y * w.dot(xi)) - 1.0)) * y
+      return xi * (1.0 / (1.0 + exp(-y * w.dot(xi))) - 1.0) * y
     }
   }
 
   class HingeLoss extends LossFunction with Serializable {
     def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double = {
-      return max(0, 1 - y * w.dot(xi))
+      return max(0, 1.0 - y * w.dot(xi))
     }
 
     def subgradient(w: DenseVector[Double], xi: DenseVector[Double], y: Double): DenseVector[Double] = {
-      if (y * xi.dot(w) < 1)
+      if (y * xi.dot(w) < 1.0)
         -y * xi
       else
         0.0 * xi
