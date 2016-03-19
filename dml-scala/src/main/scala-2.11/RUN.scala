@@ -67,7 +67,7 @@ object RUN {
       else LabeledPoint(1.0, p.features)).cache()
 
 
-    val lr = new LogisticRegressionWithLBFGS()
+    val lr = new LogisticRegressionWithSGD()
     lr.setIntercept(false)
     lr.optimizer.
       setNumIterations(iterations).

@@ -18,16 +18,17 @@ class SVM(data: RDD[LabeledPoint],
 
   def train(): DenseVector[Double] ={
     // Initialize w to zero
-    val d = data.first().features.size
-    var w = DenseVector.fill(d){0.0}
-
+    val d : Int = data.first().features.size
+    val n : Double = data.collect().length
+    var w : DenseVector[Double] = DenseVector.fill(d){0.0}
     val loss:LossFunction = new HingeLoss
+
     for (i <- 1 to iterations) {
       gamma = stepSize / sqrt(iterations)
       val gradient = data.map { p =>
         loss.subgradient(w, DenseVector(p.features.toArray), p.label)
       }.reduce(_ + _)
-      w -= gamma * (gradient + lambda * regularizer.subgradient(w))
+      w -= gamma * (gradient + lambda * regularizer.subgradient(w) * n)
     }
     println("SVM w: " + w)
     return w;
