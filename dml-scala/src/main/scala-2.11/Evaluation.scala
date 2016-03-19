@@ -12,10 +12,10 @@ import org.apache.spark.rdd.RDD
 //TODO: Additional getters,setters?
 class Evaluation(loss: LossFunction = new HingeLoss,
                  regularizer: Regularizer = new Unregularized,
-                 lambda: Double = 0.01) extends Serializable{
+                 lambda: Double = 0.0) extends Serializable{
 
   def getObjective(w: DenseVector[Double], x:  RDD[LabeledPoint]): Double ={
-    val n = x.collect().length
+    val n: Double = x.count()
     val sum = x.map(p => loss.loss(w, DenseVector(p.features.toArray), p.label)).reduce(_ + _)
     return lambda * regularizer.value(w) + ( sum / n);
   }

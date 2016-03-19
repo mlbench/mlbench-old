@@ -14,7 +14,7 @@ import org.apache.spark._
 object RUN {
 
   def main(args: Array[String]) {
-    val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
+    val conf = new SparkConf().setAppName("Distributed Machine Learning").setMaster("local[*]")
     val sc = new SparkContext(conf)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     val numSlices = if (args.length > 0) args(0).toInt else 2
@@ -32,20 +32,21 @@ object RUN {
       map(p => if (p.label == 2.0) LabeledPoint( -1.0, p.features)
                else LabeledPoint( +1.0, p.features)).cache()
 
+    val stepSize = 0.5
     val it = 100
     val lambda = 0.1
     val reg = new L2Regularizer
 
-    runWithMllib(points, reg, lambda, it)
+    runWithMllib(points, reg, lambda, it, stepSize)
 
     val eval1 = new Evaluation(new BinaryLogistic,regularizer = reg, lambda = lambda)
-    val LR = new LogisticRegression(points, regularizer = reg, lambda = lambda)
+    val LR = new LogisticRegression(points, regularizer = reg, lambda = lambda, stepSize = stepSize)
     val w = LR.train()
     val objective1 = eval1.getObjective(w, points)
     println("Logistic Objective value: " + objective1)
 
     val eval2 = new Evaluation(new HingeLoss,regularizer = reg, lambda = lambda)
-    val svm = new SVM(points, regularizer = reg, lambda = lambda)
+    val svm = new SVM(points, regularizer = reg, lambda = lambda, stepSize = stepSize)
     val w2 = svm.train()
     val object2 = eval2.getObjective(w2, points)
     println("SVM Ovjective value: "+ object2)
@@ -57,7 +58,8 @@ object RUN {
   def runWithMllib(data : RDD[LabeledPoint],
                    regularizer: Regularizer,
                    lambda: Double,
-                   iterations: Int): Unit ={
+                   iterations: Int,
+                   stepSize: Double): Unit ={
 
     val reg: Updater = (regularizer:AnyRef) match {
       case _: L2Regularizer => new SquaredL2Updater
@@ -72,7 +74,8 @@ object RUN {
     lr.optimizer.
       setNumIterations(iterations).
       setRegParam(lambda).
-      setUpdater(reg)
+      setUpdater(reg).
+      setStepSize(stepSize)
     val lrModel = lr.run(training)
 
     val eval2 = new Evaluation(new BinaryLogistic,regularizer = regularizer, lambda = lambda)
@@ -86,7 +89,8 @@ object RUN {
     svm.optimizer.
       setNumIterations(iterations).
       setRegParam(lambda).
-      setUpdater(reg)
+      setUpdater(reg).
+      setStepSize(stepSize)
     val svmModel = svm.run(training)
 
 

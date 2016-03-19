@@ -10,15 +10,15 @@ import org.apache.spark.rdd.RDD
 class LogisticRegression(data: RDD[LabeledPoint],
                          //No regularizer term by default:
                          regularizer: Regularizer = new Unregularized,
-                         lambda: Double = 0.01,
-                         iterations: Int = 100) {
-  val stepSize:Double = 1.0
+                         lambda: Double = 0.0,
+                         iterations: Int = 100,
+                         stepSize : Double = 1.0) {
   var gamma:Double = stepSize
 
   def train(): DenseVector[Double] ={
     // Initialize w to zero
     val d : Int = data.first().features.size
-    val n : Double = data.collect().length
+    val n : Double = data.count()
     var w : DenseVector[Double] = DenseVector.fill(d){0.0}
     val loss:LossFunction = new BinaryLogistic
 
