@@ -10,19 +10,18 @@ import scala.math._
   */
 object Functions {
 
-  trait LossFunction {
+  /*
+  * Loss Functions
+  * */
+  trait LossFunction extends Serializable{
     def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double
 
     def subgradient(w: DenseVector[Double], xi: DenseVector[Double], y: Double): DenseVector[Double]
   }
 
-  trait Regularizer {
-    def value(w: DenseVector[Double]): Double
 
-    def subgradient(w: DenseVector[Double]): DenseVector[Double]
-  }
 
-  class BinaryLogistic extends LossFunction with Serializable  {
+  class BinaryLogistic extends LossFunction{
     def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double = {
       return log(1.0 + exp(-y * w.dot(xi)));
     }
@@ -32,7 +31,7 @@ object Functions {
     }
   }
 
-  class HingeLoss extends LossFunction with Serializable {
+  class HingeLoss extends LossFunction {
     def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double = {
       return max(0, 1.0 - y * w.dot(xi))
     }
@@ -45,7 +44,28 @@ object Functions {
     }
   }
 
-  class L2Regularizer extends Regularizer with Serializable  {
+  class SquaredLoss extends LossFunction{
+      def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double = {
+        val  term = w.dot(xi) - y
+        return 0.5 * term * term
+      }
+
+      def subgradient(w: DenseVector[Double], xi: DenseVector[Double], y: Double): DenseVector[Double] = {
+        return (w.dot(xi) - y) * xi
+      }
+  }
+
+  /*
+  *  Regularizers
+  * */
+
+  trait Regularizer extends Serializable{
+    def value(w: DenseVector[Double]): Double
+
+    def subgradient(w: DenseVector[Double]): DenseVector[Double]
+  }
+
+  class L2Regularizer extends Regularizer{
     def value(w: DenseVector[Double]): Double = {
       return 0.5 * w.dot(w);
     }
@@ -55,7 +75,7 @@ object Functions {
     }
   }
 
-  class Unregularized extends Regularizer with Serializable  {
+  class Unregularized extends Regularizer{
     def value(w: DenseVector[Double]): Double = {
       return 0.0;
     }
@@ -64,6 +84,5 @@ object Functions {
       return w * 0.0;
     }
   }
-
 }
 

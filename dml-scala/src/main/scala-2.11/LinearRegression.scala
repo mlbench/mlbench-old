@@ -1,5 +1,6 @@
-import Functions.Unregularized
+import Functions.{LossFunction, Regularizer, SquaredLoss, Unregularized}
 import breeze.linalg.DenseVector
+import breeze.numerics._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
@@ -8,22 +9,27 @@ import org.apache.spark.rdd.RDD
   */
 class LinearRegression(data: RDD[LabeledPoint],
                        //No regularizer term by default
-                       reg_gradient: Functions.Regularizer = new Unregularized,
-                       lambda: Double = 0.01) {
-  val ITERATIONS = 50
+                       regularizer: Regularizer = new Unregularized,
+                       lambda: Double = 0.0,
+                       iterations: Int = 100,
+                       stepSize : Double = 1.0) {
+  var gamma:Double = stepSize
 
   def train(): DenseVector[Double] ={
     // Initialize w to zero
-    val D = data.first().features.size
-    var w = DenseVector.fill(D){0.0}
+    val d : Int = data.first().features.size
+    val n : Double = data.count()
+    var w : DenseVector[Double] = DenseVector.fill(d){0.0}
+    val loss: LossFunction = new SquaredLoss
 
-    for (i <- 1 to ITERATIONS) {
+    for (i <- 1 to iterations) {
+      gamma = stepSize / sqrt(iterations)
       val gradient = data.map { p =>
-        (w.dot(DenseVector(p.features.toArray)) - p.label) * DenseVector(p.features.toArray)
+        loss.subgradient(w, DenseVector(p.features.toArray), p.label)
       }.reduce(_ + _)
-      w -= (gradient + lambda * reg_gradient.subgradient(w))
+      w -= gamma * (gradient + lambda * regularizer.subgradient(w) * n)
     }
-    println("Final w: " + w)
+    println("Regression w: " + w)
     return w;
   }
 }
