@@ -27,7 +27,7 @@ class LogisticRegression(regularizer: Regularizer = new Unregularized,//No regul
       val loss_gradient = data.map { p =>
         loss.subgradient(w, DenseVector(p.features.toArray), p.label)
       }.reduce(_ + _)
-      val reg_gradient = data.map(_ => regularizer.subgradient(w)).reduce(_ + _)
+      val reg_gradient = regularizer.subgradient(w) * n
 
       w -= gamma * (loss_gradient + lambda * reg_gradient)
     }
