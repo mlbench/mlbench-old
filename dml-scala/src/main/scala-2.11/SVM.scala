@@ -33,4 +33,8 @@ class SVM(regularizer: Regularizer = new Unregularized,//No regularizer term by 
     }
     return w;
   }
+  def classify(w: DenseVector[Double], test: RDD[LabeledPoint]): RDD[(Double,Double)] ={
+    val predictions: RDD[(Double,Double)] = test.map(p => (loss.classifier(w.dot(DenseVector(p.features.toArray))), p.label))
+    return predictions
+  }
 }

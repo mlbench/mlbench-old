@@ -15,7 +15,6 @@ object Functions {
   * */
   trait LossFunction extends Serializable{
     def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double
-
     def subgradient(w: DenseVector[Double], xi: DenseVector[Double], y: Double): DenseVector[Double]
   }
 
@@ -29,6 +28,11 @@ object Functions {
     def subgradient(w: DenseVector[Double], xi: DenseVector[Double], y: Double): DenseVector[Double] = {
       return xi * (1.0 / (1.0 + exp(-y * w.dot(xi))) - 1.0) * y
     }
+
+    def classifier(z: Double): Double = {
+      val f = 1.0 / (1 + exp(-1 *  z))
+      if (f > 0.5) 1 else -1
+    }
   }
 
   class HingeLoss extends LossFunction {
@@ -41,6 +45,10 @@ object Functions {
         -y * xi
       else
         0.0 * xi
+    }
+
+    def classifier(z: Double): Double = {
+      if (z >= 0.0) 1 else -1
     }
   }
 

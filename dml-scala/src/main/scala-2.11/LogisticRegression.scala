@@ -33,4 +33,8 @@ class LogisticRegression(regularizer: Regularizer = new Unregularized,//No regul
     }
     return w;
   }
+  def classify(w: DenseVector[Double], testData: RDD[LabeledPoint]): RDD[(Double,Double)] ={
+    val predictions: RDD[(Double,Double)] = testData.map(p => (loss.classifier(w.dot(DenseVector(p.features.toArray))), p.label))
+    return predictions
+  }
 }
