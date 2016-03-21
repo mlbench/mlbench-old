@@ -19,7 +19,6 @@ class Evaluation(loss: LossFunction = new HingeLoss,
     val sum = x.map(p => loss.loss(w, DenseVector(p.features.toArray), p.label)).reduce(_ + _)
     return lambda * regularizer.value(w) + ( sum / n);
   }
-
 }
 
 

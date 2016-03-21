@@ -12,7 +12,7 @@ class LinearRegression(data: RDD[LabeledPoint],
                        regularizer: Regularizer = new Unregularized,
                        lambda: Double = 0.0,
                        iterations: Int = 100,
-                       stepSize : Double = 1.0) {
+                       stepSize : Double = 1.0) extends Serializable{
   var gamma:Double = stepSize
 
   def train(): DenseVector[Double] ={
@@ -24,10 +24,13 @@ class LinearRegression(data: RDD[LabeledPoint],
 
     for (i <- 1 to iterations) {
       gamma = stepSize / sqrt(iterations)
-      val gradient = data.map { p =>
+
+      val loss_gradient = data.map { p =>
         loss.subgradient(w, DenseVector(p.features.toArray), p.label)
       }.reduce(_ + _)
-      w -= gamma * (gradient + lambda * regularizer.subgradient(w) * n)
+      val reg_gradient = data.map(_ => regularizer.subgradient(w)).reduce(_ + _)
+
+      w -= gamma * (loss_gradient + lambda *  reg_gradient)
     }
     println("Regression w: " + w)
     return w;
