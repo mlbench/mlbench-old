@@ -26,7 +26,9 @@ object RUN {
 
     //Load data
     val data : RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
+      //"/Users/mschoengens/Documents/workspace-cscs/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
       "/Users/amirreza/workspace/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
+
 
     //Take only two class with labels -1 and +1 for binary classification
     val points = data.filter(p => p.label == 3.0 || p.label == 2.0).
