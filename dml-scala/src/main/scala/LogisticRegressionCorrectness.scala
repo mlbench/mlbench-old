@@ -28,12 +28,6 @@ object LogisticRegressionCorrectness {
     val file = args(0)
     val data : RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, file)
 
-
-    //Take only two class with labels -1 and +1 for binary classification
-    //val points = data.filter(p => p.label == 3.0 || p.label == 2.0).
-    //  map(p => if (p.label == 2.0) LabeledPoint( -1.0, p.features)
-    //           else LabeledPoint( +1.0, p.features))
-
     //Set optimizer's parameters
     val stepSize = 0.1
     val it = 100
@@ -45,13 +39,13 @@ object LogisticRegressionCorrectness {
     println("----------------------------")
 
     //Classify with Binary Logistic Regression
-    val lr = new LogisticRegression(regularizer = reg, lambda = lambda, stepSize = stepSize)
+    val lr = new LogisticRegression(regularizer = reg, iterations = it, lambda = lambda, stepSize = stepSize)
     val w1 = lr.train(data)
     val objective1 = lr.getObjective(w1, data)
-    val error1 = lr.cross_validate(data)
+    //val error1 = lr.cross_validate(data)
     println("Logistic w: " + w1)
     println("Logistic Objective value: " + objective1)
-    println("Logistic CV error: " + error1)
+    //println("Logistic CV error: " + error1)
     println("----------------------------")
 
     sc.stop()
