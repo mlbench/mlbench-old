@@ -42,10 +42,10 @@ object LogisticRegressionCorrectness {
     val lr = new LogisticRegression(regularizer = reg, iterations = it, lambda = lambda, stepSize = stepSize)
     val w1 = lr.train(data)
     val objective1 = lr.getObjective(w1, data)
-    //val error1 = lr.cross_validate(data)
+    val error1 = lr.cross_validate(data)
     println("Logistic w: " + w1)
     println("Logistic Objective value: " + objective1)
-    //println("Logistic CV error: " + error1)
+    println("Logistic CV error: " + error1)
     println("----------------------------")
 
     sc.stop()

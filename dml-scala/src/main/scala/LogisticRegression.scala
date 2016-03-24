@@ -31,11 +31,10 @@ class LogisticRegression(regularizer: Regularizer = new Unregularized,//No regul
 
       w -= gamma * (loss_gradient + lambda * reg_gradient)
 
-      if ( i%10 == 0 || i == 1) { println("iter: " + i + " cost: " + getObjective(w, data)) }
+      // if ( i%10 == 0 || i == 1) { println("iter: " + i + " cost: " + getObjective(w, data)) }
 
     }
 
-    println("Return model parameters.")
     return w;
   }
 
