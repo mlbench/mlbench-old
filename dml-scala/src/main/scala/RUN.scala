@@ -3,6 +3,7 @@ import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2U
 import Functions._
 import breeze.linalg.DenseVector
 import org.apache.log4j.{Level, Logger}
+import scala.xml.XML
 
 //Load function
 import org.apache.spark.mllib.regression.LabeledPoint
@@ -24,10 +25,11 @@ object RUN {
     val rootLogger = Logger.getRootLogger()
     rootLogger.setLevel(Level.ERROR)
 
+    val xml = XML.loadFile("configs.xml")
+    val projectPath = (xml \\ "config" \\ "projectpath") text
     //Load data
     val data : RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
-      //"/Users/mschoengens/Documents/workspace-cscs/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
-      "/Users/amirreza/workspace/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
+       projectPath + "dml-scala/dataset/iris.scale.txt")
 
 
     //Take only two class with labels -1 and +1 for binary classification
@@ -80,6 +82,7 @@ object RUN {
                    stepSize: Double): Unit ={
 
     val reg: Updater = (regularizer:AnyRef) match {
+      case _: L1Regularizer => new L1Updater
       case _: L2Regularizer => new SquaredL2Updater
       case _: Unregularized => new SimpleUpdater
     }

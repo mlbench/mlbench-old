@@ -22,3 +22,6 @@ project/plugins/project/
 
 # Mac file system
 .DS_Store
+
+# config file
+configs.xml
