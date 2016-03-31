@@ -54,6 +54,7 @@ object LogisticRegressionCorrectness {
     sc.stop()
   }
 
+
   def runLRWithMllib(data: RDD[LabeledPoint],
                      regularizer: Regularizer,
                      lambda: Double,

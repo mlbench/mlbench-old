@@ -1,6 +1,5 @@
 import java.io.Serializable
 
-import Classifications.Classification
 import Functions._
 import breeze.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
