@@ -82,7 +82,16 @@ object Functions {
       return w;
     }
   }
+  //TODO:Any other more efficient way?
+  class L1Regularizer extends Regularizer {
+    def value(w: DenseVector[Double]): Double = {
+      return sqrt(w.map(abs(_)).reduceLeft(_ + _));
+    }
 
+    def subgradient(w: DenseVector[Double]): DenseVector[Double] = {
+      return w.map(signum(_));
+    }
+  }
   class Unregularized extends Regularizer{
     def value(w: DenseVector[Double]): Double = {
       return 0.0;
