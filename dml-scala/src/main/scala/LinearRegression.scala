@@ -1,38 +1,37 @@
-import Functions.{LossFunction, Regularizer, SquaredLoss, Unregularized}
+import Functions._
+import Regressions.Regression
 import breeze.linalg.DenseVector
-import breeze.numerics._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
 /**
   * Created by amirreza on 09/03/16.
   */
-class LinearRegression(data: RDD[LabeledPoint],
-                       //No regularizer term by default
-                       regularizer: Regularizer = new Unregularized,
-                       lambda: Double = 0.0,
-                       iterations: Int = 100,
-                       stepSize : Double = 1.0) extends Serializable{
-  var gamma:Double = stepSize
+class LinearRegression(loss: LossFunction,
+                       regularizer: Regularizer,
+                       params: Parameters) extends Regression with Serializable {
+  var objectiveValue: Double = -1
 
-  def train(): DenseVector[Double] ={
-    // Initialize w to zero
-    val d : Int = data.first().features.size
-    val n : Double = data.count()
-    var w : DenseVector[Double] = DenseVector.fill(d){0.0}
-    val loss: LossFunction = new SquaredLoss
-
-    for (i <- 1 to iterations) {
-      gamma = stepSize / sqrt(iterations)
-
-      val loss_gradient = data.map { p =>
-        loss.subgradient(w, DenseVector(p.features.toArray), p.label)
-      }.reduce(_ + _)
-      val reg_gradient = regularizer.subgradient(w) * n
-
-      w -= gamma * (loss_gradient + lambda *  reg_gradient)
-    }
-    println("Regression w: " + w)
+  override def fit(data: RDD[LabeledPoint]): DenseVector[Double] = {
+    val optimizer: SGD = new SGD(loss, regularizer, params)
+    val w: DenseVector[Double] = optimizer.optimize(data)
+    objectiveValue = getObjective(w, data)
     return w;
   }
+
+  def getObjective(): Double = {
+    if (objectiveValue != -1) {
+      return objectiveValue
+    } else {
+      throw new ClassNotFoundException("You must first fit the model!")
+    }
+  }
+
+  def getObjective(w: DenseVector[Double], x: RDD[LabeledPoint]): Double = {
+    val n: Double = x.count()
+    val sum = x.map(p => loss.loss(w, DenseVector(p.features.toArray), p.label)).reduce(_ + _)
+    return params.lambda * regularizer.value(w) + (sum / n);
+  }
+
+  override def cross_validate(data: RDD[LabeledPoint]): Double = ???
 }
