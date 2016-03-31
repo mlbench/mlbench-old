@@ -13,14 +13,17 @@ object Functions {
   /*
   * Loss Functions
   * */
-  trait LossFunction extends Serializable{
+  trait LossFunction extends Serializable {
     def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double
+
     def subgradient(w: DenseVector[Double], xi: DenseVector[Double], y: Double): DenseVector[Double]
   }
 
+  trait Classifier extends Serializable {
+    def classify(z: Double): Double
+  }
 
-
-  class BinaryLogistic extends LossFunction{
+  class BinaryLogistic extends LossFunction with Classifier {
     def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double = {
       return log(1.0 + exp(-y * w.dot(xi)));
     }
@@ -29,13 +32,13 @@ object Functions {
       return xi * (1.0 / (1.0 + exp(-y * w.dot(xi))) - 1.0) * y
     }
 
-    def classifier(z: Double): Double = {
-      val f = 1.0 / (1 + exp(-1 *  z))
+    def classify(z: Double): Double = {
+      val f = 1.0 / (1 + exp(-1 * z))
       if (f > 0.5) 1 else -1
     }
   }
 
-  class HingeLoss extends LossFunction {
+  class HingeLoss extends LossFunction with Classifier {
     def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double = {
       return max(0, 1.0 - y * w.dot(xi))
     }
@@ -47,33 +50,33 @@ object Functions {
         0.0 * xi
     }
 
-    def classifier(z: Double): Double = {
+    def classify(z: Double): Double = {
       if (z >= 0.0) 1 else -1
     }
   }
 
-  class SquaredLoss extends LossFunction{
-      def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double = {
-        val  term = w.dot(xi) - y
-        return 0.5 * term * term
-      }
+  class SquaredLoss extends LossFunction {
+    def loss(w: DenseVector[Double], xi: DenseVector[Double], y: Double): Double = {
+      val term = w.dot(xi) - y
+      return 0.5 * term * term
+    }
 
-      def subgradient(w: DenseVector[Double], xi: DenseVector[Double], y: Double): DenseVector[Double] = {
-        return (w.dot(xi) - y) * xi
-      }
+    def subgradient(w: DenseVector[Double], xi: DenseVector[Double], y: Double): DenseVector[Double] = {
+      return (w.dot(xi) - y) * xi
+    }
   }
 
   /*
   *  Regularizers
   * */
 
-  trait Regularizer extends Serializable{
+  trait Regularizer extends Serializable {
     def value(w: DenseVector[Double]): Double
 
     def subgradient(w: DenseVector[Double]): DenseVector[Double]
   }
 
-  class L2Regularizer extends Regularizer{
+  class L2Regularizer extends Regularizer {
     def value(w: DenseVector[Double]): Double = {
       return 0.5 * w.dot(w);
     }
@@ -82,6 +85,7 @@ object Functions {
       return w;
     }
   }
+
   //TODO:Any other more efficient way?
   class L1Regularizer extends Regularizer {
     def value(w: DenseVector[Double]): Double = {
@@ -92,7 +96,8 @@ object Functions {
       return w.map(signum(_));
     }
   }
-  class Unregularized extends Regularizer{
+
+  class Unregularized extends Regularizer {
     def value(w: DenseVector[Double]): Double = {
       return 0.0;
     }
@@ -101,5 +106,14 @@ object Functions {
       return w * 0.0;
     }
   }
+
+  class Parameters(val lambda: Double = 0.0,
+                   val iterations: Int = 100,
+                   val fraction: Double = 1.0,
+                   val stepSize: Double = 1.0,
+                   val seed: Int = 13) extends Serializable {
+
+  }
+
 }
 

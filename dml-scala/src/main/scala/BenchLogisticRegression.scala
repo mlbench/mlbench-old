@@ -1,7 +1,6 @@
-import org.apache.spark.mllib.classification._
+import Classifications.LogisticRegression
 import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
 import Functions._
-import breeze.linalg.DenseVector
 import org.apache.log4j.{Level, Logger}
 
 //Load function
@@ -30,15 +29,17 @@ object BenchLogisticRegression {
     rootLogger.setLevel(Level.ERROR)
 
     //Load data
-    val data : RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, file)
+    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, file)
 
     //Set optimizer's parameters
-    val stepSize = 0.1
-    val it = 100
-    val lambda = 0.1
+    val params = new Parameters(
+      stepSize = 0.1,
+      iterations = 100,
+      lambda = 0.1
+    )
     val reg = new L2Regularizer
 
-    val lr = new LogisticRegression(regularizer = reg, iterations=it, lambda = lambda, stepSize = stepSize)
+    val lr = new LogisticRegression(regularizer = reg, params)
 
     val start = System.nanoTime()
     val w1 = lr.train(data)
@@ -47,7 +48,7 @@ object BenchLogisticRegression {
 
     println("Logistic w: " + w1)
     println("Logistic Objective value: " + objective1)
-    println("Training took: " + elap/1000/1000 + "ms")
+    println("Training took: " + elap / 1000 / 1000 + "ms")
     println("----------------------------")
   }
 }
