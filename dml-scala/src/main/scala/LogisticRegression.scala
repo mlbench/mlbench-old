@@ -1,8 +1,11 @@
 import Functions._
-import breeze.linalg.{DenseVector}
-import breeze.numerics.{sqrt}
+import breeze.linalg.DenseVector
+import breeze.numerics.sqrt
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
+
+import scala.util.Random
+
 
 /**
   * Created by amirreza on 09/03/16.
@@ -10,7 +13,9 @@ import org.apache.spark.rdd.RDD
 class LogisticRegression(regularizer: Regularizer = new Unregularized,//No regularizer term by default:
                          lambda: Double = 0.0,
                          iterations: Int = 100,
-                         stepSize : Double = 1.0) extends Serializable{
+                         fraction: Double = 1.0,
+                         stepSize : Double = 1.0,
+                         seed:Int = 13) extends Serializable{
   val loss = new BinaryLogistic
   var gamma:Double = stepSize
 
@@ -20,22 +25,32 @@ class LogisticRegression(regularizer: Regularizer = new Unregularized,//No regul
     val n : Double = data.count()
     var w : DenseVector[Double] = DenseVector.fill(d){0.0}
 
-    val eval = new Evaluation(loss, regularizer, lambda)
+    //TODO: Isn't this inefficient ??!!
+    val dataArr = data.mapPartitions(x => Iterator(x.toArray))
     for (i <- 1 to iterations) {
       gamma = stepSize / sqrt(iterations)
-
-      val loss_gradient = data.map { p =>
-        loss.subgradient(w, DenseVector(p.features.toArray), p.label)
-      }.reduce(_ + _)
-      val reg_gradient = regularizer.subgradient(w) * n
-
+      val loss_gradient = dataArr.mapPartitions(partitionUpdate(_, w, fraction, seed)).reduce(_ + _)
+      val reg_gradient: DenseVector[Double] = regularizer.subgradient(w) * n
       w -= gamma * (loss_gradient + lambda * reg_gradient)
-
-      // if ( i%10 == 0 || i == 1) { println("iter: " + i + " cost: " + getObjective(w, data)) }
-
     }
 
     return w;
+  }
+
+  def partitionUpdate(localData: Iterator[Array[LabeledPoint]],
+                      w: DenseVector[Double],
+                      fraction: Double,
+                      seed: Int) : Iterator[DenseVector[Double]] = {
+    val array:Array[LabeledPoint] = localData.next()
+    val n:Int = array.length
+    val subSetSize:Int = (n * fraction).toInt
+    require(subSetSize > 0, "fraction is too small: " + fraction)
+
+    val r = new Random(seed)
+    val subSet = r.shuffle(array.toList).take(subSetSize)//TODO: Isn't this inefficient?
+    val res = subSet.map(p =>
+      loss.subgradient(w, DenseVector(p.features.toArray), p.label)).reduce(_ + _)
+    return Iterator(res)
   }
 
   def getObjective(w: DenseVector[Double], x:  RDD[LabeledPoint]): Double ={

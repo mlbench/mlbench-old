@@ -18,7 +18,7 @@ object RUN {
     val conf = new SparkConf().setAppName("Distributed Machine Learning").setMaster("local[*]")
     val sc = new SparkContext(conf)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-    val numSlices = if (args.length > 0) args(0).toInt else 2
+    val numPartitions = 4
 
     //Turn off logs
     val rootLogger = Logger.getRootLogger()
@@ -26,29 +26,31 @@ object RUN {
 
     //Load data
     val data : RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
-      "/Users/mschoengens/Documents/workspace-cscs/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
-      //"/Users/amirreza/workspace/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
+      //"/Users/mschoengens/Documents/workspace-cscs/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
+      "/Users/amirreza/workspace/distributed-ML-benchmark/dml-scala/dataset/iris.scale.txt")
 
 
     //Take only two class with labels -1 and +1 for binary classification
     val points = data.filter(p => p.label == 3.0 || p.label == 2.0).
       map(p => if (p.label == 2.0) LabeledPoint( -1.0, p.features)
-               else LabeledPoint( +1.0, p.features))
+               else LabeledPoint( +1.0, p.features)).repartition(numPartitions)
 
     //Set optimizer's parameters
     val stepSize = 0.5
+    val fraction = 1.0
     val it = 100
     val lambda = 0.1
     val reg = new L2Regularizer
 
     //Fit with Mllib in order to compare
-    runLRWithMllib(points, reg, lambda, it, stepSize)
-    println("----------------------------")
-    runSVMWithMllib(points, reg, lambda, it, stepSize)
-    println("----------------------------")
+    //runLRWithMllib(points, reg, lambda, it, stepSize)
+    //println("----------------------------")
+    //runSVMWithMllib(points, reg, lambda, it, stepSize)
+    //println("----------------------------")
 
     //Classify with Binary Logistic Regression
-    val lr = new LogisticRegression(regularizer = reg, lambda = lambda, stepSize = stepSize)
+    val lr = new LogisticRegression(regularizer = reg, lambda = lambda,
+      stepSize = stepSize, fraction = fraction)
     val w1 = lr.train(points)
     val objective1 = lr.getObjective(w1, points)
     val error1 = lr.cross_validate(points)
