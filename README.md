@@ -21,12 +21,14 @@ benchmarks:
 - L2-SVM-SGD
 - L2-SVM-QN (quasi-newton, L-BFGS)
 - L2-SVM-COCOA
+
 ### Task L2-LR (Logistic Regression)
 L2-Regularized Logistic Regression
 benchmarks:
 - L2-LR-GD
 - L2-LR-SGD
 - L2-LR-QN (quasi-newton, L-BFGS)
+
 ## Tasks L1.. (L1-Regularized Linear Models)
 ### Task L1-Lasso
 Lasso
@@ -35,6 +37,7 @@ benchmarks:
 - L1-Lasso-SGD (proximal SGD)
 - L1-Lasso-QN (quasi-newton, OWL-QN)
 - L1-Lasso-proxCOCOA
+
 ### Task L1-LR
 Logistic Regression (L1 reg)
 benchmarks:
@@ -48,8 +51,9 @@ benchmarks:
 - Ridge Regression (would include linear systems solvers)
 - Elastic Net Regularizers (L1+L2, used for Least-Squares and LR)
 
-## Algorithms Descriptions
-- GD
+## Algorithm Descriptions
+- GD (Gradient Descent)
+this is the batch-variant, i.e. using all datapoints per iteration
 - SGD
 TODO:
  - describe the updates mathematically
@@ -62,6 +66,7 @@ TODO:
 - DC2: rcv
 - DC3: epsilon
 - DC4: criteo
+
 ### Regression:
 - DR1: ionosphere
 - DR2: rcv
