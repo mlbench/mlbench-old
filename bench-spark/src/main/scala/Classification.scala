@@ -49,7 +49,7 @@ object Classification {
                    params: Parameters = new Parameters(miniBatchFraction = 0.5))
     extends LinearClassifier(new HingeLoss, new L2Regularizer(lambda)) with Serializable {
     val optimizer: Optimizer = new SGD(loss, regularizer, params)
-    require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise."))
+    require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
   class L2_SVM_GD(lambda: Double = 0.1,

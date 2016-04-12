@@ -73,10 +73,21 @@ object Functions {
 
   trait Regularizer extends Serializable {
     val lambda: Double
-
+    require(lambda >= 0.0 && lambda <= 1.0, "regularizer parameter must be between 0 and 1")
     def value(w: DenseVector[Double]): Double
 
     def subgradient(w: DenseVector[Double]): DenseVector[Double]
+  }
+
+  class ElasticNet(val lambda: Double, val alpha:Double) extends Regularizer {
+    require(alpha >= 0.0 && alpha <= 1.0, "Parameter for elastic net regulirizer must be between 0 and 1")
+    def value(w: DenseVector[Double]): Double = {
+      return alpha * sqrt(w.map(abs(_)).reduceLeft(_ + _)) + (1 - alpha) * 0.5 * w.dot(w);
+    }
+
+    def subgradient(w: DenseVector[Double]): DenseVector[Double] = {
+      return alpha * w.map(signum(_)) + (1 - alpha) * w;
+    }
   }
 
   class L2Regularizer(val lambda: Double) extends Regularizer {
@@ -114,7 +125,8 @@ object Functions {
                    val miniBatchFraction: Double = 1.0,
                    val stepSize: Double = 1.0,
                    val seed: Int = 13) extends Serializable {
-
+    require(iterations > 0, "iteration must be positive integer")
+    require(miniBatchFraction > 0 && miniBatchFraction <= 1.0, "miniBatchFraction must be between 0 and 1")
   }
 
 }

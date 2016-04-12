@@ -33,7 +33,7 @@ object RUN {
     //Set optimizer's parameters
     val params = new Parameters(
       iterations = 100,
-      miniBatchFraction = 1.0,
+      miniBatchFraction = 0.9,
       stepSize = 0.1,
       seed = 13
     )
