@@ -17,33 +17,33 @@ varying d=10^{0,2,3,6,9,...}
 ### Task L2-SVM
 L2-Regularized SVM
 benchmarks:
-- L2-SVM-GD
-- L2-SVM-SGD
+- [L2-SVM-GD](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Classification.scala#L55)
+- [L2-SVM-SGD](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Classification.scala#L48)
 - L2-SVM-QN (quasi-newton, L-BFGS)
 - L2-SVM-COCOA
 
 ### Task L2-LR (Logistic Regression)
 L2-Regularized Logistic Regression
 benchmarks:
-- L2-LR-GD
-- L2-LR-SGD
+- [L2-LR-GD](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Classification.scala#L69)
+- [L2-LR-SGD](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Classification.scala#L62)
 - L2-LR-QN (quasi-newton, L-BFGS)
 
 ## Tasks L1.. (L1-Regularized Linear Models)
 ### Task L1-Lasso
 Lasso
 benchmarks:
-- L1-Lasso-GD (proximal GD)
-- L1-Lasso-SGD (proximal SGD)
+- [L1-Lasso-GD (proximal GD)](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Regression.scala#L48)
+- [L1-Lasso-SGD (proximal SGD)](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Regression.scala#L41)
 - L1-Lasso-QN (quasi-newton, OWL-QN)
 - L1-Lasso-proxCOCOA
 
 ### Task L1-LR
 Logistic Regression (L1 reg)
 benchmarks:
-- L2-LR-GD (proximal GD)
-- L2-LR-SGD (proximal SGD)
-- L2-LR-QN (quasi-newton, L-BFGS)
+- [L1-LR-GD (proximal GD)](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Classification.scala#L84)
+- [L1-LR-SGD (proximal SGD)](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Classification.scala#L77)
+- L1-LR-QN (quasi-newton, L-BFGS)
 
 
 ## Future Task Ideas
