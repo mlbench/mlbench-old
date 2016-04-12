@@ -1,4 +1,4 @@
-import Classifications.{LogisticRegression, SVM}
+import Classification.{LogisticRegression, SVM}
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
 import Functions._
@@ -41,25 +41,25 @@ object RUN {
 
     //Set optimizer's parameters
     val params = new Parameters(
-      lambda = 0.1,
-      iterations = 100,
+      lambda = 0.2,
+      iterations = 50,
       fraction = 1.0,
-      stepSize = 0.5,
+      stepSize = 0.00001,
       seed = 13
     )
     val reg = new L2Regularizer
 
     //Fit with Mllib in order to compare
-    runLRWithMllib(points, reg, params.lambda, params.iterations, params.stepSize)
+    runLRWithMllib(points, reg, params.lambda, params.iterations, params.fraction, params.stepSize)
     println("----------------------------")
-    runSVMWithMllib(points, reg, params.lambda, params.iterations, params.stepSize)
+    runSVMWithMllib(points, reg, params.lambda, params.iterations, params.fraction, params.stepSize)
     println("----------------------------")
 
     //Classify with Binary Logistic Regression
     val lr = new LogisticRegression(regularizer = reg, params)
     val w1 = lr.train(points)
     val objective1 = lr.getObjective()
-    val error1 = lr.cvError(points)
+    val error1 = lr.fiveFoldCV(points)
     println("Logistic w: " + w1)
     println("Logistic Objective value: " + objective1)
     println("Logistic CV error: " + error1)
@@ -69,7 +69,7 @@ object RUN {
     val svm = new SVM(regularizer = reg, params)
     val w2 = svm.train(points)
     val object2 = svm.getObjective()
-    val error2 = svm.cvError(points)
+    val error2 = svm.fiveFoldCV(points)
     println("SVM w: " + w2)
     println("SVM Ovjective value: " + object2)
     println("SVM CV error: " + error2)
@@ -83,9 +83,10 @@ object RUN {
                      regularizer: Regularizer,
                      lambda: Double,
                      iterations: Int,
+                     fraction: Double,
                      stepSize: Double): Unit = {
 
-    val reg: Updater = (regularizer: AnyRef) match {
+    val reg: Updater = (regularizer: Regularizer) match {
       case _: L1Regularizer => new L1Updater
       case _: L2Regularizer => new SquaredL2Updater
       case _: Unregularized => new SimpleUpdater
@@ -100,6 +101,7 @@ object RUN {
       setNumIterations(iterations).
       setRegParam(lambda).
       setUpdater(reg).
+      setMiniBatchFraction(fraction).
       setStepSize(stepSize)
     val lrModel = lr.run(training)
 
@@ -164,6 +166,7 @@ object RUN {
                       regularizer: Regularizer,
                       lambda: Double,
                       iterations: Int,
+                      fraction: Double,
                       stepSize: Double): Unit = {
 
     val reg: Updater = (regularizer: AnyRef) match {
@@ -179,6 +182,7 @@ object RUN {
     svm.setIntercept(false)
     svm.optimizer.
       setNumIterations(iterations).
+      setMiniBatchFraction(fraction).
       setRegParam(lambda).
       setUpdater(reg).
       setStepSize(stepSize)

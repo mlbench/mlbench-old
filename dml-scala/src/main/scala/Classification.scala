@@ -8,13 +8,13 @@ import org.apache.spark.rdd.RDD
 /**
   * Created by amirreza on 31/03/16.
   */
-object Classifications {
+object Classification {
 
 
   trait Classification extends Serializable {
     def train(data: RDD[LabeledPoint]): DenseVector[Double]
 
-    def classify(w: DenseVector[Double], test: RDD[LabeledPoint]): RDD[(Double, Double)]
+    def classify(w: DenseVector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double]
   }
 
   class LinearClassifier(loss: LossFunction with Classifier,
@@ -26,17 +26,17 @@ object Classifications {
       this.optimize(data)
     }
 
-    override def classify(w: DenseVector[Double], test: RDD[LabeledPoint]): RDD[(Double, Double)] = {
-      val predictions: RDD[(Double, Double)] = test.map(p => (loss.classify(w.dot(DenseVector(p.features.toArray))), p.label))
+    override def classify(w: DenseVector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double] = {
+      val predictions: RDD[Double] = test.map(p => loss.classify(w.dot(DenseVector(p.toArray))))
       return predictions
     }
 
-    override def predict(w: DenseVector[Double], test: RDD[LabeledPoint]): RDD[(Double, Double)] = {
+    override def predict(w: DenseVector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double] = {
       return this.classify(w, test)
     }
 
-    override def error(predictions: RDD[(Double, Double)]): Double = {
-      predictions.map(p => if (p._1 != p._2) 1.0 else 0.0).reduce(_ + _) / predictions.count()
+    override def error(true_labels: RDD[Double], predictions: RDD[Double]): Double = {
+      predictions.zip(true_labels).map(p => if (p._1 != p._2) 1.0 else 0.0).reduce(_ + _) / predictions.count()
     }
 
   }

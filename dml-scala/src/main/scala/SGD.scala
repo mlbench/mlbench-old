@@ -27,7 +27,7 @@ class SGD(loss: LossFunction,
     //TODO: Isn't this inefficient ??!!
     val dataArr = data.mapPartitions(x => Iterator(x.toArray))
     for (i <- 1 to params.iterations) {
-      gamma = params.stepSize / sqrt(params.iterations)
+      gamma = params.stepSize / sqrt(i)
       val loss_gradient = dataArr.mapPartitions(partitionUpdate(_, w, params.fraction, params.seed)).reduce(_ + _)
       val reg_gradient: DenseVector[Double] = regularizer.subgradient(w) * n
       w -= gamma * (loss_gradient + params.lambda * reg_gradient)

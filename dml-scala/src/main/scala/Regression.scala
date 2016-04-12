@@ -8,7 +8,7 @@ import org.apache.spark.rdd.RDD
 /**
   * Created by amirreza on 31/03/16.
   */
-object Regressions {
+object Regression {
 
   trait Regression extends Serializable {
     def fit(data: RDD[LabeledPoint]): DenseVector[Double]
@@ -23,14 +23,15 @@ object Regressions {
       super.optimize(data)
     }
 
-    override def predict(w: DenseVector[Double], test: RDD[LabeledPoint]): RDD[(Double, Double)] = {
+    override def predict(w: DenseVector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double] = {
       //TODO: Check if label is response values in this data format
-      val predictions: RDD[(Double, Double)] = test.map(p => (w.dot(DenseVector(p.features.toArray)), p.label))
+      //TODO: Isn't converting to DenseVector costly?
+      val predictions: RDD[Double] = test.map(p => w.dot(DenseVector(p.toArray)))
       return predictions
     }
 
-    override def error(predictions: RDD[(Double, Double)]): Double = {
-      predictions.map(p => (p._2 - p._1) * (p._2 - p._1)).reduce(_ + _) / predictions.count()
+    override def error(trueLabels: RDD[Double], predictions: RDD[Double]): Double = {
+      predictions.zip(trueLabels).map(p => (p._2 - p._1) * (p._2 - p._1)).reduce(_ + _) / predictions.count()
     }
 
   }

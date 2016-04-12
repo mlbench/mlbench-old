@@ -1,4 +1,4 @@
-import Classifications.LogisticRegression
+import Classification.LogisticRegression
 import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
 import Functions._
 import org.apache.log4j.{Level, Logger}

@@ -1,4 +1,4 @@
-import Classifications.LogisticRegression
+import Classification.LogisticRegression
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
 import Functions._
@@ -45,7 +45,7 @@ object LogisticRegressionCorrectness {
     val lr = new LogisticRegression(regularizer = reg, params)
     val w1 = lr.train(data)
     val objective1 = lr.getObjective(w1, data)
-    val error1 = lr.cvError(data)
+    val error1 = lr.fiveFoldCV(data)
     println("Logistic w: " + w1)
     println("Logistic Objective value: " + objective1)
     println("Logistic CV error: " + error1)
