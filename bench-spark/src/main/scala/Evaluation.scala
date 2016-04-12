@@ -19,6 +19,10 @@ class Evaluation(loss: LossFunction = new HingeLoss,
     val sum = x.map(p => loss.loss(w, DenseVector(p.features.toArray), p.label)).reduce(_ + _)
     return lambda * regularizer.value(w) + (sum / n);
   }
+
+  def error(true_labels: RDD[Double], predictions: RDD[Double]): Double = {
+    predictions.zip(true_labels).map(p => if (p._1 != p._2) 1.0 else 0.0).reduce(_ + _) / predictions.count()
+  }
 }
 
 
