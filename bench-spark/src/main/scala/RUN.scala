@@ -4,12 +4,10 @@ import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2U
 import Functions._
 import breeze.linalg.DenseVector
 import org.apache.log4j.{Level, Logger}
-
-import scala.xml.XML
+import utils.Utils
 
 //Load function
 import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 
 import org.apache.spark._
@@ -21,23 +19,15 @@ object RUN {
     val conf = new SparkConf().setAppName("Distributed Machine Learning").setMaster("local[*]")
     val sc = new SparkContext(conf)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-    val numPartitions = 4
 
     //Turn off logs
     val rootLogger = Logger.getRootLogger()
     rootLogger.setLevel(Level.ERROR)
 
-    val xml = XML.loadFile("configs.xml")
-    val projectPath = (xml \\ "config" \\ "projectpath") text
     //Load data
-    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
-      projectPath + "datasets/iris.scale.txt")
-
-
-    //Take only two class with labels -1 and +1 for binary classification
-    val points = data.filter(p => p.label == 3.0 || p.label == 2.0).
-      map(p => if (p.label == 2.0) LabeledPoint(-1.0, p.features)
-      else LabeledPoint(+1.0, p.features)).repartition(numPartitions)
+    val dataset = "iris.scale.txt"
+    val numPartitions = 4
+    val points = Utils.loadLibSVMForBinaryClassification(dataset, numPartitions, sc)
 
     //Set optimizer's parameters
     val params = new Parameters(
@@ -46,6 +36,7 @@ object RUN {
       stepSize = 0.1,
       seed = 13
     )
+    //Regularization parameter
     val lambda = 0.5
     val reg = new L2Regularizer(lambda = lambda)
 
