@@ -72,13 +72,14 @@ object Functions {
   * */
 
   trait Regularizer extends Serializable {
-    val lambda:Double
+    val lambda: Double
+
     def value(w: DenseVector[Double]): Double
 
     def subgradient(w: DenseVector[Double]): DenseVector[Double]
   }
 
-  class L2Regularizer(val lambda:Double) extends Regularizer {
+  class L2Regularizer(val lambda: Double) extends Regularizer {
     def value(w: DenseVector[Double]): Double = {
       return 0.5 * w.dot(w);
     }
@@ -89,7 +90,7 @@ object Functions {
   }
 
   //TODO:Any other more efficient way?
-  class L1Regularizer(val lambda:Double) extends Regularizer {
+  class L1Regularizer(val lambda: Double) extends Regularizer {
     def value(w: DenseVector[Double]): Double = {
       return sqrt(w.map(abs(_)).reduceLeft(_ + _));
     }
@@ -99,7 +100,7 @@ object Functions {
     }
   }
 
-  class Unregularized(val lambda:Double = 0) extends Regularizer {
+  class Unregularized(val lambda: Double = 0) extends Regularizer {
     def value(w: DenseVector[Double]): Double = {
       return 0.0;
     }

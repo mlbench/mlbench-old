@@ -13,13 +13,13 @@ import scala.util.Random
 
 abstract class Optimizer(val loss: LossFunction,
                          val regularizer: Regularizer,
-                         val params: Parameters) extends Serializable{
-  def optimize(data:RDD[LabeledPoint]): DenseVector[Double]
+                         val params: Parameters) extends Serializable {
+  def optimize(data: RDD[LabeledPoint]): DenseVector[Double]
 }
 
 class SGD(loss: LossFunction,
           regularizer: Regularizer = new Unregularized, //No regularizer term by default:
-          params: Parameters) extends Optimizer(loss, regularizer, params){
+          params: Parameters) extends Optimizer(loss, regularizer, params) {
 
 
   override def optimize(data: RDD[LabeledPoint]): DenseVector[Double] = {

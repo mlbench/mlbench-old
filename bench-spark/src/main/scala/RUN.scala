@@ -72,7 +72,7 @@ object RUN {
   }
 
   def runLRWithMllib(train: RDD[LabeledPoint],
-                     test:RDD[LabeledPoint],
+                     test: RDD[LabeledPoint],
                      regularizer: Regularizer,
                      lambda: Double,
                      iterations: Int,
@@ -100,7 +100,7 @@ object RUN {
 
     val scores = test.map { point =>
       lrModel.predict(point.features)
-    }.map(p => if(p == 0) -1.0 else 1.0)
+    }.map(p => if (p == 0) -1.0 else 1.0)
 
     val eval = new Evaluation(new BinaryLogistic, regularizer = regularizer, lambda = lambda)
     val objective = eval.getObjective(DenseVector(lrModel.weights.toArray), training)
@@ -112,7 +112,7 @@ object RUN {
   }
 
   def runSVMWithMllib(train: RDD[LabeledPoint],
-                      test:RDD[LabeledPoint],
+                      test: RDD[LabeledPoint],
                       regularizer: Regularizer,
                       lambda: Double,
                       iterations: Int,
@@ -140,7 +140,7 @@ object RUN {
 
     val scores = test.map { point =>
       svmModel.predict(point.features)
-    }.map(p => if(p == 0) -1.0 else 1.0)
+    }.map(p => if (p == 0) -1.0 else 1.0)
 
     val eval = new Evaluation(new HingeLoss, regularizer, lambda = lambda)
     val objective = eval.getObjective(DenseVector(svmModel.weights.toArray), training)

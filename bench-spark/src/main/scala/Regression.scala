@@ -15,7 +15,7 @@ object Regression {
   }
 
   abstract class LinearRegression(loss: LossFunction,
-                         regularizer: Regularizer)
+                                  regularizer: Regularizer)
     extends LinearMethod(loss, regularizer) with Regression {
 
     override def fit(data: RDD[LabeledPoint]): DenseVector[Double] = {
@@ -34,10 +34,22 @@ object Regression {
     }
 
   }
-  class L1_Lasso_SGD(lambda:Double = 0.1,
-                     params: Parameters = new Parameters)
+
+  /*
+   Tasks L1:
+  */
+  class L1_Lasso_SGD(lambda: Double = 0.1,
+                     params: Parameters = new Parameters(miniBatchFraction = 0.5))
     extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
-      val optimizer:Optimizer = new SGD(loss, regularizer, params)
+    val optimizer: Optimizer = new SGD(loss, regularizer, params)
+    require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
+  }
+
+  class L1_Lasso_GD(lambda: Double = 0.1,
+                    params: Parameters = new Parameters(miniBatchFraction = 1.0))
+    extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
+    val optimizer: Optimizer = new SGD(loss, regularizer, params)
+    require(params.miniBatchFraction == 1.0, "Use SGD for miniBatchFraction less than 1.0")
   }
 
 }

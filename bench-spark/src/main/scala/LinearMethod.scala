@@ -23,7 +23,7 @@ abstract class LinearMethod(val loss: LossFunction,
 
   def error(trueLabels: RDD[Double], predictions: RDD[Double]): Double
 
-  def testError(w:DenseVector[Double], test:RDD[org.apache.spark.mllib.linalg.Vector], trueLabels: RDD[Double]): Double = {
+  def testError(w: DenseVector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector], trueLabels: RDD[Double]): Double = {
     val predictions = predict(w, test)
     val err = error(trueLabels, predictions)
     return err
