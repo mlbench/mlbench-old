@@ -4,7 +4,6 @@ import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2U
 import Functions._
 import breeze.linalg.DenseVector
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import utils.Utils
 
 //Load function

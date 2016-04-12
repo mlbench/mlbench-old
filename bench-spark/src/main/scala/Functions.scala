@@ -1,7 +1,6 @@
 import java.io.Serializable
 
 import breeze.linalg.DenseVector
-import breeze.math.MutablizingAdaptor.Lambda2
 import breeze.numerics.log
 
 import scala.math._
@@ -73,14 +72,14 @@ object Functions {
 
   trait Regularizer extends Serializable {
     val lambda: Double
-    require(lambda >= 0.0 && lambda <= 1.0, "regularizer parameter must be between 0 and 1")
+    require(lambda >= 0.0, "Regularizer parameter must be positive")
     def value(w: DenseVector[Double]): Double
 
     def subgradient(w: DenseVector[Double]): DenseVector[Double]
   }
 
   class ElasticNet(val lambda: Double, val alpha:Double) extends Regularizer {
-    require(alpha >= 0.0 && alpha <= 1.0, "Parameter for elastic net regulirizer must be between 0 and 1")
+    require(alpha >= 0.0, "Elastic net parameter must be positive")
     def value(w: DenseVector[Double]): Double = {
       return alpha * sqrt(w.map(abs(_)).reduceLeft(_ + _)) + (1 - alpha) * 0.5 * w.dot(w);
     }
