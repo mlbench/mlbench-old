@@ -1,4 +1,4 @@
-import Classification.LogisticRegression
+import Classification.L2_LR_SGD
 import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
 import Functions._
 import org.apache.log4j.{Level, Logger}
@@ -40,12 +40,11 @@ object BenchLogisticRegression {
     //Set optimizer's parameters
     val params = new Parameters(
       stepSize = 0.1,
-      iterations = 2,
-      lambda = 0.1
+      iterations = 2
     )
 
-    val reg = new L2Regularizer
-    val lr = new LogisticRegression(regularizer = reg, params)
+    val lambda = 0.1
+    val lr = new L2_LR_SGD(lambda, params)
 
     val start = System.nanoTime()
     val w1 = lr.train(data)

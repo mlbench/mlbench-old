@@ -10,12 +10,19 @@ import scala.util.Random
 /**
   * Created by amirreza on 09/03/16.
   */
+
+abstract class Optimizer(val loss: LossFunction,
+                         val regularizer: Regularizer,
+                         val params: Parameters) extends Serializable{
+  def optimize(data:RDD[LabeledPoint]): DenseVector[Double]
+}
+
 class SGD(loss: LossFunction,
           regularizer: Regularizer = new Unregularized, //No regularizer term by default:
-          params: Parameters) extends Serializable {
+          params: Parameters) extends Optimizer(loss, regularizer, params){
 
 
-  def optimize(data: RDD[LabeledPoint]): DenseVector[Double] = {
+  override def optimize(data: RDD[LabeledPoint]): DenseVector[Double] = {
     val d: Int = data.first().features.size //feature dimension
     val n: Double = data.count() //dataset size
 
@@ -28,9 +35,9 @@ class SGD(loss: LossFunction,
     val dataArr = data.mapPartitions(x => Iterator(x.toArray))
     for (i <- 1 to params.iterations) {
       gamma = params.stepSize / sqrt(i)
-      val loss_gradient = dataArr.mapPartitions(partitionUpdate(_, w, params.fraction, params.seed)).reduce(_ + _)
+      val loss_gradient = dataArr.mapPartitions(partitionUpdate(_, w, params.miniBatchFraction, params.seed)).reduce(_ + _)
       val reg_gradient: DenseVector[Double] = regularizer.subgradient(w) * n
-      w -= gamma * (loss_gradient + params.lambda * reg_gradient)
+      w -= gamma * (loss_gradient + regularizer.lambda * reg_gradient)
     }
 
     return w;

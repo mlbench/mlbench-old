@@ -17,10 +17,9 @@ object Classification {
     def classify(w: DenseVector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double]
   }
 
-  class LinearClassifier(loss: LossFunction with Classifier,
-                         regularizer: Regularizer,
-                         params: Parameters)
-    extends LinearMethod(loss, regularizer, params) with Classification {
+  abstract class LinearClassifier(loss: LossFunction with Classifier,
+                                  regularizer: Regularizer)
+    extends LinearMethod(loss, regularizer) with Classification {
 
     override def train(data: RDD[LabeledPoint]): DenseVector[Double] = {
       this.optimize(data)
@@ -41,15 +40,16 @@ object Classification {
 
   }
 
-  class SVM(regularizer: Regularizer = new Unregularized, //No regularizer term by default:
-            params: Parameters = new Parameters)
-    extends LinearClassifier(new HingeLoss, regularizer, params) with Serializable {
+  class L2_SVM_SGD(lambda: Double = 0.1,
+                   params: Parameters = new Parameters)
+    extends LinearClassifier(new HingeLoss, new L2Regularizer(lambda)) with Serializable {
+      val optimizer:Optimizer = new SGD(loss, regularizer, params)
   }
 
-  class LogisticRegression(regularizer: Regularizer = new Unregularized, //No regularizer term by default:
-                           params: Parameters = new Parameters)
-    extends LinearClassifier(new BinaryLogistic, regularizer, params) with Serializable {
-
+  class L2_LR_SGD(lambda:Double = 0.1,
+                  params: Parameters = new Parameters)
+    extends LinearClassifier(new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
+      val optimizer:Optimizer = new SGD(loss, regularizer, params)
   }
 
 }

@@ -1,4 +1,4 @@
-import Classification.{LogisticRegression, SVM}
+import Classification.{L2_LR_SGD, L2_SVM_SGD}
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
 import Functions._
@@ -41,22 +41,22 @@ object RUN {
 
     //Set optimizer's parameters
     val params = new Parameters(
-      lambda = 0.2,
-      iterations = 50,
-      fraction = 1.0,
-      stepSize = 0.00001,
+      iterations = 100,
+      miniBatchFraction = 1.0,
+      stepSize = 0.1,
       seed = 13
     )
-    val reg = new L2Regularizer
+    val lambda = 0.5
+    val reg = new L2Regularizer(lambda = lambda)
 
     //Fit with Mllib in order to compare
-    runLRWithMllib(points, reg, params.lambda, params.iterations, params.fraction, params.stepSize)
+    runLRWithMllib(points, reg, lambda, params.iterations, params.miniBatchFraction, params.stepSize)
     println("----------------------------")
-    runSVMWithMllib(points, reg, params.lambda, params.iterations, params.fraction, params.stepSize)
+    runSVMWithMllib(points, reg, lambda, params.iterations, params.miniBatchFraction, params.stepSize)
     println("----------------------------")
 
     //Classify with Binary Logistic Regression
-    val lr = new LogisticRegression(regularizer = reg, params)
+    val lr = new L2_LR_SGD(lambda, params)
     val w1 = lr.train(points)
     val objective1 = lr.getObjective()
     val error1 = lr.fiveFoldCV(points)
@@ -66,7 +66,7 @@ object RUN {
     println("----------------------------")
 
     //Classify with SVM
-    val svm = new SVM(regularizer = reg, params)
+    val svm = new L2_SVM_SGD(lambda, params)
     val w2 = svm.train(points)
     val object2 = svm.getObjective()
     val error2 = svm.fiveFoldCV(points)

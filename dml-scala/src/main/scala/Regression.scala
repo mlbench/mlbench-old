@@ -14,10 +14,9 @@ object Regression {
     def fit(data: RDD[LabeledPoint]): DenseVector[Double]
   }
 
-  class LinearRegression(loss: LossFunction,
-                         regularizer: Regularizer,
-                         params: Parameters)
-    extends LinearMethod(loss, regularizer, params) with Regression {
+  abstract class LinearRegression(loss: LossFunction,
+                         regularizer: Regularizer)
+    extends LinearMethod(loss, regularizer) with Regression {
 
     override def fit(data: RDD[LabeledPoint]): DenseVector[Double] = {
       super.optimize(data)
@@ -35,17 +34,10 @@ object Regression {
     }
 
   }
-
-  class OrdinaryLeastSquares(params: Parameters = new Parameters)
-    extends LinearRegression(new SquaredLoss, new Unregularized, params) with Serializable {
-  }
-
-  class RidgeRegression(params: Parameters = new Parameters(lambda = 0.01))
-    extends LinearRegression(new SquaredLoss, new L2Regularizer, params) with Serializable {
-  }
-
-  class Lasso(params: Parameters = new Parameters(lambda = 0.01))
-    extends LinearRegression(new SquaredLoss, new L1Regularizer, params) with Serializable {
+  class L1_Lasso_SGD(lambda:Double = 0.1,
+                     params: Parameters = new Parameters)
+    extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
+      val optimizer:Optimizer = new SGD(loss, regularizer, params)
   }
 
 }

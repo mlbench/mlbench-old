@@ -1,6 +1,7 @@
 import java.io.Serializable
 
 import breeze.linalg.DenseVector
+import breeze.math.MutablizingAdaptor.Lambda2
 import breeze.numerics.log
 
 import scala.math._
@@ -71,12 +72,13 @@ object Functions {
   * */
 
   trait Regularizer extends Serializable {
+    val lambda:Double
     def value(w: DenseVector[Double]): Double
 
     def subgradient(w: DenseVector[Double]): DenseVector[Double]
   }
 
-  class L2Regularizer extends Regularizer {
+  class L2Regularizer(val lambda:Double) extends Regularizer {
     def value(w: DenseVector[Double]): Double = {
       return 0.5 * w.dot(w);
     }
@@ -87,7 +89,7 @@ object Functions {
   }
 
   //TODO:Any other more efficient way?
-  class L1Regularizer extends Regularizer {
+  class L1Regularizer(val lambda:Double) extends Regularizer {
     def value(w: DenseVector[Double]): Double = {
       return sqrt(w.map(abs(_)).reduceLeft(_ + _));
     }
@@ -97,7 +99,7 @@ object Functions {
     }
   }
 
-  class Unregularized extends Regularizer {
+  class Unregularized(val lambda:Double = 0) extends Regularizer {
     def value(w: DenseVector[Double]): Double = {
       return 0.0;
     }
@@ -107,9 +109,8 @@ object Functions {
     }
   }
 
-  class Parameters(val lambda: Double = 0.0,
-                   val iterations: Int = 100,
-                   val fraction: Double = 1.0,
+  class Parameters(val iterations: Int = 100,
+                   val miniBatchFraction: Double = 1.0,
                    val stepSize: Double = 1.0,
                    val seed: Int = 13) extends Serializable {
 

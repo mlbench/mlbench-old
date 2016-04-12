@@ -8,13 +8,12 @@ import org.apache.spark.rdd.RDD
 /**
   * Created by amirreza on 09/03/16.
   */
-abstract class LinearMethod(loss: LossFunction,
-                            regularizer: Regularizer,
-                            params: Parameters) extends Serializable {
+abstract class LinearMethod(val loss: LossFunction,
+                            val regularizer: Regularizer) extends Serializable {
+  val optimizer: Optimizer
   var objectiveValue: Option[Double] = None
 
   def optimize(data: RDD[LabeledPoint]): DenseVector[Double] = {
-    val optimizer: SGD = new SGD(loss, regularizer, params)
     val w: DenseVector[Double] = optimizer.optimize(data)
     objectiveValue = Some(getObjective(w, data))
     return w;
@@ -71,6 +70,6 @@ abstract class LinearMethod(loss: LossFunction,
   def getObjective(w: DenseVector[Double], x: RDD[LabeledPoint]): Double = {
     val n: Double = x.count()
     val sum = x.map(p => loss.loss(w, DenseVector(p.features.toArray), p.label)).reduce(_ + _)
-    return params.lambda * regularizer.value(w) + (sum / n);
+    return regularizer.lambda * regularizer.value(w) + (sum / n);
   }
 }
