@@ -31,7 +31,7 @@ object RUN {
     val projectPath = (xml \\ "config" \\ "projectpath") text
     //Load data
     val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
-      projectPath + "dml-scala/dataset/iris.scale.txt")
+      projectPath + "datasets/iris.scale.txt")
 
 
     //Take only two class with labels -1 and +1 for binary classification
