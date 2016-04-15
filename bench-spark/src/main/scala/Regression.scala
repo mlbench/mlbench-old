@@ -28,7 +28,7 @@ object Regression {
       val predictions: RDD[Double] = test.map(p => w.dot(DenseVector(p.toArray)))
       return predictions
     }
-
+    //Mean squared error
     override def error(trueLabels: RDD[Double], predictions: RDD[Double]): Double = {
       predictions.zip(trueLabels).map(p => (p._2 - p._1) * (p._2 - p._1)).reduce(_ + _) / predictions.count()
     }
@@ -39,14 +39,14 @@ object Regression {
    Tasks L1:
   */
   class L1_Lasso_SGD(lambda: Double = 0.1,
-                     params: Parameters = new Parameters(miniBatchFraction = 0.5))
+                     params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
     extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
     val optimizer: Optimizer = new SGD(loss, regularizer, params)
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
   class L1_Lasso_GD(lambda: Double = 0.1,
-                    params: Parameters = new Parameters(miniBatchFraction = 1.0))
+                    params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
     val optimizer: Optimizer = new SGD(loss, regularizer, params)
     require(params.miniBatchFraction == 1.0, "Use SGD for miniBatchFraction less than 1.0")

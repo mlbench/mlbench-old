@@ -1,6 +1,9 @@
+import java.io.Serializable
+
 import Functions._
 import breeze.linalg.DenseVector
 import breeze.numerics.sqrt
+import org.apache.spark.mllib.linalg.SparseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
@@ -10,29 +13,23 @@ import scala.util.Random
 /**
   * Created by amirreza on 09/03/16.
   */
-
-abstract class Optimizer(val loss: LossFunction,
-                         val regularizer: Regularizer,
-                         val params: Parameters) extends Serializable {
-  def optimize(data: RDD[LabeledPoint]): DenseVector[Double]
-}
-
 class SGD(loss: LossFunction,
-          regularizer: Regularizer = new Unregularized, //No regularizer term by default:
-          params: Parameters) extends Optimizer(loss, regularizer, params) {
+          regularizer: Regularizer,
+          params: SGDParameters) extends Optimizer(loss, regularizer, params) {
 
 
   override def optimize(data: RDD[LabeledPoint]): DenseVector[Double] = {
+
     val d: Int = data.first().features.size //feature dimension
     val n: Double = data.count() //dataset size
-
     var gamma: Double = params.stepSize
+
+    //Initial weight vector
     var w: DenseVector[Double] = DenseVector.fill(d) {
       0.0
-    } //Initial weight vector
+    }
 
-    //TODO: Isn't this inefficient ??!!
-    val dataArr = data.mapPartitions(x => Iterator(x.toArray))
+    val dataArr:RDD[Array[LabeledPoint]] = data.mapPartitions(p => Iterator(p.toArray)).cache()
     for (i <- 1 to params.iterations) {
       gamma = params.stepSize / sqrt(i)
       val loss_gradient = dataArr.mapPartitions(partitionUpdate(_, w, params.miniBatchFraction, params.seed)).reduce(_ + _)
@@ -47,16 +44,32 @@ class SGD(loss: LossFunction,
                               w: DenseVector[Double],
                               fraction: Double,
                               seed: Int): Iterator[DenseVector[Double]] = {
-    val array: Array[LabeledPoint] = localData.next() //Get the array
-    val n: Int = array.length //local dataset size
+    val dataArray: Array[LabeledPoint] = localData.next() //Get the array
+    val n: Int = dataArray.length //local dataset size
     val subSetSize: Int = (n * fraction).toInt //size of randomely selected samples
-    require(subSetSize > 0, "fraction is too small: " + fraction)
-    //Randomely sample local dataset
+    val indices: Seq[Int] = Array.range(0, n)
     val r = new Random(seed)
-    val subSet = r.shuffle(array.toList).take(subSetSize) //TODO: Isn't this inefficient?
+    require(subSetSize > 0, "fraction is too small: " + fraction)
+
+    //Randomely sample local dataset
+    val subSet: Seq[LabeledPoint] = (fraction: Double) match {
+      case 1 => dataArray //GD case
+      case _ => {         //SGD case
+        val shuffeledIndices = r.shuffle(indices).take(subSetSize)
+        shuffeledIndices.map(dataArray)
+      }
+    }
 
     val res = subSet.map(p =>
       loss.subgradient(w, DenseVector(p.features.toArray), p.label)).reduce(_ + _)
     return Iterator(res)
   }
+}
+
+class SGDParameters(val iterations: Int = 100,
+                    val miniBatchFraction: Double = 1.0,
+                    val stepSize: Double = 1.0,
+                    val seed: Int = 13) extends Serializable {
+  require(iterations > 0, "iteration must be positive integer")
+  require(miniBatchFraction > 0 && miniBatchFraction <= 1.0, "miniBatchFraction must be between 0 and 1")
 }

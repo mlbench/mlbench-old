@@ -30,7 +30,7 @@ object LogisticRegressionCorrectness {
     val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, file)
 
     //Set optimizer's parameters
-    val params = new Parameters(
+    val params = new SGDParameters(
       stepSize = 0.1,
       iterations = 100
     )
