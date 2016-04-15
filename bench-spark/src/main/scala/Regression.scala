@@ -29,7 +29,6 @@ object Regression {
       val predictions: RDD[Double] = test.map(p => w.dot(DenseVector(p.toArray)))
       return predictions
     }
-
     //Mean squared error
     override def error(trueLabels: RDD[Double], predictions: RDD[Double]): Double = {
       predictions.zip(trueLabels).map(p => (p._2 - p._1) * (p._2 - p._1)).reduce(_ + _) / predictions.count()

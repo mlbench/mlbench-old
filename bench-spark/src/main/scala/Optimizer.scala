@@ -7,5 +7,4 @@ import breeze.linalg.Vector
 abstract class Optimizer[DataType](val loss: LossFunction,
                          val regularizer: Regularizer) extends Serializable {
   def optimize(data: DataType): Vector[Double]
-
 }

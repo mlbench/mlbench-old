@@ -29,6 +29,7 @@ class SGD(loss: LossFunction,
       0.0
     }
 
+    //TODO: Isn't this inefficient ??!! I think it is inefficient unless number of datapoints per partition is not a lot
     val dataArr:RDD[Array[LabeledPoint]] = data.mapPartitions(p => Iterator(p.toArray)).cache()
     for (i <- 1 to params.iterations) {
       gamma = params.stepSize / sqrt(i)
