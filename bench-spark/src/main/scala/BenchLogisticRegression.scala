@@ -38,7 +38,7 @@ object BenchLogisticRegression {
     
 
     //Set optimizer's parameters
-    val params = new Parameters(
+    val params = new SGDParameters(
       stepSize = 0.1,
       iterations = 2
     )

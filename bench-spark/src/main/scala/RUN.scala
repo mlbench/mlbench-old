@@ -30,7 +30,7 @@ object RUN {
     val points = Utils.loadLibSVMForBinaryClassification(dataset, numPartitions, sc)
     val Array(train, test) = points.randomSplit(Array(0.8, 0.2), seed = 13)
     //Set optimizer's parameters
-    val params = new Parameters(
+    val params = new SGDParameters(
       iterations = 100,
       miniBatchFraction = 0.9,
       stepSize = 0.1,
