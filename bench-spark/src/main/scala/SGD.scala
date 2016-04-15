@@ -3,7 +3,6 @@ import java.io.Serializable
 import Functions._
 import breeze.linalg.DenseVector
 import breeze.numerics.sqrt
-import org.apache.spark.mllib.linalg.SparseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
@@ -13,13 +12,14 @@ import scala.util.Random
 /**
   * Created by amirreza on 09/03/16.
   */
+
+
 class SGD(loss: LossFunction,
           regularizer: Regularizer,
-          params: SGDParameters) extends Optimizer(loss, regularizer, params) {
+          params: SGDParameters) extends Optimizer[SGDDataMatrix](loss, regularizer) {
 
 
-  override def optimize(data: RDD[LabeledPoint]): DenseVector[Double] = {
-
+  override def optimize(data: SGDDataMatrix): DenseVector[Double] = {
     val d: Int = data.first().features.size //feature dimension
     val n: Double = data.count() //dataset size
     var gamma: Double = params.stepSize

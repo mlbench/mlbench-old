@@ -1,4 +1,4 @@
-name := "dml-scala"
+name := "bench-spark"
 
 version := "1.0"
 

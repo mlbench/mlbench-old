@@ -1,8 +1,9 @@
 import java.io.Serializable
 
+import Classification.LinearClassifier
 import Functions._
-import breeze.linalg.DenseVector
-import org.apache.spark.mllib.regression.LabeledPoint
+import breeze.linalg.{DenseVector, Vector}
+import l1distopt.utils.{DebugParams, Params}
 import org.apache.spark.rdd.RDD
 
 /**
@@ -10,24 +11,25 @@ import org.apache.spark.rdd.RDD
   */
 object Regression {
 
-  trait Regression extends Serializable {
-    def fit(data: RDD[LabeledPoint]): DenseVector[Double]
+  trait Regression[DataType] extends Serializable {
+    def fit(data: DataType): Vector[Double]
   }
 
-  abstract class LinearRegression(loss: LossFunction,
-                                  regularizer: Regularizer)
-    extends LinearMethod(loss, regularizer) with Regression {
+  abstract class LinearRegression[DataType](loss: LossFunction,
+                                            regularizer: Regularizer)
+    extends LinearMethod[DataType](loss, regularizer) with Regression[DataType] {
 
-    override def fit(data: RDD[LabeledPoint]): DenseVector[Double] = {
+    override def fit(data: DataType): Vector[Double] = {
       super.optimize(data)
     }
 
-    override def predict(w: DenseVector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double] = {
+    override def predict(w: Vector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double] = {
       //TODO: Check if label is response values in this data format
       //TODO: Isn't converting to DenseVector costly?
       val predictions: RDD[Double] = test.map(p => w.dot(DenseVector(p.toArray)))
       return predictions
     }
+
     //Mean squared error
     override def error(trueLabels: RDD[Double], predictions: RDD[Double]): Double = {
       predictions.zip(trueLabels).map(p => (p._2 - p._1) * (p._2 - p._1)).reduce(_ + _) / predictions.count()
@@ -40,16 +42,25 @@ object Regression {
   */
   class L1_Lasso_SGD(lambda: Double = 0.1,
                      params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
-    extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
-    val optimizer: Optimizer = new SGD(loss, regularizer, params)
+    extends LinearRegression[SGDDataMatrix](new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
+    val optimizer = new SGD(loss, regularizer, params)
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
   class L1_Lasso_GD(lambda: Double = 0.1,
                     params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
-    extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
-    val optimizer: Optimizer = new SGD(loss, regularizer, params)
+    extends LinearRegression[SGDDataMatrix](new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
+    val optimizer = new SGD(loss, regularizer, params)
     require(params.miniBatchFraction == 1.0, "Use SGD for miniBatchFraction less than 1.0")
+  }
+
+  class Elastic_ProxCOCOA(lambda: Double = 0.01,
+                          alpha: Double = 0.01,
+                          params: Params,
+                          debug: DebugParams)
+    extends LinearRegression[ProxCocoaDataMatrix](new SquaredLoss, new ElasticNet(lambda, alpha)) {
+    val optimizer = new ProxCocoa(loss, regularizer, params, debug)
+
   }
 
 }

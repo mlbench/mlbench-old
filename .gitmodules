@@ -1,0 +1,3 @@
+[submodule "bench-spark/src/main/scala/proxcocoa"]
+	path = bench-spark/src/main/scala/proxcocoa
+	url = git@github.com:gingsmith/proxcocoa.git

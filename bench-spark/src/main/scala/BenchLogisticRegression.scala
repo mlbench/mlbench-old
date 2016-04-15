@@ -47,12 +47,12 @@ object BenchLogisticRegression {
     val lr = new L2_LR_SGD(lambda, params)
 
     val start = System.nanoTime()
-    val w1 = lr.train(data)
+    //val w1 = lr.train(data)
     val elap = System.nanoTime() - start
-    val objective1 = lr.getObjective(w1, data)
+    //val objective1 = lr.getObjective(w1.toDenseVector, data)
 
-    println("Logistic w: " + w1)
-    println("Logistic Objective value: " + objective1)
+    //println("Logistic w: " + w1)
+    //println("Logistic Objective value: " + objective1)
     println("Training took: " + elap / 1000 / 1000 + "ms")
     println("Number of partitions: " + data.partitions.size)
     println("Size of data rdd: " + SizeEstimator.estimate(data) + " bytes.")

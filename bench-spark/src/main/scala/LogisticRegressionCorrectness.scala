@@ -43,12 +43,12 @@ object LogisticRegressionCorrectness {
 
     //Classify with Binary Logistic Regression
     val lr = new L2_LR_SGD(lambda, params)
-    val w1 = lr.train(data)
-    val objective1 = lr.getObjective(w1, data)
-    val error1 = lr.fiveFoldCV(data)
-    println("Logistic w: " + w1)
-    println("Logistic Objective value: " + objective1)
-    println("Logistic CV error: " + error1)
+    //val w1 = lr.train(data)
+    //val objective1 = lr.getObjective(w1.toDenseVector, data)
+    //val error1 = lr.(data)
+    //println("Logistic w: " + w1)
+    //println("Logistic Objective value: " + objective1)
+    //println("Logistic CV error: " + error1)
     println("----------------------------")
 
     sc.stop()
