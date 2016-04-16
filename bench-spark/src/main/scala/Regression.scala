@@ -59,4 +59,12 @@ object Regression {
 
   }
 
+  class L1_Lasso_ProxCocoa(params: Params,
+                          debug: DebugParams)
+    extends LinearRegression[ProxCocoaDataMatrix](new SquaredLoss, new ElasticNet(params.lambda, 1.0)) {
+    val optimizer = new ProxCocoa(loss, regularizer, params, debug)
+    require(params.eta == 1.0, "eta must be 1 for L1-regularization")
+
+  }
+
 }
