@@ -1,4 +1,4 @@
-import Classification.{L2_LR_SGD, L2_SVM_SGD}
+import Classification.{L2_LR_SGD, L2_SVM_COCOA, L2_SVM_SGD}
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
 import Regression.{Elastic_ProxCOCOA, L1_Lasso_SGD}
@@ -8,7 +8,7 @@ import optimizers.SGDParameters
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.mllib.linalg.Vectors
 import utils.Functions._
-import utils.{Utils}
+import utils.Utils
 
 
 
@@ -35,9 +35,9 @@ object RUN {
     val seed = 13
 
     //Load classification data
-    //val dataset = "iris.scale.txt"
-    //val points = Utils.loadLibSVMForBinaryClassification(dataset, numPartitions, sc)
-    //val Array(train, test) = points.randomSplit(Array(0.8, 0.2), seed = 13)
+    val dataset = "iris.scale.txt"
+    val (trainCocBinary, testCocBinary, trainBinary, testbinary) =
+      Utils.loadLibSVMForClassificationCocoa(dataset, numPartitions, 4, sc)
 
     //Load regression data
     val numFeats = 10 //number of features for breast-cancer data
@@ -66,10 +66,33 @@ object RUN {
     val w1 = l1net.fit(trainColumn)
     val objective1 = l1net.getObjective(w1.toDenseVector, train)
     val error1 = l1net.testError(w1, test.map(p => p.features), test.map(p => p.label))
-    println("Lasso w: " + w1)
-    println("Lasso Objective value: " + objective1)
-    println("Lasso test error: " + error1)
+    println("prox w: " + w1)
+    println("prox Objective value: " + objective1)
+    println("prox test error: " + error1)
     println("----------------------------")
+
+
+    //Cocoa+
+    val chkptIter = 1000
+    val numRounds = 100
+    val beta = 1
+    val gamma = 1
+    val n2 = trainBinary.count().toInt
+    val wInit = DenseVector.zeros[Double](4)
+
+    val loss = distopt.utils.OptUtils.hingeLoss _
+    val cocParams = distopt.utils.Params(loss, n2, wInit, numRounds, localIters, lambda, beta, gamma)
+    val cocDebug = distopt.utils.DebugParams(testCocBinary, debugIter, seed, chkptIter)
+
+    val cocSVM = new L2_SVM_COCOA(cocParams, cocDebug, true)
+    val w2 = cocSVM.train(trainCocBinary)
+    val objective2 = cocSVM.getObjective(w2.toDenseVector, trainBinary)
+    val error2 = cocSVM.testError(w2, testbinary.map(p => p.features), testbinary.map(p => p.label))
+    println("coc w: " + w2)
+    println("coc Objective value: " + objective2)
+    println("coc test error: " + error2)
+    println("----------------------------")
+
     sc.stop()
   }
 

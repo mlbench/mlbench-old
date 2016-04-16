@@ -1,8 +1,9 @@
 import java.io.Serializable
 
-import optimizers.{SGD, SGDParameters}
+import optimizers.{Cocoa, SGD, SGDParameters}
 import org.apache.spark.rdd.RDD
 import breeze.linalg.{DenseVector, Vector}
+import distopt.utils.{DebugParams, Params}
 import utils.Functions._
 /**
   * Created by amirreza on 31/03/16.
@@ -86,4 +87,10 @@ object Classification {
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
+  class L2_SVM_COCOA(params: Params,
+                     debug: DebugParams,
+                     plus: Boolean)
+    extends LinearClassifier[CocoaLabeledPoint](new HingeLoss, new L2Regularizer(params.lambda)) with Serializable {
+    val optimizer = new Cocoa(loss, regularizer, params, debug, plus)
+  }
 }

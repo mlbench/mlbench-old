@@ -1,6 +1,6 @@
 package utils
 
-import Functions.{ProxCocoaDataMatrix, SGDDataMatrix}
+import Functions.{CocoaLabeledPoint, ProxCocoaDataMatrix, ProxCocoaLabeledPoint, SGDDataMatrix}
 import breeze.linalg.{DenseVector, SparseVector}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.Vectors
@@ -29,10 +29,32 @@ object Utils {
     return points
   }
 
+  def loadLibSVMForClassificationCocoa(dataset: String, numPartitions: Int = 4, numFeats: Int, sc: SparkContext):
+  (CocoaLabeledPoint, CocoaLabeledPoint, SGDDataMatrix, SGDDataMatrix)= {
+    val xml = XML.loadFile("configs.xml")
+    val projectPath = (xml \\ "config" \\ "projectpath") text
+    val filename: String  = projectPath + "datasets/" + dataset
+    //Load data
+    val data = MLUtils.loadLibSVMFile(sc,
+      projectPath + "datasets/" + dataset)
+
+    val points = data.filter(p => p.label == 3.0 || p.label == 2.0).
+      map(p => if (p.label == 2.0) LabeledPoint(-1.0, p.features)
+      else LabeledPoint(+1.0, p.features)).repartition(numPartitions)
+
+    val Array(train, test) = points.randomSplit(Array(0.8, 0.2), seed = 13)
+
+    val testCoc = test.map(p => distopt.utils.LabeledPoint( p.label, SparseVector(p.features.toArray.map(x => x.toDouble))))
+    val trainCoc = train.map(p => distopt.utils.LabeledPoint( p.label, SparseVector(p.features.toArray.map(x => x.toDouble))))
+    return (trainCoc, testCoc, train, test)
+
+  }
+
+
   def loadLibSVMForRegressionProxCocoa(dataset: String, numPartitions: Int = 4, numFeats: Int, sc: SparkContext):
   (ProxCocoaDataMatrix, ProxCocoaDataMatrix,
     SGDDataMatrix, SGDDataMatrix,
-    RDD[l1distopt.utils.LabeledPoint], RDD[l1distopt.utils.LabeledPoint]) = {
+    ProxCocoaLabeledPoint, ProxCocoaLabeledPoint) = {
 
     val xml = XML.loadFile("configs.xml")
     val projectPath = (xml \\ "config" \\ "projectpath") text

@@ -14,6 +14,8 @@ import scala.math._
   */
 object Functions {
 
+  type CocoaLabeledPoint = RDD[distopt.utils.LabeledPoint]
+  type ProxCocoaLabeledPoint = RDD[l1distopt.utils.LabeledPoint]
   type ProxCocoaDataMatrix = (RDD[(Int, SparseVector[Double])], Vector[Double])
   type SGDDataMatrix = RDD[LabeledPoint]
 
