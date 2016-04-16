@@ -1,9 +1,9 @@
 import java.io.Serializable
 
-import Functions.{Unregularized, Regularizer, HingeLoss, LossFunction}
 import breeze.linalg.DenseVector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
+import utils.Functions.{HingeLoss, LossFunction, Regularizer, Unregularized}
 
 /**
   * Created by amirreza on 09/03/16.

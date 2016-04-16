@@ -1,9 +1,10 @@
-import Classification.{L2_LR_SGD}
+import Classification.L2_LR_SGD
+import breeze.linalg.DenseVector
+import optimizers.SGDParameters
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
-import Functions._
-import breeze.linalg.DenseVector
 import org.apache.log4j.{Level, Logger}
+import utils.Functions.{BinaryLogistic, L2Regularizer, Regularizer, Unregularized}
 
 //Load function
 import org.apache.spark.mllib.regression.LabeledPoint

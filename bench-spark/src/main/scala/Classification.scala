@@ -1,10 +1,9 @@
 import java.io.Serializable
 
-import Functions.{Classifier, LossFunction, _}
-import breeze.linalg.{DenseVector, Vector}
-import l1distopt.utils.{DebugParams, Params}
+import optimizers.{SGD, SGDParameters}
 import org.apache.spark.rdd.RDD
-
+import breeze.linalg.{DenseVector, Vector}
+import utils.Functions._
 /**
   * Created by amirreza on 31/03/16.
   */
@@ -55,7 +54,7 @@ object Classification {
                   params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearClassifier[SGDDataMatrix](new HingeLoss, new L2Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(loss, regularizer, params)
-    require(params.miniBatchFraction == 1.0, "Use SGD for miniBatchFraction less than 1.0")
+    require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
   class L2_LR_SGD(lambda: Double = 0.1,
@@ -69,7 +68,7 @@ object Classification {
                  params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
     extends LinearClassifier[SGDDataMatrix](new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(loss, regularizer, params)
-    require(params.miniBatchFraction == 1.0, "Use SGD for miniBatchFraction less than 1.0")
+    require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
 
@@ -84,7 +83,7 @@ object Classification {
                  params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
     extends LinearClassifier[SGDDataMatrix](new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(loss, regularizer, params)
-    require(params.miniBatchFraction == 1.0, "Use SGD for miniBatchFraction less than 1.0")
+    require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
 }

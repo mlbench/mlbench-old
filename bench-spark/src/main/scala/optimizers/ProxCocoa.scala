@@ -1,7 +1,9 @@
-import Functions.{LossFunction, ProxCocoaDataMatrix, Regularizer}
-import breeze.linalg.Vector
+package optimizers
+
 import l1distopt.solvers.ProxCoCoAp
 import l1distopt.utils.{DebugParams, Params}
+import utils.Functions.{LossFunction, ProxCocoaDataMatrix, Regularizer}
+import breeze.linalg.Vector
 
 /**
   * Created by amirreza on 15/04/16.

@@ -1,10 +1,10 @@
 import java.io.Serializable
 
-import Classification.LinearClassifier
-import Functions._
 import breeze.linalg.{DenseVector, Vector}
 import l1distopt.utils.{DebugParams, Params}
+import optimizers.{ProxCocoa, SGD, SGDParameters}
 import org.apache.spark.rdd.RDD
+import utils.Functions._
 
 /**
   * Created by amirreza on 31/03/16.
@@ -24,7 +24,6 @@ object Regression {
     }
 
     override def predict(w: Vector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double] = {
-      //TODO: Check if label is response values in this data format
       //TODO: Isn't converting to DenseVector costly?
       val predictions: RDD[Double] = test.map(p => w.dot(DenseVector(p.toArray)))
       return predictions
@@ -50,14 +49,12 @@ object Regression {
                     params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearRegression[SGDDataMatrix](new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(loss, regularizer, params)
-    require(params.miniBatchFraction == 1.0, "Use SGD for miniBatchFraction less than 1.0")
+    require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
-  class Elastic_ProxCOCOA(lambda: Double = 0.01,
-                          alpha: Double = 0.01,
-                          params: Params,
+  class Elastic_ProxCOCOA(params: Params,
                           debug: DebugParams)
-    extends LinearRegression[ProxCocoaDataMatrix](new SquaredLoss, new ElasticNet(lambda, alpha)) {
+    extends LinearRegression[ProxCocoaDataMatrix](new SquaredLoss, new ElasticNet(params.lambda, params.eta)) {
     val optimizer = new ProxCocoa(loss, regularizer, params, debug)
 
   }

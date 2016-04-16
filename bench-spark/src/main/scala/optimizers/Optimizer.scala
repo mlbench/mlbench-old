@@ -1,4 +1,6 @@
-import Functions.{LossFunction, Regularizer}
+package optimizers
+
+import utils.Functions.{LossFunction, Regularizer}
 import breeze.linalg.Vector
 
 /**

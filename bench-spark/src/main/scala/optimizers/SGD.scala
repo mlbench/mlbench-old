@@ -1,10 +1,10 @@
-import java.io.Serializable
+package optimizers
 
-import Functions._
 import breeze.linalg.DenseVector
 import breeze.numerics.sqrt
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
+import utils.Functions.{LossFunction, Regularizer, SGDDataMatrix}
 
 import scala.util.Random
 
@@ -55,7 +55,7 @@ class SGD(loss: LossFunction,
     //Randomely sample local dataset
     val subSet: Seq[LabeledPoint] = (fraction: Double) match {
       case 1 => dataArray //GD case
-      case _ => {         //SGD case
+      case _ => {         //optimizers.SGD case
         val shuffeledIndices = r.shuffle(indices).take(subSetSize)
         shuffeledIndices.map(dataArray)
       }
@@ -67,10 +67,3 @@ class SGD(loss: LossFunction,
   }
 }
 
-class SGDParameters(val iterations: Int = 100,
-                    val miniBatchFraction: Double = 1.0,
-                    val stepSize: Double = 1.0,
-                    val seed: Int = 13) extends Serializable {
-  require(iterations > 0, "iteration must be positive integer")
-  require(miniBatchFraction > 0 && miniBatchFraction <= 1.0, "miniBatchFraction must be between 0 and 1")
-}
