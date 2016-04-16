@@ -20,7 +20,7 @@ benchmarks:
 - [L2-SVM-GD](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Classification.scala#L55)
 - [L2-SVM-SGD](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Classification.scala#L48)
 - L2-SVM-QN (quasi-newton, L-BFGS)
-- L2-SVM-COCOA
+- [L2-SVM-COCOA] (https://github.com/dalab/distributed-ML-benchmark/blob/9f4b6779fd2048b78254e3d67387308498a2477b/bench-spark/src/main/scala/Classification.scala#L90)
 
 ### Task L2-LR (Logistic Regression)
 L2-Regularized Logistic Regression
@@ -45,6 +45,9 @@ benchmarks:
 - [L1-LR-SGD (proximal SGD)](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Classification.scala#L77)
 - L1-LR-QN (quasi-newton, L-BFGS)
 
+## Tasks Elastic-Net
+### Task L1-L2 Least-Squares
+- [Elastic_ProxCOCOA] (https://github.com/dalab/distributed-ML-benchmark/blob/9f4b6779fd2048b78254e3d67387308498a2477b/bench-spark/src/main/scala/Regression.scala#L55)
 
 ## Future Task Ideas
 - D-A: asynchronous communication rounds
