@@ -36,7 +36,7 @@ benchmarks:
 - [L1-Lasso-GD (proximal GD)](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Regression.scala#L48)
 - [L1-Lasso-SGD (proximal SGD)](https://github.com/dalab/distributed-ML-benchmark/blob/77db165afa2c3504543a5cd92cf209b5f11ae4d4/bench-spark/src/main/scala/Regression.scala#L41)
 - L1-Lasso-QN (quasi-newton, OWL-QN)
-- L1-Lasso-proxCOCOA
+- [L1-Lasso-proxCOCOA] (https://github.com/dalab/distributed-ML-benchmark/blob/71191ba1f04e362fde6fcb247b1629265dc2d5af/bench-spark/src/main/scala/Regression.scala#L62)
 
 ### Task L1-LR
 Logistic Regression (L1 reg)
