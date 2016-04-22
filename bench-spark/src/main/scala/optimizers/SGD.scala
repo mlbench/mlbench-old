@@ -4,7 +4,7 @@ import breeze.linalg.DenseVector
 import breeze.numerics.sqrt
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
-import utils.Functions.{LossFunction, Regularizer, SGDDataMatrix}
+import utils.Functions.{LossFunction, Regularizer}
 
 import scala.util.Random
 
@@ -14,12 +14,13 @@ import scala.util.Random
   */
 
 
-class SGD(loss: LossFunction,
+class SGD(val data: RDD[LabeledPoint],
+          loss: LossFunction,
           regularizer: Regularizer,
-          params: SGDParameters) extends Optimizer[SGDDataMatrix](loss, regularizer) {
+          params: SGDParameters) extends Optimizer(loss, regularizer) {
 
 
-  override def optimize(data: SGDDataMatrix): DenseVector[Double] = {
+  override def optimize(): DenseVector[Double] = {
     val d: Int = data.first().features.size //feature dimension
     val n: Double = data.count() //dataset size
     var gamma: Double = params.stepSize

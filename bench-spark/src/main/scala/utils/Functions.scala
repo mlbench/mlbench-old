@@ -4,7 +4,6 @@ import java.io.Serializable
 
 import breeze.linalg.{DenseVector, SparseVector, Vector}
 import breeze.numerics.log
-import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
 import scala.math._
@@ -17,7 +16,6 @@ object Functions {
   type CocoaLabeledPoint = RDD[distopt.utils.LabeledPoint]
   type ProxCocoaLabeledPoint = RDD[l1distopt.utils.LabeledPoint]
   type ProxCocoaDataMatrix = (RDD[(Int, SparseVector[Double])], Vector[Double])
-  type SGDDataMatrix = RDD[LabeledPoint]
 
   /*
   * Loss Functions

@@ -9,12 +9,12 @@ import utils.Functions.{LossFunction, Regularizer}
 /**
   * Created by amirreza on 09/03/16.
   */
-abstract class LinearMethod[DataType](val loss: LossFunction,
+abstract class LinearMethod(val loss: LossFunction,
                             val regularizer: Regularizer) extends Serializable {
-  val optimizer: Optimizer[DataType]
+  val optimizer: Optimizer
 
-  def optimize(data: DataType): Vector[Double] = {
-    val w: Vector[Double] = optimizer.optimize(data)
+  def optimize(): Vector[Double] = {
+    val w: Vector[Double] = optimizer.optimize()
     return w;
   }
 

@@ -27,30 +27,30 @@ object LogisticRegressionCorrectness {
     rootLogger.setLevel(Level.ERROR)
 
     //Load data
-    val file = args(0)
-    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, file)
-
-    //Set optimizer's parameters
-    val params = new SGDParameters(
-      stepSize = 0.1,
-      iterations = 100
-    )
-    val lambda = 0.1
-    val reg = new L2Regularizer(lambda = lambda)
-
-    //Fit with Mllib in order to compare
-    runLRWithMllib(data, reg, lambda, params.iterations, params.stepSize)
-    println("----------------------------")
-
-    //Classify with Binary Logistic Regression
-    val lr = new L2_LR_SGD(lambda, params)
-    //val w1 = lr.train(data)
-    //val objective1 = lr.getObjective(w1.toDenseVector, data)
-    //val error1 = lr.(data)
-    //println("Logistic w: " + w1)
-    //println("Logistic Objective value: " + objective1)
-    //println("Logistic CV error: " + error1)
-    println("----------------------------")
+//    val file = args(0)
+//    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, file)
+//
+//    //Set optimizer's parameters
+//    val params = new SGDParameters(
+//      stepSize = 0.1,
+//      iterations = 100
+//    )
+//    val lambda = 0.1
+//    val reg = new L2Regularizer(lambda = lambda)
+//
+//    //Fit with Mllib in order to compare
+//    runLRWithMllib(data, reg, lambda, params.iterations, params.stepSize)
+//    println("----------------------------")
+//
+//    //Classify with Binary Logistic Regression
+//    val lr = new L2_LR_SGD(lambda, params)
+//    //val w1 = lr.train(data)
+//    //val objective1 = lr.getObjective(w1.toDenseVector, data)
+//    //val error1 = lr.(data)
+//    //println("Logistic w: " + w1)
+//    //println("Logistic Objective value: " + objective1)
+//    //println("Logistic CV error: " + error1)
+//    println("----------------------------")
 
     sc.stop()
   }

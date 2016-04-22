@@ -10,11 +10,12 @@ import breeze.linalg.Vector
   */
 
 
-class ProxCocoa(loss: LossFunction,
+class ProxCocoa(val data: ProxCocoaDataMatrix,
+                loss: LossFunction,
                 regularizer: Regularizer,
                 params: Params,
-                debug: DebugParams) extends Optimizer[ProxCocoaDataMatrix] (loss, regularizer){
-  override def optimize(data: ProxCocoaDataMatrix): Vector[Double] = {
+                debug: DebugParams) extends Optimizer (loss, regularizer){
+  override def optimize(): Vector[Double] = {
     val finalAlphaCoCoA = ProxCoCoAp.runProxCoCoAp(data._1, data._2, params, debug)
     return finalAlphaCoCoA
   }

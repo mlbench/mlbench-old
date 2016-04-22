@@ -4,25 +4,27 @@ import optimizers.{Cocoa, SGD, SGDParameters}
 import org.apache.spark.rdd.RDD
 import breeze.linalg.{DenseVector, Vector}
 import distopt.utils.{DebugParams, Params}
+import org.apache.spark.mllib.regression.LabeledPoint
 import utils.Functions._
+import utils.Utils
 /**
   * Created by amirreza on 31/03/16.
   */
 object Classification {
 
 
-  trait Classification[DataType] extends Serializable {
-    def train(data: DataType): Vector[Double]
+  trait Classification extends Serializable {
+    def train(): Vector[Double]
 
     def classify(w: Vector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double]
   }
 
-  abstract class LinearClassifier[DataType](loss: LossFunction with Classifier,
+  abstract class LinearClassifier(loss: LossFunction with Classifier,
                                   regularizer: Regularizer)
-    extends LinearMethod[DataType](loss, regularizer) with Classification[DataType] {
+    extends LinearMethod(loss, regularizer) with Classification {
 
-    override def train(data: DataType): Vector[Double] = {
-      this.optimize(data)
+    override def train(): Vector[Double] = {
+      this.optimize()
     }
 
     override def classify(w: Vector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double] = {
@@ -44,53 +46,61 @@ object Classification {
     Tasks L2:
    */
 
-  class L2_SVM_SGD(lambda: Double = 0.1,
+  class L2_SVM_SGD(data: RDD[LabeledPoint],
+                   lambda: Double = 0.1,
                    params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
-    extends LinearClassifier[SGDDataMatrix](new HingeLoss, new L2Regularizer(lambda)) with Serializable {
-    val optimizer = new SGD(loss, regularizer, params)
+    extends LinearClassifier(new HingeLoss, new L2Regularizer(lambda)) with Serializable {
+    val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
-  class L2_SVM_GD(lambda: Double = 0.1,
+  class L2_SVM_GD(data: RDD[LabeledPoint],
+                  lambda: Double = 0.1,
                   params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
-    extends LinearClassifier[SGDDataMatrix](new HingeLoss, new L2Regularizer(lambda)) with Serializable {
-    val optimizer = new SGD(loss, regularizer, params)
+    extends LinearClassifier(new HingeLoss, new L2Regularizer(lambda)) with Serializable {
+    val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
-  class L2_LR_SGD(lambda: Double = 0.1,
+  class L2_LR_SGD(data: RDD[LabeledPoint],
+                  lambda: Double = 0.1,
                   params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
-    extends LinearClassifier[SGDDataMatrix](new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
-    val optimizer = new SGD(loss, regularizer, params)
+    extends LinearClassifier(new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
+    val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
-  class L2_LR_GD(lambda: Double = 0.1,
+  class L2_LR_GD(data: RDD[LabeledPoint],
+                 lambda: Double = 0.1,
                  params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
-    extends LinearClassifier[SGDDataMatrix](new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
-    val optimizer = new SGD(loss, regularizer, params)
+    extends LinearClassifier(new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
+    val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
 
-  class L1_LR_SGD(lambda: Double = 0.1,
+  class L1_LR_SGD(data: RDD[LabeledPoint],
+                  lambda: Double = 0.1,
                   params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
-    extends LinearClassifier[SGDDataMatrix](new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
-    val optimizer = new SGD(loss, regularizer, params)
+    extends LinearClassifier(new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
+    val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
-  class L1_LR_GD(lambda: Double = 0.1,
+  class L1_LR_GD(data: RDD[LabeledPoint],
+                 lambda: Double = 0.1,
                  params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
-    extends LinearClassifier[SGDDataMatrix](new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
-    val optimizer = new SGD(loss, regularizer, params)
+    extends LinearClassifier(new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
+    val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
-  class L2_SVM_COCOA(params: Params,
+  class L2_SVM_COCOA(data: RDD[LabeledPoint],
+                     params: Params,
                      debug: DebugParams,
                      plus: Boolean)
-    extends LinearClassifier[CocoaLabeledPoint](new HingeLoss, new L2Regularizer(params.lambda)) with Serializable {
-    val optimizer = new Cocoa(loss, regularizer, params, debug, plus)
+    extends LinearClassifier(new HingeLoss, new L2Regularizer(params.lambda)) with Serializable {
+    val cocoaData = Utils.toCocoaFormat(data)
+    val optimizer = new Cocoa(cocoaData, loss, regularizer, params, debug, plus)
   }
 }
