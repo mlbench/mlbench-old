@@ -1,3 +1,5 @@
+package utils
+
 import java.io.Serializable
 
 import breeze.linalg.DenseVector

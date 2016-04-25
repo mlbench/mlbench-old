@@ -8,7 +8,7 @@ import optimizers.SGDParameters
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.mllib.linalg.Vectors
 import utils.Functions._
-import utils.Utils
+import utils.{Evaluation, Utils}
 
 
 
