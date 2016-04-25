@@ -4,6 +4,23 @@ A public and reproducible comparison of distributed machine learning systems. Be
 Here is the [design doc](https://docs.google.com/document/d/1jM4zXRDezEJmIKwoDOKNlGvuNNJk5_FxcBrn1mfYp0E/edit#)
 
 Towards a more precise definition of the benchmark task, work in progress
+## Set up the repository
+###### Clone the repository: 
+```bash
+git clone https://github.com/dalab/distributed-ML-benchmark
+```
+###### Add submodule projects:
+```bash
+git submodule init
+git submodule update
+```
+###### Create a configs.xml in \bench-spark contating the root of the repository on your system:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<projectpath>/path/to/distributed-ML-benchmark/</projectpath>
+</config>
+```
 
 # Task specifications:
 
