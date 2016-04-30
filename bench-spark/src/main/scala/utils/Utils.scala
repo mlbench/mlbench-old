@@ -13,14 +13,19 @@ import scala.xml.XML
   * Created by amirreza on 12/04/16.
   */
 object Utils {
-  def loadLibSVMForBinaryClassification(dataset: String, numPartitions: Int = 4, sc: SparkContext):
-  (RDD[LabeledPoint],RDD[LabeledPoint]) = {
+  def loadRawDataset(dataset: String, sc: SparkContext) : RDD[LabeledPoint] = {
+    // get projectPath from config
     val xml = XML.loadFile("configs.xml")
     val projectPath = (xml \\ "config" \\ "projectpath") text
+    val datasetPath = projectPath + (if (projectPath.endsWith("/")) "" else "/") + "datasets/" + dataset
     //Load data
-    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
-      projectPath + "datasets/" + dataset)
+    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, datasetPath)
+    return data
+  }
 
+  def loadLibSVMForBinaryClassification(dataset: String, numPartitions: Int = 4, sc: SparkContext):
+  (RDD[LabeledPoint],RDD[LabeledPoint]) = {
+    val data = loadRawDataset(dataset, sc)
     //Take only two class with labels -1 and +1 for binary classification
     val points = data.filter(p => p.label == 3.0 || p.label == 2.0).
       map(p => if (p.label == 2.0) LabeledPoint(-1.0, p.features)

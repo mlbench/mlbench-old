@@ -1,4 +1,4 @@
-import Classification.L2_LR_SGD
+import Classification.L2_LR_GD
 import optimizers.SGDParameters
 import org.apache.log4j.{Level, Logger}
 
@@ -43,7 +43,7 @@ object BenchLogisticRegression {
     )
 
     val lambda = 0.1
-    val lr = new L2_LR_SGD(data, lambda, params)
+    val lr = new L2_LR_GD(data, lambda, params)
 
     val start = System.nanoTime()
     val w1 = lr.train()
