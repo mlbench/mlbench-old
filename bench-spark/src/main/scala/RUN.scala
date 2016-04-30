@@ -6,8 +6,10 @@ import optimizers.SGDParameters
 import org.apache.log4j.{Level, Logger}
 import utils.{Evaluation, Utils}
 import org.rogach.scallop._
-
 import org.apache.spark._
+import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.rdd.RDD
+import java.io._
 
 class Parser(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(arguments) {
   val dataset = opt[String](required = true, short = 'd', descr = "absolute address of the libsvm dataset")
@@ -32,33 +34,21 @@ object RUN {
     val parser = new Parser(args)
     val optimizers: List[String] = parser.optimizers()
     val dataset = parser.dataset()
-    val output = parser.out()
+    val outname = parser.out()
     val numPartitions = parser.partitions()
     //Load data
     val (trainReg, testReg) = Utils.loadLibSVMForRegression(dataset, numPartitions, sc)
     val (trainClass, testClass) = Utils.loadLibSVMForBinaryClassification(dataset, numPartitions, sc)
-
+    val output = new File(outname + ".txt")
+    val bw = new BufferedWriter(new FileWriter(output))
     //Run all optimisers given in the args
     optimizers.foreach { opt => opt match {
       case "Elastic_ProxCocoa" => {
-        val seed = 13
-        //Regularization parameters
-        val lambda = 0.1
-        val eta = 0.5
-        //optimization parameters
-        val iterations = 100
-        val localIterFrac = 0.9
-        val debugIter = 10
-        val force_cache = trainReg.count().toInt
-        val n = trainReg.count().toInt
-        var localIters = (localIterFrac * trainReg.first().features.size / trainReg.partitions.size).toInt
-        localIters = Math.max(localIters, 1)
-        val alphaInit = SparseVector.zeros[Double](10)
-        val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
-        val debug = DebugParams(Utils.toProxCocoaFormat(testReg), debugIter, seed)
-
+        val (proxParams, debug) = defaultElasticProxParams(trainReg, testReg)
         val l1net = new Elastic_ProxCOCOA(trainReg, proxParams, debug)
         val w = l1net.fit()
+        bw.write("Elastic_ProxCocoa: " + w)
+        bw.newLine()
         val objective = l1net.getObjective(w.toDenseVector, trainReg)
         val error1 = l1net.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
         println("elastic w: " + w)
@@ -67,24 +57,11 @@ object RUN {
         println("----------------------------")
       }
       case "L1_Lasso_ProxCocoa" => {
-        val seed = 13
-        //Regularization parameters
-        val lambda = 0.1
-        val eta = 1.0
-        //optimization parameters
-        val iterations = 100
-        val localIterFrac = 0.9
-        val debugIter = 10
-        val force_cache = trainReg.count().toInt
-        val n = trainReg.count().toInt
-        var localIters = (localIterFrac * trainReg.first().features.size / trainReg.partitions.size).toInt
-        localIters = Math.max(localIters, 1)
-        val alphaInit = SparseVector.zeros[Double](10)
-        val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
-        val debug = DebugParams(Utils.toProxCocoaFormat(testReg), debugIter, seed)
-
+        val (proxParams, debug) = defaultL1ProxParams(trainReg, testReg)
         val l1lasso = new L1_Lasso_ProxCocoa(trainReg, proxParams, debug)
         val w = l1lasso.fit()
+        bw.write("L1_Lasso_ProxCocoa: " + w)
+        bw.newLine()
         val objective = l1lasso.getObjective(w.toDenseVector, trainReg)
         val error1 = l1lasso.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
         println("prox w: " + w)
@@ -95,6 +72,8 @@ object RUN {
       case "L1_Lasso_GD" => {
         val l1lasso = new L1_Lasso_GD(trainReg)
         val w = l1lasso.fit()
+        bw.write("L1_Lasso_GD: " + w)
+        bw.newLine()
         val objective = l1lasso.getObjective(w.toDenseVector, trainReg)
         val error1 = l1lasso.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
         println("L1_Lasso_GD w: " + w)
@@ -105,6 +84,8 @@ object RUN {
       case "L1_Lasso_SGD" => {
         val l1lasso = new L1_Lasso_SGD(trainReg)
         val w = l1lasso.fit()
+        bw.write("L1_Lasso_SGD: " + w)
+        bw.newLine()
         val objective = l1lasso.getObjective(w.toDenseVector, trainReg)
         val error = l1lasso.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
         println("L1_Lasso_SGD w: " + w)
@@ -115,6 +96,8 @@ object RUN {
       case "L2_SVM_SGD" => {
         val l2svm = new L2_SVM_SGD(trainClass)
         val w = l2svm.train()
+        bw.write("L2_SVM_SGD: " + w)
+        bw.newLine()
         val objective = l2svm.getObjective(w.toDenseVector, trainClass)
         val error = l2svm.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
         println("L2_SVM_SGD w: " + w)
@@ -125,6 +108,8 @@ object RUN {
       case "L2_SVM_GD" => {
         val l2svm = new L2_SVM_GD(trainClass)
         val w = l2svm.train()
+        bw.write("L2_SVM_GD: " + w)
+        bw.newLine()
         val objective = l2svm.getObjective(w.toDenseVector, trainClass)
         val error = l2svm.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
         println("L2_SVM_GD w: " + w)
@@ -135,6 +120,8 @@ object RUN {
       case "L2_LR_SGD" => {
         val l2lr = new L2_LR_SGD(trainClass)
         val w = l2lr.train()
+        bw.write("L2_LR_SGD: " + w)
+        bw.newLine()
         val objective = l2lr.getObjective(w.toDenseVector, trainClass)
         val error = l2lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
         println("L2_LR_SGD w: " + w)
@@ -145,6 +132,8 @@ object RUN {
       case "L2_LR_GD" => {
         val l2lr = new L2_LR_GD(trainClass)
         val w = l2lr.train()
+        bw.write("L2_LR_GD: " + w)
+        bw.newLine()
         val objective = l2lr.getObjective(w.toDenseVector, trainClass)
         val error = l2lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
         println("L2_LR_GD w: " + w)
@@ -155,6 +144,8 @@ object RUN {
       case "L1_LR_SGD" => {
         val l1lr = new L1_LR_SGD(trainClass)
         val w = l1lr.train()
+        bw.write("L1_LR_SGD: " + w)
+        bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, trainClass)
         val error = l1lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
         println("L1_LR_SGD w: " + w)
@@ -165,6 +156,8 @@ object RUN {
       case "L1_LR_GD" => {
         val l1lr = new L1_LR_GD(trainClass)
         val w = l1lr.train()
+        bw.write("L1_LR_GD: " + w)
+        bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, trainClass)
         val error = l1lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
         println("L1_LR_GD w: " + w)
@@ -173,26 +166,11 @@ object RUN {
         println("----------------------------")
       }
       case "L2_SVM_Cocoa" => {
-
-        val lambda = 0.01
-        val numRounds = 200 // number of outer iterations, called T in the paper
-        val localIterFrac = 1.0 // fraction of local points to be processed per round, H = localIterFrac * n
-        val beta = 1.0 // scaling parameter when combining the updates of the workers (1=averaging for CoCoA)
-        val gamma = 1.0 // aggregation parameter for CoCoA+ (1=adding, 1/K=averaging)
-        val debugIter = 10 // set to -1 to turn off debugging output
-        val seed = 13 // set seed for debug purposes
-        val n = trainClass.count().toInt
-        var localIters = (localIterFrac * n / trainClass.partitions.size).toInt
-        localIters = Math.max(localIters, 1)
-        var chkptIter = 100
-        val wInit = DenseVector.zeros[Double](trainClass.first().features.size)
-        // set to solve hingeloss SVM
-        val loss = distopt.utils.OptUtils.hingeLoss _
-        val params = distopt.utils.Params(loss, n, wInit, numRounds, localIters, lambda, beta, gamma)
-        val debug = distopt.utils.DebugParams(Utils.toCocoaFormat(testClass), debugIter, seed, chkptIter)
-
+        val (params, debug) = defaultCocoa(trainClass, testClass)
         val l2svm = new L2_SVM_COCOA(trainClass, params, debug, false)
         val w = l2svm.train()
+        bw.write("L2_SVM_Cocoa: " + w)
+        bw.newLine()
         val objective = l2svm.getObjective(w.toDenseVector, trainClass)
         val error = l2svm.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
         println("L2_SVM_Cocoa w: " + w)
@@ -203,9 +181,68 @@ object RUN {
       case _ => println("The optimizer " + opt + " doest not exist")
     }
     }
-
-
+    bw.close()
     sc.stop()
+  }
+
+  def defaultL1ProxParams(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): (
+    l1distopt.utils.Params, l1distopt.utils.DebugParams) = {
+    val seed = 13
+    //Regularization parameters
+    val lambda = 0.1
+    val eta = 1.0
+    //optimization parameters
+    val iterations = 100
+    val localIterFrac = 0.9
+    val debugIter = 10
+    val force_cache = train.count().toInt
+    val n = train.count().toInt
+    var localIters = (localIterFrac * train.first().features.size / train.partitions.size).toInt
+    localIters = Math.max(localIters, 1)
+    val alphaInit = SparseVector.zeros[Double](10)
+    val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
+    val debug = DebugParams(Utils.toProxCocoaFormat(test), debugIter, seed)
+    return (proxParams, debug)
+  }
+
+  def defaultElasticProxParams(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): (
+    l1distopt.utils.Params, l1distopt.utils.DebugParams) = {
+    val seed = 13
+    //Regularization parameters
+    val lambda = 0.1
+    val eta = 0.5
+    //optimization parameters
+    val iterations = 100
+    val localIterFrac = 0.9
+    val debugIter = 10
+    val force_cache = train.count().toInt
+    val n = train.count().toInt
+    var localIters = (localIterFrac * train.first().features.size / train.partitions.size).toInt
+    localIters = Math.max(localIters, 1)
+    val alphaInit = SparseVector.zeros[Double](10)
+    val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
+    val debug = DebugParams(Utils.toProxCocoaFormat(test), debugIter, seed)
+    return (proxParams, debug)
+  }
+  def defaultCocoa(train: RDD[LabeledPoint], test: RDD[LabeledPoint]):
+  (distopt.utils.Params, distopt.utils.DebugParams) = {
+    val lambda = 0.01
+    val numRounds = 200 // number of outer iterations, called T in the paper
+    val localIterFrac = 1.0 // fraction of local points to be processed per round, H = localIterFrac * n
+    val beta = 1.0 // scaling parameter when combining the updates of the workers (1=averaging for CoCoA)
+    val gamma = 1.0 // aggregation parameter for CoCoA+ (1=adding, 1/K=averaging)
+    val debugIter = 10 // set to -1 to turn off debugging output
+    val seed = 13 // set seed for debug purposes
+    val n = train.count().toInt
+    var localIters = (localIterFrac * n / train.partitions.size).toInt
+    localIters = Math.max(localIters, 1)
+    var chkptIter = 100
+    val wInit = DenseVector.zeros[Double](train.first().features.size)
+    // set to solve hingeloss SVM
+    val loss = distopt.utils.OptUtils.hingeLoss _
+    val params = distopt.utils.Params(loss, n, wInit, numRounds, localIters, lambda, beta, gamma)
+    val debug = distopt.utils.DebugParams(Utils.toCocoaFormat(test), debugIter, seed, chkptIter)
+    return (params, debug)
   }
 
 }
