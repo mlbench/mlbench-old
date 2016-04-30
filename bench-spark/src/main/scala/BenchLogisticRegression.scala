@@ -1,6 +1,5 @@
 import Classification.L2_LR_SGD
 import optimizers.SGDParameters
-import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
 import org.apache.log4j.{Level, Logger}
 
 //Load function

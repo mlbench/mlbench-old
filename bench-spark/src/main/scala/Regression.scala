@@ -41,7 +41,7 @@ object Regression {
    Tasks L1:
   */
   class L1_Lasso_SGD(data: RDD[LabeledPoint],
-                            lambda: Double = 0.1,
+                            lambda: Double = 0.01,
                             params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
     extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
@@ -49,7 +49,7 @@ object Regression {
   }
 
   class L1_Lasso_GD(data: RDD[LabeledPoint],
-                           lambda: Double = 0.1,
+                           lambda: Double = 0.01,
                            params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)

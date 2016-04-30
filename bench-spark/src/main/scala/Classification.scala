@@ -47,7 +47,7 @@ object Classification {
    */
 
   class L2_SVM_SGD(data: RDD[LabeledPoint],
-                   lambda: Double = 0.1,
+                   lambda: Double = 0.01,
                    params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
     extends LinearClassifier(new HingeLoss, new L2Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
@@ -55,7 +55,7 @@ object Classification {
   }
 
   class L2_SVM_GD(data: RDD[LabeledPoint],
-                  lambda: Double = 0.1,
+                  lambda: Double = 0.01,
                   params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearClassifier(new HingeLoss, new L2Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
@@ -63,7 +63,7 @@ object Classification {
   }
 
   class L2_LR_SGD(data: RDD[LabeledPoint],
-                  lambda: Double = 0.1,
+                  lambda: Double = 0.01,
                   params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
     extends LinearClassifier(new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
@@ -71,8 +71,8 @@ object Classification {
   }
 
   class L2_LR_GD(data: RDD[LabeledPoint],
-                 lambda: Double = 0.1,
-                 params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
+                 lambda: Double = 0.01,
+                 params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearClassifier(new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
@@ -80,7 +80,7 @@ object Classification {
 
 
   class L1_LR_SGD(data: RDD[LabeledPoint],
-                  lambda: Double = 0.1,
+                  lambda: Double = 0.01,
                   params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
     extends LinearClassifier(new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
@@ -88,8 +88,8 @@ object Classification {
   }
 
   class L1_LR_GD(data: RDD[LabeledPoint],
-                 lambda: Double = 0.1,
-                 params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
+                 lambda: Double = 0.01,
+                 params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearClassifier(new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")

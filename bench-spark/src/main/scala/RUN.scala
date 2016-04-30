@@ -1,22 +1,22 @@
-import Classification.{L2_LR_SGD, L2_SVM_COCOA, L2_SVM_SGD}
-import org.apache.spark.mllib.classification._
-import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
-import Regression.{Elastic_ProxCOCOA, L1_Lasso_SGD}
+import Classification._
+import Regression.{Elastic_ProxCOCOA, L1_Lasso_GD, L1_Lasso_ProxCocoa, L1_Lasso_SGD}
 import breeze.linalg.{DenseVector, SparseVector}
 import l1distopt.utils.{DebugParams, Params}
 import optimizers.SGDParameters
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.mllib.linalg.Vectors
-import utils.Functions._
 import utils.{Evaluation, Utils}
-
-
-
-//Load function
-import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.rdd.RDD
+import org.rogach.scallop._
 
 import org.apache.spark._
+
+class Parser(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(arguments) {
+  val dataset = opt[String](required = true, short = 'd', descr = "absolute address of the libsvm dataset")
+  val partitions = opt[Int](required = false, default = Some(4),
+    short = 'p', validate = (0 <), descr = "Number of spark partitions to be used.")
+  val out = opt[String](default = Some("out"), short = 'o', descr = "The name of the ouput file")
+  val optimizers = trailArg[List[String]](descr = "List of optimizers to be used")
+  verify()
+}
 
 object RUN {
 
@@ -25,121 +25,187 @@ object RUN {
     val conf = new SparkConf().setAppName("Distributed Machine Learning").setMaster("local[*]")
     val sc = new SparkContext(conf)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-
     //Turn off logs
     val rootLogger = Logger.getRootLogger()
     rootLogger.setLevel(Level.ERROR)
+    //Parse arguments
+    val parser = new Parser(args)
+    val optimizers: List[String] = parser.optimizers()
+    val dataset = parser.dataset()
+    val output = parser.out()
+    val numPartitions = parser.partitions()
+    //Load data
+    val (trainReg, testReg) = Utils.loadLibSVMForRegression(dataset, numPartitions, sc)
+    val (trainClass, testClass) = Utils.loadLibSVMForBinaryClassification(dataset, numPartitions, sc)
 
-    val numPartitions = 4
-    val seed = 13
-    //Load regression data
-    val filename = "breast-cancer_scale.libsvm"
-    val (trainReg , testReg) = Utils.loadLibSVMForRegression( filename , numPartitions, sc)
+    //Run all optimisers given in the args
+    optimizers.foreach { opt => opt match {
+      case "Elastic_ProxCocoa" => {
+        val seed = 13
+        //Regularization parameters
+        val lambda = 0.1
+        val eta = 0.5
+        //optimization parameters
+        val iterations = 100
+        val localIterFrac = 0.9
+        val debugIter = 10
+        val force_cache = trainReg.count().toInt
+        val n = trainReg.count().toInt
+        var localIters = (localIterFrac * trainReg.first().features.size / trainReg.partitions.size).toInt
+        localIters = Math.max(localIters, 1)
+        val alphaInit = SparseVector.zeros[Double](10)
+        val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
+        val debug = DebugParams(Utils.toProxCocoaFormat(testReg), debugIter, seed)
 
-    //Regularization parameters
-    val lambda = 0.1
-    val eta = 0.5
-    //optimization parameters
-    val iterations = 100
-    val localIterFrac = 0.9
-    val debugIter = 10
-    val force_cache = trainReg.count().toInt
-    val n = trainReg.count().toInt
-    var localIters = (localIterFrac * trainReg.first().features.size / trainReg.partitions.size).toInt
-    localIters = Math.max(localIters,1)
-    val alphaInit = SparseVector.zeros[Double](10)
-    val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
-    val debug = DebugParams(Utils.toProxCocoaFormat(testReg), debugIter, seed)
+        val l1net = new Elastic_ProxCOCOA(trainReg, proxParams, debug)
+        val w = l1net.fit()
+        val objective = l1net.getObjective(w.toDenseVector, trainReg)
+        val error1 = l1net.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
+        println("elastic w: " + w)
+        println("elastic Objective value: " + objective)
+        println("elastic test error: " + error1)
+        println("----------------------------")
+      }
+      case "L1_Lasso_ProxCocoa" => {
+        val seed = 13
+        //Regularization parameters
+        val lambda = 0.1
+        val eta = 1.0
+        //optimization parameters
+        val iterations = 100
+        val localIterFrac = 0.9
+        val debugIter = 10
+        val force_cache = trainReg.count().toInt
+        val n = trainReg.count().toInt
+        var localIters = (localIterFrac * trainReg.first().features.size / trainReg.partitions.size).toInt
+        localIters = Math.max(localIters, 1)
+        val alphaInit = SparseVector.zeros[Double](10)
+        val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
+        val debug = DebugParams(Utils.toProxCocoaFormat(testReg), debugIter, seed)
 
-    val l1net = new Elastic_ProxCOCOA(trainReg, proxParams, debug)
-    val w1 = l1net.fit()
-    val objective1 = l1net.getObjective(w1.toDenseVector, trainReg)
-    val error1 = l1net.testError(w1, testReg.map(p => p.features), testReg.map(p => p.label))
-    println("prox w: " + w1)
-    println("prox Objective value: " + objective1)
-    println("prox test error: " + error1)
-    println("----------------------------")
+        val l1lasso = new L1_Lasso_ProxCocoa(trainReg, proxParams, debug)
+        val w = l1lasso.fit()
+        val objective = l1lasso.getObjective(w.toDenseVector, trainReg)
+        val error1 = l1lasso.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
+        println("prox w: " + w)
+        println("prox Objective value: " + objective)
+        println("prox test error: " + error1)
+        println("----------------------------")
+      }
+      case "L1_Lasso_GD" => {
+        val l1lasso = new L1_Lasso_GD(trainReg)
+        val w = l1lasso.fit()
+        val objective = l1lasso.getObjective(w.toDenseVector, trainReg)
+        val error1 = l1lasso.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
+        println("L1_Lasso_GD w: " + w)
+        println("L1_Lasso_GD Objective value: " + objective)
+        println("L1_Lasso_GD test error: " + error1)
+        println("----------------------------")
+      }
+      case "L1_Lasso_SGD" => {
+        val l1lasso = new L1_Lasso_SGD(trainReg)
+        val w = l1lasso.fit()
+        val objective = l1lasso.getObjective(w.toDenseVector, trainReg)
+        val error = l1lasso.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
+        println("L1_Lasso_SGD w: " + w)
+        println("L1_Lasso_SGD Objective value: " + objective)
+        println("L1_Lasso_SGD test error: " + error)
+        println("----------------------------")
+      }
+      case "L2_SVM_SGD" => {
+        val l2svm = new L2_SVM_SGD(trainClass)
+        val w = l2svm.train()
+        val objective = l2svm.getObjective(w.toDenseVector, trainClass)
+        val error = l2svm.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        println("L2_SVM_SGD w: " + w)
+        println("L2_SVM_SGD Objective value: " + objective)
+        println("L2_SVM_SGD test error: " + error)
+        println("----------------------------")
+      }
+      case "L2_SVM_GD" => {
+        val l2svm = new L2_SVM_GD(trainClass)
+        val w = l2svm.train()
+        val objective = l2svm.getObjective(w.toDenseVector, trainClass)
+        val error = l2svm.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        println("L2_SVM_GD w: " + w)
+        println("L2_SVM_GD Objective value: " + objective)
+        println("L2_SVM_GD test error: " + error)
+        println("----------------------------")
+      }
+      case "L2_LR_SGD" => {
+        val l2lr = new L2_LR_SGD(trainClass)
+        val w = l2lr.train()
+        val objective = l2lr.getObjective(w.toDenseVector, trainClass)
+        val error = l2lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        println("L2_LR_SGD w: " + w)
+        println("L2_LR_SGD Objective value: " + objective)
+        println("L2_LR_SGD test error: " + error)
+        println("----------------------------")
+      }
+      case "L2_LR_GD" => {
+        val l2lr = new L2_LR_GD(trainClass)
+        val w = l2lr.train()
+        val objective = l2lr.getObjective(w.toDenseVector, trainClass)
+        val error = l2lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        println("L2_LR_GD w: " + w)
+        println("L2_LR_GD Objective value: " + objective)
+        println("L2_LR_GD test error: " + error)
+        println("----------------------------")
+      }
+      case "L1_LR_SGD" => {
+        val l1lr = new L1_LR_SGD(trainClass)
+        val w = l1lr.train()
+        val objective = l1lr.getObjective(w.toDenseVector, trainClass)
+        val error = l1lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        println("L1_LR_SGD w: " + w)
+        println("L1_LR_SGD Objective value: " + objective)
+        println("L1_LR_SGD test error: " + error)
+        println("----------------------------")
+      }
+      case "L1_LR_GD" => {
+        val l1lr = new L1_LR_GD(trainClass)
+        val w = l1lr.train()
+        val objective = l1lr.getObjective(w.toDenseVector, trainClass)
+        val error = l1lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        println("L1_LR_GD w: " + w)
+        println("L1_LR_GD Objective value: " + objective)
+        println("L1_LR_GD test error: " + error)
+        println("----------------------------")
+      }
+      case "L2_SVM_Cocoa" => {
+
+        val lambda = 0.01
+        val numRounds = 200 // number of outer iterations, called T in the paper
+        val localIterFrac = 1.0 // fraction of local points to be processed per round, H = localIterFrac * n
+        val beta = 1.0 // scaling parameter when combining the updates of the workers (1=averaging for CoCoA)
+        val gamma = 1.0 // aggregation parameter for CoCoA+ (1=adding, 1/K=averaging)
+        val debugIter = 10 // set to -1 to turn off debugging output
+        val seed = 13 // set seed for debug purposes
+        val n = trainClass.count().toInt
+        var localIters = (localIterFrac * n / trainClass.partitions.size).toInt
+        localIters = Math.max(localIters, 1)
+        var chkptIter = 100
+        val wInit = DenseVector.zeros[Double](trainClass.first().features.size)
+        // set to solve hingeloss SVM
+        val loss = distopt.utils.OptUtils.hingeLoss _
+        val params = distopt.utils.Params(loss, n, wInit, numRounds, localIters, lambda, beta, gamma)
+        val debug = distopt.utils.DebugParams(Utils.toCocoaFormat(testClass), debugIter, seed, chkptIter)
+
+        val l2svm = new L2_SVM_COCOA(trainClass, params, debug, false)
+        val w = l2svm.train()
+        val objective = l2svm.getObjective(w.toDenseVector, trainClass)
+        val error = l2svm.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        println("L2_SVM_Cocoa w: " + w)
+        println("L2_SVM_Cocoa Objective value: " + objective)
+        println("L2_SVM_Cocoa test error: " + error)
+        println("----------------------------")
+      }
+      case _ => println("The optimizer " + opt + " doest not exist")
+    }
+    }
+
 
     sc.stop()
   }
 
-  def runLRWithMllib(train: RDD[LabeledPoint],
-                     test: RDD[LabeledPoint],
-                     regularizer: Regularizer,
-                     lambda: Double,
-                     iterations: Int,
-                     fraction: Double,
-                     stepSize: Double): Unit = {
-
-    val reg: Updater = (regularizer: Regularizer) match {
-      case _: L1Regularizer => new L1Updater
-      case _: L2Regularizer => new SquaredL2Updater
-      case _: Unregularized => new SimpleUpdater
-    }
-    val training = train.map(p => if (p.label == -1.0) LabeledPoint(0.0, p.features)
-    else LabeledPoint(1.0, p.features)).cache()
-
-    //Logistic Regression
-    val lr = new LogisticRegressionWithSGD()
-    lr.setIntercept(false)
-    lr.optimizer.
-      setNumIterations(iterations).
-      setRegParam(lambda).
-      setUpdater(reg).
-      setMiniBatchFraction(fraction).
-      setStepSize(stepSize)
-    val lrModel = lr.run(training)
-
-    val scores = test.map { point =>
-      lrModel.predict(point.features)
-    }.map(p => if (p == 0) -1.0 else 1.0)
-
-    val eval = new Evaluation(new BinaryLogistic, regularizer = regularizer, lambda = lambda)
-    val objective = eval.getObjective(DenseVector(lrModel.weights.toArray), training)
-    val error = eval.error(scores, test.map(p => p.label))
-    println("Mllib Logistic w: " + DenseVector(lrModel.weights.toArray))
-    println("Mllib Logistic Objective value: " + objective)
-    println("Mllib Logistic test error: " + error)
-
-  }
-
-  def runSVMWithMllib(train: RDD[LabeledPoint],
-                      test: RDD[LabeledPoint],
-                      regularizer: Regularizer,
-                      lambda: Double,
-                      iterations: Int,
-                      fraction: Double,
-                      stepSize: Double): Unit = {
-
-    val reg: Updater = (regularizer: AnyRef) match {
-      case _: L2Regularizer => new SquaredL2Updater
-      case _: L1Regularizer => new L1Updater
-      case _: Unregularized => new SimpleUpdater
-    }
-    val training = train.map(p => if (p.label == -1.0) LabeledPoint(0.0, p.features)
-    else LabeledPoint(1.0, p.features)).cache()
-
-
-    //SVM:
-    val svm = new SVMWithSGD()
-    svm.setIntercept(false)
-    svm.optimizer.
-      setNumIterations(iterations).
-      setMiniBatchFraction(fraction).
-      setRegParam(lambda).
-      setUpdater(reg).
-      setStepSize(stepSize)
-    val svmModel = svm.run(training)
-
-    val scores = test.map { point =>
-      svmModel.predict(point.features)
-    }.map(p => if (p == 0) -1.0 else 1.0)
-
-    val eval = new Evaluation(new HingeLoss, regularizer, lambda = lambda)
-    val objective = eval.getObjective(DenseVector(svmModel.weights.toArray), training)
-    val error = eval.error(scores, test.map(p => p.label))
-    println("Mllib SVM w: " + DenseVector(svmModel.weights.toArray))
-    println("Mllib SVM Ovjective value: " + objective)
-    println("Mllib SVM test error: " + error)
-  }
 }

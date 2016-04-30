@@ -36,7 +36,14 @@ object Utils {
     val projectPath = (xml \\ "config" \\ "projectpath") text
     //Load data
     val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
-      projectPath + "datasets/" + dataset)
+      projectPath + "datasets/" + dataset).repartition(numPartitions)
+    val Array(train, test) = data.randomSplit(Array(0.8, 0.2), seed = 13)
+    return (train, test)
+  }
+  def loadAbsolutLibSVMForRegression(dataset: String, numPartitions: Int = 4, sc: SparkContext):
+  (RDD[LabeledPoint],RDD[LabeledPoint]) = {
+    //Load data
+    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, dataset).repartition(numPartitions)
     val Array(train, test) = data.randomSplit(Array(0.8, 0.2), seed = 13)
     return (train, test)
   }
