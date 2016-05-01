@@ -12,11 +12,14 @@ import org.apache.spark.rdd.RDD
 import java.io._
 
 class Parser(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(arguments) {
-  val dataset = opt[String](required = true, short = 'd', descr = "absolute address of the libsvm dataset")
-  val partitions = opt[Int](required = false, default = Some(4),
-    short = 'p', validate = (0 <), descr = "Number of spark partitions to be used.")
-  val out = opt[String](default = Some("out"), short = 'o', descr = "The name of the ouput file")
-  val optimizers = trailArg[List[String]](descr = "List of optimizers to be used")
+  val dataset = opt[String](required = true, short = 'd',
+    descr = "absolute address of the libsvm dataset. This must be provided.")
+  val partitions = opt[Int](required = false, default = Some(4), short = 'p', validate = (0 <),
+    descr = "Number of spark partitions to be used. Optional.")
+  val out = opt[String](default = Some("out"), short = 'o', descr = "The name of the ouput file. Optional.")
+  val optimizers = trailArg[List[String]](descr = "List of optimizers to be used. At least one is required")
+  val method = opt[String](required = true, short = 'm',
+    descr = "Method can be either \"Regression\" or \"Classification\". This must be provided")
   verify()
 }
 
@@ -33,24 +36,30 @@ object RUN {
     //Parse arguments
     val parser = new Parser(args)
     val optimizers: List[String] = parser.optimizers()
+    assert(optimizers.length > 0)
     val dataset = parser.dataset()
     val outname = parser.out()
     val numPartitions = parser.partitions()
+    val method = parser.method()
     //Load data
-    val (trainReg, testReg) = Utils.loadLibSVMForRegression(dataset, numPartitions, sc)
-    val (trainClass, testClass) = Utils.loadLibSVMForBinaryClassification(dataset, numPartitions, sc)
+    val (train, test) = method match {
+      case "Classification" => Utils.loadLibSVMForBinaryClassification(dataset, numPartitions, sc)
+      case "Regression" => Utils.loadLibSVMForRegression(dataset, numPartitions, sc)
+      case _ => throw new IllegalArgumentException("The method " + method + " is not supported.")
+    }
     val output = new File(outname + ".txt")
     val bw = new BufferedWriter(new FileWriter(output))
     //Run all optimisers given in the args
     optimizers.foreach { opt => opt match {
       case "Elastic_ProxCocoa" => {
-        val (proxParams, debug) = defaultElasticProxParams(trainReg, testReg)
-        val l1net = new Elastic_ProxCOCOA(trainReg, proxParams, debug)
+        if (method == "Classification") throw new IllegalArgumentException("ElasticNet is a Regression method.")
+        val (proxParams, debug) = defaultElasticProxParams(train, test)
+        val l1net = new Elastic_ProxCOCOA(train, proxParams, debug)
         val w = l1net.fit()
         bw.write("Elastic_ProxCocoa: " + w + " elapsed: " + l1net.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l1net.getObjective(w.toDenseVector, trainReg)
-        val error1 = l1net.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
+        val objective = l1net.getObjective(w.toDenseVector, train)
+        val error1 = l1net.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l1net.elapsed.get / 1000 / 1000 + "ms")
         println("elastic w: " + w)
         println("elastic Objective value: " + objective)
@@ -58,13 +67,14 @@ object RUN {
         println("----------------------------")
       }
       case "L1_Lasso_ProxCocoa" => {
-        val (proxParams, debug) = defaultL1ProxParams(trainReg, testReg)
-        val l1lasso = new L1_Lasso_ProxCocoa(trainReg, proxParams, debug)
+        if (method == "Classification") throw new IllegalArgumentException("L1_Lasso_ProxCocoa is a Regression method.")
+        val (proxParams, debug) = defaultL1ProxParams(train, test)
+        val l1lasso = new L1_Lasso_ProxCocoa(train, proxParams, debug)
         val w = l1lasso.fit()
         bw.write("L1_Lasso_ProxCocoa: " + w + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l1lasso.getObjective(w.toDenseVector, trainReg)
-        val error1 = l1lasso.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
+        val objective = l1lasso.getObjective(w.toDenseVector, train)
+        val error1 = l1lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l1lasso.elapsed.get / 1000 / 1000 + "ms")
         println("prox w: " + w)
         println("prox Objective value: " + objective)
@@ -72,12 +82,13 @@ object RUN {
         println("----------------------------")
       }
       case "L1_Lasso_GD" => {
-        val l1lasso = new L1_Lasso_GD(trainReg)
+        if (method == "Classification") throw new IllegalArgumentException("L1_Lasso is a Regression method.")
+        val l1lasso = new L1_Lasso_GD(train)
         val w = l1lasso.fit()
         bw.write("L1_Lasso_GD: " + w + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l1lasso.getObjective(w.toDenseVector, trainReg)
-        val error1 = l1lasso.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
+        val objective = l1lasso.getObjective(w.toDenseVector, train)
+        val error1 = l1lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l1lasso.elapsed.get / 1000 / 1000 + "ms")
         println("L1_Lasso_GD w: " + w)
         println("L1_Lasso_GD Objective value: " + objective)
@@ -85,12 +96,13 @@ object RUN {
         println("----------------------------")
       }
       case "L1_Lasso_SGD" => {
-        val l1lasso = new L1_Lasso_SGD(trainReg)
+        if (method == "Classification") throw new IllegalArgumentException("L1_Lasso is a Regression method.")
+        val l1lasso = new L1_Lasso_SGD(train)
         val w = l1lasso.fit()
         bw.write("L1_Lasso_SGD: " + w + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l1lasso.getObjective(w.toDenseVector, trainReg)
-        val error = l1lasso.testError(w, testReg.map(p => p.features), testReg.map(p => p.label))
+        val objective = l1lasso.getObjective(w.toDenseVector, train)
+        val error = l1lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l1lasso.elapsed.get / 1000 / 1000 + "ms")
         println("L1_Lasso_SGD w: " + w)
         println("L1_Lasso_SGD Objective value: " + objective)
@@ -98,12 +110,13 @@ object RUN {
         println("----------------------------")
       }
       case "L2_SVM_SGD" => {
-        val l2svm = new L2_SVM_SGD(trainClass)
+        if (method == "Regression") throw new IllegalArgumentException("L2_SVM is a Classification method.")
+        val l2svm = new L2_SVM_SGD(train)
         val w = l2svm.train()
         bw.write("L2_SVM_SGD: " + w + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l2svm.getObjective(w.toDenseVector, trainClass)
-        val error = l2svm.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        val objective = l2svm.getObjective(w.toDenseVector, train)
+        val error = l2svm.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l2svm.elapsed.get / 1000 / 1000 + "ms")
         println("L2_SVM_SGD w: " + w)
         println("L2_SVM_SGD Objective value: " + objective)
@@ -111,12 +124,13 @@ object RUN {
         println("----------------------------")
       }
       case "L2_SVM_GD" => {
-        val l2svm = new L2_SVM_GD(trainClass)
+        if (method == "Regression") throw new IllegalArgumentException("L2_SVM is a Classification method.")
+        val l2svm = new L2_SVM_GD(train)
         val w = l2svm.train()
         bw.write("L2_SVM_GD: " + w + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l2svm.getObjective(w.toDenseVector, trainClass)
-        val error = l2svm.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        val objective = l2svm.getObjective(w.toDenseVector, train)
+        val error = l2svm.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l2svm.elapsed.get / 1000 / 1000 + "ms")
         println("L2_SVM_GD w: " + w)
         println("L2_SVM_GD Objective value: " + objective)
@@ -124,12 +138,13 @@ object RUN {
         println("----------------------------")
       }
       case "L2_LR_SGD" => {
-        val l2lr = new L2_LR_SGD(trainClass)
+        if (method == "Regression") throw new IllegalArgumentException("L2_LR is a Classification method.")
+        val l2lr = new L2_LR_SGD(train)
         val w = l2lr.train()
         bw.write("L2_LR_SGD: " + w + " elapsed: " + l2lr.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l2lr.getObjective(w.toDenseVector, trainClass)
-        val error = l2lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        val objective = l2lr.getObjective(w.toDenseVector, train)
+        val error = l2lr.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l2lr.elapsed.get / 1000 / 1000 + "ms")
         println("L2_LR_SGD w: " + w)
         println("L2_LR_SGD Objective value: " + objective)
@@ -137,12 +152,13 @@ object RUN {
         println("----------------------------")
       }
       case "L2_LR_GD" => {
-        val l2lr = new L2_LR_GD(trainClass)
+        if (method == "Regression") throw new IllegalArgumentException("L2_LR is a Classification method.")
+        val l2lr = new L2_LR_GD(train)
         val w = l2lr.train()
         bw.write("L2_LR_GD: " + w + " elapsed: " + l2lr.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l2lr.getObjective(w.toDenseVector, trainClass)
-        val error = l2lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        val objective = l2lr.getObjective(w.toDenseVector, train)
+        val error = l2lr.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l2lr.elapsed.get / 1000 / 1000 + "ms")
         println("L2_LR_GD w: " + w)
         println("L2_LR_GD Objective value: " + objective)
@@ -150,12 +166,13 @@ object RUN {
         println("----------------------------")
       }
       case "L1_LR_SGD" => {
-        val l1lr = new L1_LR_SGD(trainClass)
+        if (method == "Regression") throw new IllegalArgumentException("L1_LR is a Classification method.")
+        val l1lr = new L1_LR_SGD(train)
         val w = l1lr.train()
         bw.write("L1_LR_SGD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l1lr.getObjective(w.toDenseVector, trainClass)
-        val error = l1lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        val objective = l1lr.getObjective(w.toDenseVector, train)
+        val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
         println("L1_LR_SGD w: " + w)
         println("L1_LR_SGD Objective value: " + objective)
@@ -163,12 +180,13 @@ object RUN {
         println("----------------------------")
       }
       case "L1_LR_GD" => {
-        val l1lr = new L1_LR_GD(trainClass)
+        if (method == "Regression") throw new IllegalArgumentException("L1_LR is a Classification method.")
+        val l1lr = new L1_LR_GD(train)
         val w = l1lr.train()
         bw.write("L1_LR_GD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l1lr.getObjective(w.toDenseVector, trainClass)
-        val error = l1lr.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        val objective = l1lr.getObjective(w.toDenseVector, train)
+        val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
         println("L1_LR_GD w: " + w)
         println("L1_LR_GD Objective value: " + objective)
@@ -176,13 +194,14 @@ object RUN {
         println("----------------------------")
       }
       case "L2_SVM_Cocoa" => {
-        val (params, debug) = defaultCocoa(trainClass, testClass)
-        val l2svm = new L2_SVM_COCOA(trainClass, params, debug, false)
+        if (method == "Regression") throw new IllegalArgumentException("L2_SVM is a Classification method.")
+        val (params, debug) = defaultCocoa(train, test)
+        val l2svm = new L2_SVM_COCOA(train, params, debug, false)
         val w = l2svm.train()
         bw.write("L2_SVM_Cocoa: " + w + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
-        val objective = l2svm.getObjective(w.toDenseVector, trainClass)
-        val error = l2svm.testError(w, testClass.map(p => p.features), testClass.map(p => p.label))
+        val objective = l2svm.getObjective(w.toDenseVector, train)
+        val error = l2svm.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + l2svm.elapsed.get / 1000 / 1000 + "ms")
         println("L2_SVM_Cocoa w: " + w)
         println("L2_SVM_Cocoa Objective value: " + objective)
