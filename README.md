@@ -36,7 +36,8 @@ Then lunch the class RUN using bin/spark-submit. Class RUN accepts the following
 The trailing arguments must be one of the tasks mentioned below in [Tasks Specifications](#task-specifications).
 ###### Example:
 ```bash
- $your-spark-folder/bin/spark-submit --class "RUN" target/scala-2.10/bench-spark-assembly-1.0.jar -d "iris.scale.txt" L2_LR_GD L2_LR_SGD
+ $your-spark-folder/bin/spark-submit --class "RUN" target/scala-2.10/bench-spark-assembly-1.0.jar 
+ -d "/path/to/your/dataset/iris.scale.txt" -m Classification L2_LR_GD L2_LR_SGD
 ```
 The result are shown in your termnial:
 ```bash
