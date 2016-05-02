@@ -52,7 +52,18 @@ object Utils {
     val Array(train, test) = data.randomSplit(Array(0.8, 0.2), seed = 13)
     return (train, test)
   }
+  def loadAbsolutLibSVMForBinaryClassification(dataset: String, numPartitions: Int = 4, sc: SparkContext):
+  (RDD[LabeledPoint],RDD[LabeledPoint]) = {
+    //Load data
+    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, dataset).repartition(numPartitions)
+    //Take only two class with labels -1 and +1 for binary classification
+    val points = data.filter(p => p.label == 3.0 || p.label == 2.0).
+      map(p => if (p.label == 2.0) LabeledPoint(-1.0, p.features)
+      else LabeledPoint(+1.0, p.features)).repartition(numPartitions)
 
+    val Array(train, test) = points.randomSplit(Array(0.8, 0.2), seed = 13)
+    return (train, test)
+  }
   def toProxCocoaTranspose(data:RDD[LabeledPoint]): ProxCocoaDataMatrix = {
     val numEx = data.count().toInt
     val myData:RDD[(Double,Array[(Int, (Int, Double))])] = data.zipWithIndex().

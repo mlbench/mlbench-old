@@ -16,7 +16,7 @@ class Parser(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(argu
     descr = "absolute address of the libsvm dataset. This must be provided.")
   val partitions = opt[Int](required = false, default = Some(4), short = 'p', validate = (0 <),
     descr = "Number of spark partitions to be used. Optional.")
-  val out = opt[String](default = Some("out"), short = 'o', descr = "The name of the ouput file. Optional.")
+  val out = opt[String](default = Some("results"), short = 'o', descr = "The name of the ouput file. Optional.")
   val optimizers = trailArg[List[String]](descr = "List of optimizers to be used. At least one is required")
   val method = opt[String](required = true, short = 'm',
     descr = "Method can be either \"Regression\" or \"Classification\". This must be provided")
@@ -43,11 +43,11 @@ object RUN {
     val method = parser.method()
     //Load data
     val (train, test) = method match {
-      case "Classification" => Utils.loadLibSVMForBinaryClassification(dataset, numPartitions, sc)
-      case "Regression" => Utils.loadLibSVMForRegression(dataset, numPartitions, sc)
+      case "Classification" => Utils.loadAbsolutLibSVMForBinaryClassification(dataset, numPartitions, sc)
+      case "Regression" => Utils.loadAbsolutLibSVMForRegression(dataset, numPartitions, sc)
       case _ => throw new IllegalArgumentException("The method " + method + " is not supported.")
     }
-    val output = new File(outname + ".txt")
+    val output = new File(outname + ".out")
     val bw = new BufferedWriter(new FileWriter(output))
     //Run all optimisers given in the args
     optimizers.foreach { opt => opt match {
