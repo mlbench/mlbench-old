@@ -22,6 +22,48 @@ git submodule update
 </config>
 ```
 
+## How to run:
+First create a fat JAR of the project with all of its dependencies by running the following command in /bench-spark folder:
+```bash
+sbt assembly
+```
+Then lunch the class RUN using bin/spark-submit. Class RUN accepts the following arguments:
+```bash
+  -d, --dataset  <arg>      absolute address of the libsvm dataset. This must be
+                            provided.
+  -m, --method  <arg>       Method can be either "Regression" or "Classification".
+                            This must be provided
+  -o, --out  <arg>          The name of the ouput file. Optional.
+  -p, --partitions  <arg>   Number of spark partitions to be used. Optional.
+      --help                Show help message
+
+ trailing arguments:
+  optimizers (required)   List of optimizers to be used. At least one is required
+```
+The trailing arguments must be one of the tasks mentioned below in [Tasks Specifications](#task-specifications).
+###### Example:
+```bash
+ $your-spark-folder/bin/spark-submit --class "RUN" target/scala-2.10/bench-spark-assembly-1.0.jar -d "iris.scale.txt" L2_LR_GD L2_LR_SGD
+```
+The result will be shows in termnial:
+```bash
+Training took: 1481ms
+L2_LR_GD w: DenseVector(0.6954357978679125, 1.365622166956638, 0.8677384858769774, 2.355271061697218)
+L2_LR_GD Objective value: 0.47124109428012734
+L2_LR_GD test error: 0.15789473684210525
+----------------------------
+Training took: 629ms
+L2_LR_SGD w: DenseVector(0.5559469945983706, 1.1579382677051653, 1.0130652396015274, 1.9898353282120804)
+L2_LR_SGD Objective value: 0.4737371906349525
+L2_LR_SGD test error: 0.15789473684210525
+----------------------------
+```
+and also written in the output file:
+```bash
+L2_LR_GD: DenseVector(0.6954357978679125, 1.365622166956638, 0.8677384858769774, 2.355271061697218) elapsed: 1481ms
+L2_LR_SGD: DenseVector(0.5559469945983706, 1.1579382677051653, 1.0130652396015274, 1.9898353282120804) elapsed: 629ms
+```
+
 # Task specifications:
 
 ## Tasks D.. (Dummy tasks for measuring raw system performance)
