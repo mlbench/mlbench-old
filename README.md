@@ -14,13 +14,6 @@ git clone https://github.com/dalab/distributed-ML-benchmark
 git submodule init
 git submodule update
 ```
-###### Create a configs.xml in \bench-spark contating the root of the repository on your system:
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<config>
-	<projectpath>/path/to/distributed-ML-benchmark/</projectpath>
-</config>
-```
 
 ## How to run:
 First create a fat JAR of the project with all of its dependencies by running the following command in /bench-spark folder:
@@ -43,9 +36,10 @@ Then lunch the class RUN using bin/spark-submit. Class RUN accepts the following
 The trailing arguments must be one of the tasks mentioned below in [Tasks Specifications](#task-specifications).
 ###### Example:
 ```bash
- $your-spark-folder/bin/spark-submit --class "RUN" target/scala-2.10/bench-spark-assembly-1.0.jar -d "iris.scale.txt" L2_LR_GD L2_LR_SGD
+ $your-spark-folder/bin/spark-submit --class "RUN" target/scala-2.10/bench-spark-assembly-1.0.jar 
+ -d "/path/to/your/dataset/iris.scale.txt" -m Classification L2_LR_GD L2_LR_SGD
 ```
-The result will be shows in termnial:
+The result are shown in your termnial:
 ```bash
 Training took: 1481ms
 L2_LR_GD w: DenseVector(0.6954357978679125, 1.365622166956638, 0.8677384858769774, 2.355271061697218)
