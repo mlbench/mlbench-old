@@ -1,6 +1,6 @@
 import java.io.Serializable
 
-import breeze.linalg.{DenseVector, Vector}
+import breeze.linalg.{DenseVector, SparseVector, Vector}
 import l1distopt.utils.{DebugParams, Params}
 import optimizers.{ProxCocoa, SGD, SGDParameters}
 import org.apache.spark.mllib.regression.LabeledPoint
@@ -18,8 +18,8 @@ object Regression {
   }
 
   abstract class LinearRegression(loss: LossFunction,
-                                            regularizer: Regularizer)
-    extends LinearMethod(loss, regularizer) with Regression{
+                                  regularizer: Regularizer)
+    extends LinearMethod(loss, regularizer) with Regression {
 
     override def fit(): Vector[Double] = {
       super.optimize()
@@ -30,6 +30,7 @@ object Regression {
       val predictions: RDD[Double] = test.map(p => w.dot(DenseVector(p.toArray)))
       return predictions
     }
+
     //Mean squared error
     override def error(trueLabels: RDD[Double], predictions: RDD[Double]): Double = {
       predictions.zip(trueLabels).map(p => (p._2 - p._1) * (p._2 - p._1)).reduce(_ + _) / predictions.count()
@@ -41,38 +42,49 @@ object Regression {
    Tasks L1:
   */
   class L1_Lasso_SGD(data: RDD[LabeledPoint],
-                            lambda: Double = 0.01,
-                            params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
+                     lambda: Double = 0.01,
+                     params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
     extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
   class L1_Lasso_GD(data: RDD[LabeledPoint],
-                           lambda: Double = 0.01,
-                           params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
+                    lambda: Double = 0.01,
+                    params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
-  class Elastic_ProxCOCOA(data: RDD[LabeledPoint],
-                                 params: Params,
-                                 debug: DebugParams)
+  class Elastic_ProxCOCOA(train: RDD[LabeledPoint],
+                          test: RDD[LabeledPoint],
+                          params: Params,
+                          debug: DebugParams)
     extends LinearRegression(new SquaredLoss, new ElasticNet(params.lambda, params.eta)) {
-    val dataProx = Utils.toProxCocoaTranspose(data)
-    val optimizer = new ProxCocoa(dataProx, loss, regularizer, params, debug)
+    def this(train: RDD[LabeledPoint],
+             test: RDD[LabeledPoint]) {
+      this(train, test, Utils.defaultElasticProxParams(train, test)._1, Utils.defaultElasticProxParams(train, test)._2)
+    }
 
+    val dataProx = Utils.toProxCocoaTranspose(train)
+    val optimizer = new ProxCocoa(dataProx, loss, regularizer, params, debug)
   }
 
-  class L1_Lasso_ProxCocoa(data:RDD[LabeledPoint],
+  class L1_Lasso_ProxCocoa(train: RDD[LabeledPoint],
+                           test: RDD[LabeledPoint],
                            params: Params,
                            debug: DebugParams)
     extends LinearRegression(new SquaredLoss, new ElasticNet(params.lambda, params.eta)) {
-    val dataProx = Utils.toProxCocoaTranspose(data)
+
+    def this(train: RDD[LabeledPoint],
+             test: RDD[LabeledPoint]) {
+      this(train, test, Utils.defaultL1ProxParams(train, test)._1, Utils.defaultL1ProxParams(train, test)._2)
+    }
+
+    val dataProx = Utils.toProxCocoaTranspose(train)
     val optimizer = new ProxCocoa(dataProx, loss, regularizer, params, debug)
     require(params.eta == 1.0, "eta must be 1 for L1-regularization")
-
   }
 
 }

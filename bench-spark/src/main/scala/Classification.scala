@@ -7,6 +7,7 @@ import distopt.utils.{DebugParams, Params}
 import org.apache.spark.mllib.regression.LabeledPoint
 import utils.Functions._
 import utils.Utils
+
 /**
   * Created by amirreza on 31/03/16.
   */
@@ -35,6 +36,7 @@ object Classification {
     override def predict(w: Vector[Double], test: RDD[org.apache.spark.mllib.linalg.Vector]): RDD[Double] = {
       return this.classify(w, test)
     }
+
     //Missclassification error
     override def error(true_labels: RDD[Double], predictions: RDD[Double]): Double = {
       predictions.zip(true_labels).map(p => if (p._1 != p._2) 1.0 else 0.0).reduce(_ + _) / predictions.count()
@@ -95,12 +97,21 @@ object Classification {
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
-  class L2_SVM_COCOA(data: RDD[LabeledPoint],
+  class L2_SVM_COCOA(train: RDD[LabeledPoint],
+                     test: RDD[LabeledPoint],
                      params: Params,
                      debug: DebugParams,
                      plus: Boolean)
     extends LinearClassifier(new HingeLoss, new L2Regularizer(params.lambda)) with Serializable {
-    val cocoaData = Utils.toCocoaFormat(data)
+
+    def this(train: RDD[LabeledPoint],
+             test: RDD[LabeledPoint],
+             plus:Boolean){
+      this(train, test, Utils.defaultCocoa(train, test)._1, Utils.defaultCocoa(train, test)._2, plus)
+    }
+    val cocoaData = Utils.toCocoaFormat(train)
     val optimizer = new Cocoa(cocoaData, loss, regularizer, params, debug, plus)
+
   }
+
 }

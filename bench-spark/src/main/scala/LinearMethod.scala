@@ -12,7 +12,8 @@ import utils.Functions.{LossFunction, Regularizer}
 abstract class LinearMethod(val loss: LossFunction,
                             val regularizer: Regularizer) extends Serializable {
   val optimizer: Optimizer
-  var elapsed:Option[Long] = None
+  var elapsed: Option[Long] = None
+
   def optimize(): Vector[Double] = {
     val start = System.nanoTime()
     val w: Vector[Double] = optimizer.optimize()

@@ -53,8 +53,7 @@ object RUN {
     optimizers.foreach { opt => opt match {
       case "Elastic_ProxCocoa" => {
         if (method == "Classification") throw new IllegalArgumentException("ElasticNet is a Regression method.")
-        val (proxParams, debug) = defaultElasticProxParams(train, test)
-        val l1net = new Elastic_ProxCOCOA(train, proxParams, debug)
+        val l1net = new Elastic_ProxCOCOA(train, test)
         val w = l1net.fit()
         bw.write("Elastic_ProxCocoa: " + w + " elapsed: " + l1net.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
@@ -68,8 +67,7 @@ object RUN {
       }
       case "L1_Lasso_ProxCocoa" => {
         if (method == "Classification") throw new IllegalArgumentException("L1_Lasso_ProxCocoa is a Regression method.")
-        val (proxParams, debug) = defaultL1ProxParams(train, test)
-        val l1lasso = new L1_Lasso_ProxCocoa(train, proxParams, debug)
+        val l1lasso = new L1_Lasso_ProxCocoa(train, test)
         val w = l1lasso.fit()
         bw.write("L1_Lasso_ProxCocoa: " + w + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
@@ -195,8 +193,7 @@ object RUN {
       }
       case "L2_SVM_Cocoa" => {
         if (method == "Regression") throw new IllegalArgumentException("L2_SVM is a Classification method.")
-        val (params, debug) = defaultCocoa(train, test)
-        val l2svm = new L2_SVM_COCOA(train, params, debug, false)
+        val l2svm = new L2_SVM_COCOA(train, test, false)
         val w = l2svm.train()
         bw.write("L2_SVM_Cocoa: " + w + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms")
         bw.newLine()
@@ -214,65 +211,4 @@ object RUN {
     bw.close()
     sc.stop()
   }
-
-  def defaultL1ProxParams(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): (
-    l1distopt.utils.Params, l1distopt.utils.DebugParams) = {
-    val seed = 13
-    //Regularization parameters
-    val lambda = 0.1
-    val eta = 1.0
-    //optimization parameters
-    val iterations = 100
-    val localIterFrac = 0.9
-    val debugIter = 10
-    val force_cache = train.count().toInt
-    val n = train.count().toInt
-    var localIters = (localIterFrac * train.first().features.size / train.partitions.size).toInt
-    localIters = Math.max(localIters, 1)
-    val alphaInit = SparseVector.zeros[Double](10)
-    val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
-    val debug = DebugParams(Utils.toProxCocoaFormat(test), debugIter, seed)
-    return (proxParams, debug)
-  }
-
-  def defaultElasticProxParams(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): (
-    l1distopt.utils.Params, l1distopt.utils.DebugParams) = {
-    val seed = 13
-    //Regularization parameters
-    val lambda = 0.1
-    val eta = 0.5
-    //optimization parameters
-    val iterations = 100
-    val localIterFrac = 0.9
-    val debugIter = 10
-    val force_cache = train.count().toInt
-    val n = train.count().toInt
-    var localIters = (localIterFrac * train.first().features.size / train.partitions.size).toInt
-    localIters = Math.max(localIters, 1)
-    val alphaInit = SparseVector.zeros[Double](10)
-    val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
-    val debug = DebugParams(Utils.toProxCocoaFormat(test), debugIter, seed)
-    return (proxParams, debug)
-  }
-  def defaultCocoa(train: RDD[LabeledPoint], test: RDD[LabeledPoint]):
-  (distopt.utils.Params, distopt.utils.DebugParams) = {
-    val lambda = 0.01
-    val numRounds = 200 // number of outer iterations, called T in the paper
-    val localIterFrac = 1.0 // fraction of local points to be processed per round, H = localIterFrac * n
-    val beta = 1.0 // scaling parameter when combining the updates of the workers (1=averaging for CoCoA)
-    val gamma = 1.0 // aggregation parameter for CoCoA+ (1=adding, 1/K=averaging)
-    val debugIter = 10 // set to -1 to turn off debugging output
-    val seed = 13 // set seed for debug purposes
-    val n = train.count().toInt
-    var localIters = (localIterFrac * n / train.partitions.size).toInt
-    localIters = Math.max(localIters, 1)
-    var chkptIter = 100
-    val wInit = DenseVector.zeros[Double](train.first().features.size)
-    // set to solve hingeloss SVM
-    val loss = distopt.utils.OptUtils.hingeLoss _
-    val params = distopt.utils.Params(loss, n, wInit, numRounds, localIters, lambda, beta, gamma)
-    val debug = distopt.utils.DebugParams(Utils.toCocoaFormat(test), debugIter, seed, chkptIter)
-    return (params, debug)
-  }
-
 }
