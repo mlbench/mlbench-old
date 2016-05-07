@@ -4,7 +4,6 @@ import optimizers.SGDParameters
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.optimization.{L1Updater, SimpleUpdater, SquaredL2Updater, Updater}
 import org.apache.log4j.{Level, Logger}
-import utils.Evaluation
 import utils.Functions.{BinaryLogistic, L2Regularizer, Regularizer, Unregularized}
 
 //Load function
@@ -41,7 +40,7 @@ object LogisticRegressionCorrectness {
     val reg = new L2Regularizer(lambda = lambda)
 
     //Fit with Mllib in order to compare
-    runLRWithMllib(train, test, reg, lambda, params.iterations, params.stepSize)
+    runLRWithMllib(train, test, reg, params.iterations, params.stepSize)
     println("----------------------------")
 
     //Classify with Binary Logistic Regression
@@ -61,7 +60,6 @@ object LogisticRegressionCorrectness {
   def runLRWithMllib(train: RDD[LabeledPoint],
                      test: RDD[LabeledPoint],
                      regularizer: Regularizer,
-                     lambda: Double,
                      iterations: Int,
                      stepSize: Double): Unit = {
 
@@ -77,12 +75,12 @@ object LogisticRegressionCorrectness {
     lr.setIntercept(false)
     lr.optimizer.
       setNumIterations(iterations).
-      setRegParam(lambda).
+      setRegParam(regularizer.lambda).
       setUpdater(reg).
       setStepSize(stepSize)
     val lrModel = lr.run(training)
 
-    val eval2 = new Evaluation(new BinaryLogistic, regularizer = regularizer, lambda = lambda)
+    val eval2 = new Evaluation(new BinaryLogistic, regularizer = regularizer)
     val object2 = eval2.getObjective(DenseVector(lrModel.weights.toArray), training)
     println("Mllib Logistic w: " + DenseVector(lrModel.weights.toArray))
     println("Mllib Logistic Objective value: " + object2)
