@@ -1,5 +1,7 @@
 package utils
 
+import java.io.File
+
 import Functions.{CocoaLabeledPoint, ProxCocoaDataMatrix, ProxCocoaLabeledPoint}
 import breeze.linalg.{DenseVector, SparseVector}
 import l1distopt.utils.{DebugParams, Params}
@@ -14,6 +16,11 @@ import scala.xml.XML
   * Created by amirreza on 12/04/16.
   */
 object Utils {
+  def loadLibSVMFromDir(dir: String, sc: SparkContext): RDD[LabeledPoint] = {
+    val files = (new File(dir)).listFiles.filter(_.getName.startsWith("part")).map(_.getName)
+    return files.map(part => MLUtils.loadLibSVMFile(sc, dir + part).repartition(1)).reduceLeft(_.union(_))
+  }
+
   def loadRawDataset(dataset: String, sc: SparkContext): RDD[LabeledPoint] = {
     // get projectPath from config
     val xml = XML.loadFile("configs.xml")
