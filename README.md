@@ -15,47 +15,66 @@ git submodule init
 git submodule update
 ```
 
-## How to run:
+## How to run
 First create a fat JAR of the project with all of its dependencies by running the following command in /bench-spark folder:
 ```bash
 sbt assembly
 ```
-Then lunch the class RUN using bin/spark-submit. Class RUN accepts the following arguments:
+It is important to first create a "working directory" where all results will be gathered. The default working directory is ../results relative to your project folder.
+First step is to prepare the data, second is to run desired optimization algorithms on data and finally evaluate the performance and compare them.
+To prepare the dataset use "PrepareData" which accepts the following arguments:
 ```bash
-  -d, --dataset  <arg>      absolute address of the libsvm dataset. This must be
+-d, --dataset  <arg>      absolute address of the libsvm dataset. This must be
                             provided.
+  -w, --dir  <arg>          working directory where resultsare stored. Default is
+                            "../results".
   -m, --method  <arg>       Method can be either "Regression" or "Classification".
                             This must be provided
-  -o, --out  <arg>          The name of the ouput file. Optional.
   -p, --partitions  <arg>   Number of spark partitions to be used. Optional.
       --help                Show help message
+```
+This command will split the original data to train and test data and will save them in working directory for later use.
+To run different optimization algorithms use "RUN" which needs the following arguments:
+```bash
+-w, --dir  <arg>   working directory where resultsare stored. Default is
+                     "../results".
+      --help         Show help message
 
  trailing arguments:
   optimizers (required)   List of optimizers to be used. At least one is required
 ```
-The trailing arguments must be one of the tasks mentioned below in [Tasks Specifications](#task-specifications).
-###### Example:
+The trailing arguments must be one of the tasks mentioned below in [Tasks Specifications](#task-specifications). An output file "res.out" will be saved in the working directory containing weight vectors of each different optimization method.
+Finally to get the corresposing objective values run the script "Evaluate":
 ```bash
- $your-spark-folder/bin/spark-submit --class "RUN" target/scala-2.10/bench-spark-assembly-1.0.jar 
- -d "/path/to/your/dataset/iris.scale.txt" -m Classification L2_LR_GD L2_LR_SGD
+ -d, --dir  <arg>   absolute address of the working directory. This must be
+                     provided.
+      --help         Show help message
 ```
-The result are shown in your termnial:
+
+###### Example: 
+Go to /bench-spark folder and run:
 ```bash
-Training took: 1481ms
-L2_LR_GD w: DenseVector(0.6954357978679125, 1.365622166956638, 0.8677384858769774, 2.355271061697218)
-L2_LR_GD Objective value: 0.47124109428012734
-L2_LR_GD test error: 0.15789473684210525
-----------------------------
-Training took: 629ms
-L2_LR_SGD w: DenseVector(0.5559469945983706, 1.1579382677051653, 1.0130652396015274, 1.9898353282120804)
-L2_LR_SGD Objective value: 0.4737371906349525
-L2_LR_SGD test error: 0.15789473684210525
-----------------------------
+mkdir ../results
+
+$your-spark-folder/bin/spark-submit --class "PrepareData" 
+target/scala-2.10/bench-spark-assembly-1.0.jar 
+-d "/path/to/your/dataset/breast-cancer_scale.libsvm" 
+-m Regression
+
+$your-spark-folder/bin/spark-submit --class "RUN" 
+target/scala-2.10/bench-spark-assembly-1.0.jar 
+L1_Lasso_GD L1_Lasso_SGD L1_Lasso_ProxCocoa Elastic_ProxCocoa
+
+$your-spark-folder/bin/spark-submit --class "Evaluate" 
+target/scala-2.10/bench-spark-assembly-1.0.jar
 ```
-and also written in the output file:
+
+The output res.out:
 ```bash
-L2_LR_GD: DenseVector(0.6954357978679125, 1.365622166956638, 0.8677384858769774, 2.355271061697218) elapsed: 1481ms
-L2_LR_SGD: DenseVector(0.5559469945983706, 1.1579382677051653, 1.0130652396015274, 1.9898353282120804) elapsed: 629ms
+L1_Lasso_GD: DenseVector(-2.672158927525372, 0.2835398557585042, 0.2616505245785392, 0.1062669616202757, 0.0010041643706443565, -3.247334399853071E-4, 0.414111116641944, 0.004824409829823558, 0.00742871210731205, -0.7643289526295685) elapsed: 1281ms lambda: 0.1
+L1_Lasso_SGD: DenseVector(-2.112996906376575, 0.10904730089760592, 0.0789677010341028, 7.846417009157897E-4, 0.007214770187810594, -0.002870040147401511, 0.45213296371762246, -4.0625328938762354E-4, 0.007843171211156274, -0.9378429139210855) elapsed: 621ms lambda: 0.1
+L1_Lasso_ProxCocoa: DenseVector(-3.0703759321596684, 0.2063079519043623, 0.328673676903811, 0.027289089761645777, 0.0, 0.0, 0.41197113667299534, 0.0, 0.0, -0.3722738846697741) elapsed: 1683ms lambda: 0.1
+Elastic_ProxCocoa: DenseVector(-2.1647682768571683, 0.35959693942313214, 0.16053636571576063, 0.07100394273617437, 0.0, 0.0, 0.32159948533563326, 0.0, 0.0, -0.8746298720599254) elapsed: 1436ms lambda: 0.1 alpha: 0.5
 ```
 
 # Task specifications:
