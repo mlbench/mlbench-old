@@ -17,6 +17,6 @@ class ProxCocoa(val data: ProxCocoaDataMatrix,
                 debug: DebugParams) extends Optimizer (loss, regularizer){
   override def optimize(): Vector[Double] = {
     val finalAlphaCoCoA = ProxCoCoAp.runProxCoCoAp(data._1, data._2, params, debug)
-    return finalAlphaCoCoA
+    return finalAlphaCoCoA.toDenseVector
   }
 }

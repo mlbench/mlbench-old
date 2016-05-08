@@ -34,39 +34,53 @@ object Evaluate {
     val parser = new EvalParser(args)
     val workinDir = parser.dir()
     val inputLines = Source.fromFile(workinDir + "res.out").getLines.toList
-    val pattern = "^([^:]+): DenseVector\\((.*)\\) elapsed: ([1-9]*)ms lambda: ([0-9]*\\.[0-9]*)".r
+    val pattern = "^([^:]+): .*Vector\\((.*)\\) elapsed: ([0-9]*)ms (.*)".r
 
     val train: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workinDir + "train/", sc)
 
     inputLines.foreach { line =>
-      val pattern(method, weights_row, elapsed_row, lambda_raw) = line
+      val pattern(method, weights_row, elapsed_row, regs) = line
       val weights = DenseVector(weights_row.split(",").map(_.trim).map(_.toDouble))
       val elapsed = elapsed_row.toInt
-      val lambda = lambda_raw.toDouble
-      val alpha = 0.01 //TODO
 
       method match {
         case "Elastic_ProxCocoa" => {
+          val regPattern = "lambda: ([0-9]*\\.[0-9]*) alpha: ([0-9]*\\.[0-9]*)".r
+          val regPattern(lambda_raw, alpha_raw) = regs
+          val lambda = lambda_raw.toDouble
+          val alpha = alpha_raw.toDouble
           val eval = new Evaluation(new SquaredLoss, new ElasticNet(lambda, alpha))
           val objective = eval.getObjective(weights, train)
           println("objective: " + objective)
         }
         case "L1_Lasso_SGD" | "L1_Lasso_GD" | "L1_Lasso_ProxCocoa" => {
+          val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
+          val regPattern(lambda_raw) = regs
+          val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new SquaredLoss, new L1Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
           println("objective: " + objective)
         }
         case "L2_LR_SGD" | "L2_LR_GD" => {
+          val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
+          val regPattern(lambda_raw) = regs
+          val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new BinaryLogistic, new L2Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
           println("L2_LR objective: " + objective)
         }
         case "L1_LR_SGD" | "L1_LR_SGD" => {
+          val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
+          val regPattern(lambda_raw) = regs
+          val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new BinaryLogistic, new L1Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
           println("objective: " + objective)
         }
         case "L2_SVM_Cocoa" | "L2_SVM_GD" | "L2_SVM_SGD" => {
+          val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
+          val regPattern(lambda_raw) = regs
+          val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new HingeLoss, new L2Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
           println("objective: " + objective)
