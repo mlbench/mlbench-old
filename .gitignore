@@ -1,7 +1,7 @@
 *.class
 *.log
 *.out
-
+results/*
 # sbt specific
 .cache
 .history
@@ -19,7 +19,8 @@ project/plugins/project/
 .worksheet
 
 # large dataset
-/dml-scala/dataset/epsilon*
+dataset/epsilon*
+dml-scala/dataset/epsilon*
 
 # Mac file system
 .DS_Store
