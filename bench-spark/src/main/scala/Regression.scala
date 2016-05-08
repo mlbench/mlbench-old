@@ -42,15 +42,15 @@ object Regression {
    Tasks L1:
   */
   class L1_Lasso_SGD(data: RDD[LabeledPoint],
-                     lambda: Double = 0.01,
-                     params: SGDParameters = new SGDParameters(miniBatchFraction = 0.5))
+                     lambda: Double = DEFAULT_LABMDA,
+                     params: SGDParameters = new SGDParameters(miniBatchFraction = DEFAULT_BATCH_FRACTION))
     extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
   class L1_Lasso_GD(data: RDD[LabeledPoint],
-                    lambda: Double = 0.01,
+                    lambda: Double = DEFAULT_LABMDA,
                     params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
     val optimizer = new SGD(data, loss, regularizer, params)

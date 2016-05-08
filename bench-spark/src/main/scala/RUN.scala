@@ -43,7 +43,7 @@ object RUN {
       case "Elastic_ProxCocoa" => {
         val l1net = new Elastic_ProxCOCOA(train, test)
         val w = l1net.fit()
-        bw.write("Elastic_ProxCocoa: " + w + " elapsed: " + l1net.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+        bw.write("Elastic_ProxCocoa: " + w.toDenseVector + " elapsed: " + l1net.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
           l1net.regularizer.lambda + " alpha: " + l1net.regularizer.asInstanceOf[ElasticNet].alpha)
         bw.newLine()
         val objective = l1net.getObjective(w.toDenseVector, train)
@@ -57,7 +57,7 @@ object RUN {
       case "L1_Lasso_ProxCocoa" => {
         val l1lasso = new L1_Lasso_ProxCocoa(train, test)
         val w = l1lasso.fit()
-        bw.write("L1_Lasso_ProxCocoa: " + w + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+        bw.write("L1_Lasso_ProxCocoa: " + w.toDenseVector + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
           l1lasso.regularizer.lambda)
         bw.newLine()
         val objective = l1lasso.getObjective(w.toDenseVector, train)
@@ -183,7 +183,7 @@ object RUN {
       case "L2_SVM_Cocoa" => {
         val l2svm = new L2_SVM_COCOA(train, test, false)
         val w = l2svm.train()
-        bw.write("L2_SVM_Cocoa: " + w + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+        bw.write("L2_SVM_Cocoa: " + w.toDenseVector + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
           l2svm.regularizer.lambda)
         bw.newLine()
         val objective = l2svm.getObjective(w.toDenseVector, train)

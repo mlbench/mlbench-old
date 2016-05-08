@@ -17,6 +17,8 @@ object Functions {
   type ProxCocoaLabeledPoint = RDD[l1distopt.utils.LabeledPoint]
   type ProxCocoaDataMatrix = (RDD[(Int, SparseVector[Double])], Vector[Double])
 
+  val DEFAULT_LABMDA = 0.01
+  val DEFAULT_BATCH_FRACTION = 0.5
   /*
   * Loss Functions
   * */
