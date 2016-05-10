@@ -1,7 +1,7 @@
 import Classification._
-import Regression.{Elastic_ProxCOCOA, L1_Lasso_GD, L1_Lasso_ProxCocoa, L1_Lasso_SGD}
+import Regression._
 import org.apache.log4j.{Level, Logger}
-import utils.{Utils}
+import utils.Utils
 import org.rogach.scallop._
 import org.apache.spark._
 import org.apache.spark.mllib.regression.LabeledPoint
@@ -11,7 +11,7 @@ import java.io._
 import utils.Functions.ElasticNet
 
 class RunParser(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(arguments) {
-  val dir = opt[String](required = true, default = Some("../results/"), short = 'w', descr = "working directory where results" +
+  val dir = opt[String](required = true, default = Some("../results/"), short = 'w', descr = "working directory where results " +
     "are stored. Default is \"../results\". ")
   val optimizers = trailArg[List[String]](descr = "List of optimizers to be used. At least one is required")
   verify()
@@ -192,6 +192,148 @@ object RUN {
         println("L2_SVM_Cocoa w: " + w)
         println("L2_SVM_Cocoa Objective value: " + objective)
         println("L2_SVM_Cocoa test error: " + error)
+        println("----------------------------")
+      }
+      case "Mllib_Lasso_SGD" => {
+        val lasso = new Mllib_Lasso_SGD(train)
+        val w = lasso.fit()
+        bw.write("Mllib_Lasso_SGD: " + w + " elapsed: " + lasso.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          lasso.regularizer.lambda)
+        bw.newLine()
+        val objective = lasso.getObjective(w.toDenseVector, train)
+        val error = lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + lasso.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_Lasso_SGD w: " + w)
+        println("Mllib_Lasso_SGD Objective value: " + objective)
+        println("Mllib_Lasso_SGD test error: " + error)
+        println("----------------------------")
+      }
+      case "Mllib_Lasso_GD" => {
+        val lasso = new Mllib_Lasso_GD(train)
+        val w = lasso.fit()
+        bw.write("Mllib_Lasso_GD: " + w + " elapsed: " + lasso.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          lasso.regularizer.lambda)
+        bw.newLine()
+        val objective = lasso.getObjective(w.toDenseVector, train)
+        val error = lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + lasso.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_Lasso_GD w: " + w)
+        println("Mllib_Lasso_GD Objective value: " + objective)
+        println("Mllib_Lasso_GD test error: " + error)
+        println("----------------------------")
+      }
+      case "Mllib_L2_LR_LBFGS" => {
+        val lbfgs = new Mllib_L2_LR_LBFGS(train)
+        val w = lbfgs.train()
+        bw.write("Mllib_L2_LR_LBFGS: " + w + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          lbfgs.regularizer.lambda)
+        bw.newLine()
+        val objective = lbfgs.getObjective(w.toDenseVector, train)
+        val error = lbfgs.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + lbfgs.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_L2_LR_LBFGS w: " + w)
+        println("Mllib_L2_LR_LBFGS Objective value: " + objective)
+        println("Mllib_L2_LR_LBFGS test error: " + error)
+        println("----------------------------")
+      }
+      case "Mllib_L1_LR_LBFGS" => {
+        val lbfgs = new Mllib_L1_LR_LBFGS(train)
+        val w = lbfgs.train()
+        bw.write("Mllib_L1_LR_LBFGS: " + w + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          lbfgs.regularizer.lambda)
+        bw.newLine()
+        val objective = lbfgs.getObjective(w.toDenseVector, train)
+        val error = lbfgs.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + lbfgs.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_L1_LR_LBFGS w: " + w)
+        println("Mllib_L1_LR_LBFGS Objective value: " + objective)
+        println("Mllib_L1_LR_LBFGS test error: " + error)
+        println("----------------------------")
+      }
+
+      case "Mllib_L1_LR_GD" => {
+        val l1lr = new Mllib_L1_LR_GD(train)
+        val w = l1lr.train()
+        bw.write("Mllib_L1_LR_GD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          l1lr.regularizer.lambda)
+        bw.newLine()
+        val objective = l1lr.getObjective(w.toDenseVector, train)
+        val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_L1_LR_GD w: " + w)
+        println("Mllib_L1_LR_GD Objective value: " + objective)
+        println("Mllib_L1_LR_GD test error: " + error)
+        println("----------------------------")
+      }
+      case "Mllib_L1_LR_SGD" => {
+        val l1lr = new Mllib_L1_LR_SGD(train)
+        val w = l1lr.train()
+        bw.write("Mllib_L1_LR_SGD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          l1lr.regularizer.lambda)
+        bw.newLine()
+        val objective = l1lr.getObjective(w.toDenseVector, train)
+        val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_L1_LR_SGD w: " + w)
+        println("Mllib_L1_LR_SGD Objective value: " + objective)
+        println("Mllib_L1_LR_SGD test error: " + error)
+        println("----------------------------")
+      }
+      case "Mllib_L2_LR_SGD" => {
+        val l1lr = new Mllib_L2_LR_SGD(train)
+        val w = l1lr.train()
+        bw.write("Mllib_L2_LR_SGD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          l1lr.regularizer.lambda)
+        bw.newLine()
+        val objective = l1lr.getObjective(w.toDenseVector, train)
+        val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_L2_LR_SGD w: " + w)
+        println("Mllib_L2_LR_SGD Objective value: " + objective)
+        println("Mllib_L2_LR_SGD test error: " + error)
+        println("----------------------------")
+      }
+      case "Mllib_L2_LR_GD" => {
+        val l1lr = new Mllib_L2_LR_GD(train)
+        val w = l1lr.train()
+        bw.write("Mllib_L2_LR_GD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          l1lr.regularizer.lambda)
+        bw.newLine()
+        val objective = l1lr.getObjective(w.toDenseVector, train)
+        val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_L2_LR_GD w: " + w)
+        println("Mllib_L2_LR_GD Objective value: " + objective)
+        println("Mllib_L2_LR_GD test error: " + error)
+        println("----------------------------")
+      }
+      case "Mllib_L2_SVM_SGD" => {
+        val l1lr = new Mllib_L2_SVM_SGD(train)
+        val w = l1lr.train()
+        bw.write("Mllib_L2_SVM_SGD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          l1lr.regularizer.lambda)
+        bw.newLine()
+        val objective = l1lr.getObjective(w.toDenseVector, train)
+        val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_L2_SVM_SGD w: " + w)
+        println("Mllib_L2_SVM_SGD Objective value: " + objective)
+        println("Mllib_L2_SVM_SGD test error: " + error)
+        println("----------------------------")
+      }
+
+      case "Mllib_L2_SVM_GD" => {
+        val l1lr = new Mllib_L2_SVM_GD(train)
+        val w = l1lr.train()
+        bw.write("Mllib_L2_SVM_GD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
+          l1lr.regularizer.lambda)
+        bw.newLine()
+        val objective = l1lr.getObjective(w.toDenseVector, train)
+        val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
+        println("Training took: " + l1lr.elapsed.get / 1000 / 1000 + "ms")
+        println("Mllib_L2_SVM_GD w: " + w)
+        println("Mllib_L2_SVM_GD Objective value: " + objective)
+        println("Mllib_L2_SVM_GD test error: " + error)
         println("----------------------------")
       }
       case _ => println("The optimizer " + opt + " doest not exist")

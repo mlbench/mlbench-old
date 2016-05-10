@@ -3,7 +3,6 @@ import java.io.Serializable
 import breeze.linalg.DenseVector
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import utils.Functions._
@@ -53,7 +52,7 @@ object Evaluate {
           val objective = eval.getObjective(weights, train)
           println("objective: " + objective)
         }
-        case "L1_Lasso_SGD" | "L1_Lasso_GD" | "L1_Lasso_ProxCocoa" => {
+        case "L1_Lasso_SGD" | "L1_Lasso_GD" | "L1_Lasso_ProxCocoa" | "Mllib_Lasso_GD" | "Mllib_Lasso_SGD" => {
           val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
           val regPattern(lambda_raw) = regs
           val lambda = lambda_raw.toDouble
@@ -61,7 +60,7 @@ object Evaluate {
           val objective = eval.getObjective(weights, train)
           println("objective: " + objective)
         }
-        case "L2_LR_SGD" | "L2_LR_GD" => {
+        case "L2_LR_SGD" | "L2_LR_GD" | "Mllib_L2_LR_GD" | "Mllib_L2_LR_SGD" | "Mllib_L2_LR_LBFGS" => {
           val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
           val regPattern(lambda_raw) = regs
           val lambda = lambda_raw.toDouble
@@ -69,7 +68,7 @@ object Evaluate {
           val objective = eval.getObjective(weights, train)
           println("L2_LR objective: " + objective)
         }
-        case "L1_LR_SGD" | "L1_LR_SGD" => {
+        case "L1_LR_SGD" | "L1_LR_SGD" | "L1_LR_SGD" | "L1_LR_GD" | "Mllib_L1_LR_LBFGS" => {
           val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
           val regPattern(lambda_raw) = regs
           val lambda = lambda_raw.toDouble
@@ -77,7 +76,7 @@ object Evaluate {
           val objective = eval.getObjective(weights, train)
           println("objective: " + objective)
         }
-        case "L2_SVM_Cocoa" | "L2_SVM_GD" | "L2_SVM_SGD" => {
+        case "L2_SVM_Cocoa" | "L2_SVM_GD" | "L2_SVM_SGD" | "Mllib_L2_SVM_GD" | "Mllib_L2_SVM_SGD" => {
           val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
           val regPattern(lambda_raw) = regs
           val lambda = lambda_raw.toDouble

@@ -1,8 +1,8 @@
 import java.io.Serializable
 
-import breeze.linalg.{DenseVector, SparseVector, Vector}
+import breeze.linalg.{DenseVector, Vector}
 import l1distopt.utils.{DebugParams, Params}
-import optimizers.{ProxCocoa, SGD, SGDParameters}
+import optimizers.{MllibSGD, ProxCocoa, SGD, SGDParameters}
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 import utils.Functions._
@@ -85,6 +85,22 @@ object Regression {
     val dataProx = Utils.toProxCocoaTranspose(train)
     val optimizer = new ProxCocoa(dataProx, loss, regularizer, params, debug)
     require(params.eta == 1.0, "eta must be 1 for L1-regularization")
+  }
+
+  class Mllib_Lasso_SGD(data: RDD[LabeledPoint],
+                        lambda: Double = DEFAULT_LABMDA,
+                        params: SGDParameters = new SGDParameters(miniBatchFraction = DEFAULT_BATCH_FRACTION))
+    extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
+    val optimizer = new MllibSGD(data, loss, regularizer, params, "Regression")
+    require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
+  }
+
+  class Mllib_Lasso_GD(data: RDD[LabeledPoint],
+                       lambda: Double = DEFAULT_LABMDA,
+                       params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
+    extends LinearRegression(new SquaredLoss, new L1Regularizer(lambda)) with Serializable {
+    val optimizer = new MllibSGD(data, loss, regularizer, params, "Regression")
+    require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
 }

@@ -12,7 +12,7 @@ class PrepArgParser(arguments: Seq[String]) extends org.rogach.scallop.ScallopCo
     descr = "absolute address of the libsvm dataset. This must be provided.")
   val partitions = opt[Int](required = false, default = Some(4), short = 'p', validate = (0 <),
     descr = "Number of spark partitions to be used. Optional.")
-  val dir = opt[String](required = true, default = Some("../results/"), short = 'w', descr = "working directory where results" +
+  val dir = opt[String](required = true, default = Some("../results/"), short = 'w', descr = "working directory where results " +
     "are stored. Default is \"../results\". ")
   val method = opt[String](required = true, short = 'm',
     descr = "Method can be either \"Regression\" or \"Classification\". This must be provided")

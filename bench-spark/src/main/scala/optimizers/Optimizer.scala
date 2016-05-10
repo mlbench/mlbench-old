@@ -9,6 +9,8 @@ import breeze.linalg.Vector
 abstract class Optimizer(val loss: LossFunction,
                          val regularizer: Regularizer) extends Serializable {
 
-  val data:Any //Data Type depends on the optimizer
+  val data: Any
+
+  //Data Type depends on the optimizer
   def optimize(): Vector[Double]
 }
