@@ -37,8 +37,8 @@ object PrepareData {
 
     //Load data
     val (train, test) = method match {
-      case "Classification" => Utils.loadAbsolutLibSVMForBinaryClassification(dataset, numPartitions, sc)
-      case "Regression" => Utils.loadAbsolutLibSVMForRegression(dataset, numPartitions, sc)
+      case "Classification" => Utils.loadAbsolutLibSVMBinaryClassification(dataset, numPartitions, sc)
+      case "Regression" => Utils.loadAbsolutLibSVMRegression(dataset, numPartitions, sc)
       case _ => throw new IllegalArgumentException("The method " + method + " is not supported.")
     }
     MLUtils.saveAsLibSVMFile(train, workingDir + "train")
