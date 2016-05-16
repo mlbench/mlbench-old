@@ -8,7 +8,10 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 import java.io._
 
+import scalax.file.Path
 import utils.Functions.ElasticNet
+
+import scala.util.Try
 
 class RunParser(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(arguments) {
   val dir = opt[String](required = true, default = Some("../results/"), short = 'w', descr = "working directory where results " +

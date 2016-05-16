@@ -3,6 +3,9 @@ import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.{SparkConf, SparkContext}
 import utils.Utils
 
+import scala.util.Try
+import scalax.file.Path
+
 /**
   * Created by amirreza on 07/05/16.
   */
@@ -41,6 +44,11 @@ object PrepareData {
       case "Regression" => Utils.loadAbsolutLibSVMRegression(dataset, numPartitions, sc)
       case _ => throw new IllegalArgumentException("The method " + method + " is not supported.")
     }
+
+    val trainPath: Path = Path.fromString(workingDir + "train")
+    Try(trainPath.deleteRecursively(continueOnFailure = false))
+    val testPath: Path = Path.fromString(workingDir + "test")
+    Try(testPath.deleteRecursively(continueOnFailure = false))
     MLUtils.saveAsLibSVMFile(train, workingDir + "train")
     MLUtils.saveAsLibSVMFile(test, workingDir + "test")
   }
