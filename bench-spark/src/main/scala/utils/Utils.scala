@@ -16,7 +16,7 @@ import org.apache.spark.rdd.RDD
 object Utils {
   def loadLibSVMFromDir(dir: String, sc: SparkContext): RDD[LabeledPoint] = {
     val files = (new File(dir)).listFiles.filter(_.getName.startsWith("part")).map(_.getName)
-    return files.map(part => MLUtils.loadLibSVMFile(sc, dir + part).repartition(1)).reduceLeft(_.union(_))
+    return files.map(part => MLUtils.loadLibSVMFile(sc, dir + part)).reduceLeft(_.union(_))
   }
   def loadAbsolutLibSVMRegression(dataset: String, numPartitions: Int = 4, sc: SparkContext):
   (RDD[LabeledPoint], RDD[LabeledPoint]) = {
