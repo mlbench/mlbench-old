@@ -20,48 +20,14 @@ object Utils {
     val files = (new File(dir)).listFiles.filter(_.getName.startsWith("part")).map(_.getName)
     return files.map(part => MLUtils.loadLibSVMFile(sc, dir + part).repartition(1)).reduceLeft(_.union(_))
   }
-
-  def loadRawDataset(dataset: String, sc: SparkContext): RDD[LabeledPoint] = {
-    // get projectPath from config
-    val xml = XML.loadFile("configs.xml")
-    val projectPath = (xml \\ "config" \\ "projectpath") text
-    val datasetPath = projectPath + (if (projectPath.endsWith("/")) "" else "/") + "datasets/" + dataset
-    //Load data
-    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, datasetPath)
-    return data
-  }
-
-  def loadLibSVMForBinaryClassification(dataset: String, numPartitions: Int = 4, sc: SparkContext):
-  (RDD[LabeledPoint], RDD[LabeledPoint]) = {
-    val data = loadRawDataset(dataset, sc)
-    //Take only two class with labels -1 and +1 for binary classification
-    val points = data.filter(p => p.label == 3.0 || p.label == 2.0).
-      map(p => if (p.label == 2.0) LabeledPoint(-1.0, p.features)
-      else LabeledPoint(+1.0, p.features)).repartition(numPartitions)
-
-    val Array(train, test) = points.randomSplit(Array(0.8, 0.2), seed = 13)
-    return (train, test)
-  }
-
-  def loadLibSVMBinaryClassification(dataset: String, numPartitions: Int = 4, sc: SparkContext):
-  (RDD[LabeledPoint], RDD[LabeledPoint]) = {
-    val data = loadRawDataset(dataset, sc)
-    val Array(train, test) = data.randomSplit(Array(0.8, 0.2), seed = 13)
-    return (train, test)
-  }
-
-  def loadLibSVMRegression(dataset: String, numPartitions: Int = 4, sc: SparkContext):
-  (RDD[LabeledPoint], RDD[LabeledPoint]) = {
-    val xml = XML.loadFile("configs.xml")
-    val projectPath = (xml \\ "config" \\ "projectpath") text
-    //Load data
-    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc,
-      projectPath + "datasets/" + dataset).repartition(numPartitions)
-    val Array(train, test) = data.randomSplit(Array(0.8, 0.2), seed = 13)
-    return (train, test)
-  }
-
   def loadAbsolutLibSVMRegression(dataset: String, numPartitions: Int = 4, sc: SparkContext):
+  (RDD[LabeledPoint], RDD[LabeledPoint]) = {
+    //Load data
+    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, dataset).repartition(numPartitions)
+    val Array(train, test) = data.randomSplit(Array(0.8, 0.2), seed = 13)
+    return (train, test)
+  }
+  def loadAbsolutLibSVMBinaryClassification(dataset: String, numPartitions: Int = 4, sc: SparkContext):
   (RDD[LabeledPoint], RDD[LabeledPoint]) = {
     //Load data
     val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, dataset).repartition(numPartitions)
@@ -81,15 +47,6 @@ object Utils {
     val Array(train, test) = points.randomSplit(Array(0.8, 0.2), seed = 13)
     return (train, test)
   }
-
-  def loadAbsolutLibSVMBinaryClassification(dataset: String, numPartitions: Int = 4, sc: SparkContext):
-  (RDD[LabeledPoint], RDD[LabeledPoint]) = {
-    //Load data
-    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, dataset).repartition(numPartitions)
-    val Array(train, test) = data.randomSplit(Array(0.8, 0.2), seed = 13)
-    return (train, test)
-  }
-
   def toProxCocoaTranspose(data: RDD[LabeledPoint]): ProxCocoaDataMatrix = {
     val numEx = data.count().toInt
     val myData: RDD[(Double, Array[(Int, (Int, Double))])] = data.zipWithIndex().
