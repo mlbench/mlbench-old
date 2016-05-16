@@ -7,11 +7,7 @@ import org.apache.spark._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 import java.io._
-
-import scalax.file.Path
 import utils.Functions.ElasticNet
-
-import scala.util.Try
 
 class RunParser(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(arguments) {
   val dir = opt[String](required = true, default = Some("../results/"), short = 'w', descr = "working directory where results " +
@@ -46,8 +42,9 @@ object RUN {
       case "Elastic_ProxCocoa" => {
         val l1net = new Elastic_ProxCOCOA(train, test)
         val w = l1net.fit()
-        bw.write("Elastic_ProxCocoa: " + w.toDenseVector + " elapsed: " + l1net.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1net.regularizer.lambda + " alpha: " + l1net.regularizer.asInstanceOf[ElasticNet].alpha)
+        bw.write("Elastic_ProxCocoa: " + "lambda: " +
+          l1net.regularizer.lambda + " alpha: " + l1net.regularizer.asInstanceOf[ElasticNet].alpha + " elapsed: " +
+          l1net.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector)
         bw.newLine()
         val objective = l1net.getObjective(w.toDenseVector, train)
         val error1 = l1net.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -60,8 +57,8 @@ object RUN {
       case "L1_Lasso_ProxCocoa" => {
         val l1lasso = new L1_Lasso_ProxCocoa(train, test)
         val w = l1lasso.fit()
-        bw.write("L1_Lasso_ProxCocoa: " + w.toDenseVector + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lasso.regularizer.lambda)
+        bw.write("L1_Lasso_ProxCocoa: " + "lambda: " +
+          l1lasso.regularizer.lambda + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lasso.getObjective(w.toDenseVector, train)
         val error1 = l1lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -74,8 +71,8 @@ object RUN {
       case "L1_Lasso_GD" => {
         val l1lasso = new L1_Lasso_GD(train)
         val w = l1lasso.fit()
-        bw.write("L1_Lasso_GD: " + w + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lasso.regularizer.lambda)
+        bw.write("L1_Lasso_GD: " + "lambda: " +
+          l1lasso.regularizer.lambda + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lasso.getObjective(w.toDenseVector, train)
         val error1 = l1lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -88,8 +85,8 @@ object RUN {
       case "L1_Lasso_SGD" => {
         val l1lasso = new L1_Lasso_SGD(train)
         val w = l1lasso.fit()
-        bw.write("L1_Lasso_SGD: " + w + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lasso.regularizer.lambda)
+        bw.write("L1_Lasso_SGD: " + "lambda: " +
+          l1lasso.regularizer.lambda + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lasso.getObjective(w.toDenseVector, train)
         val error = l1lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -102,8 +99,8 @@ object RUN {
       case "L2_SVM_SGD" => {
         val l2svm = new L2_SVM_SGD(train)
         val w = l2svm.train()
-        bw.write("L2_SVM_SGD: " + w + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l2svm.regularizer.lambda)
+        bw.write("L2_SVM_SGD: " + "lambda: " +
+          l2svm.regularizer.lambda + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l2svm.getObjective(w.toDenseVector, train)
         val error = l2svm.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -116,8 +113,8 @@ object RUN {
       case "L2_SVM_GD" => {
         val l2svm = new L2_SVM_GD(train)
         val w = l2svm.train()
-        bw.write("L2_SVM_GD: " + w + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l2svm.regularizer.lambda)
+        bw.write("L2_SVM_GD: " + "lambda: " +
+          l2svm.regularizer.lambda + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l2svm.getObjective(w.toDenseVector, train)
         val error = l2svm.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -130,8 +127,8 @@ object RUN {
       case "L2_LR_SGD" => {
         val l2lr = new L2_LR_SGD(train)
         val w = l2lr.train()
-        bw.write("L2_LR_SGD: " + w + " elapsed: " + l2lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l2lr.regularizer.lambda)
+        bw.write("L2_LR_SGD: " + "lambda: " +
+          l2lr.regularizer.lambda + " elapsed: " + l2lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l2lr.getObjective(w.toDenseVector, train)
         val error = l2lr.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -144,8 +141,8 @@ object RUN {
       case "L2_LR_GD" => {
         val l2lr = new L2_LR_GD(train)
         val w = l2lr.train()
-        bw.write("L2_LR_GD: " + w + " elapsed: " + l2lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l2lr.regularizer.lambda)
+        bw.write("L2_LR_GD: " + "lambda: " +
+          l2lr.regularizer.lambda + " elapsed: " + l2lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l2lr.getObjective(w.toDenseVector, train)
         val error = l2lr.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -158,8 +155,8 @@ object RUN {
       case "L1_LR_SGD" => {
         val l1lr = new L1_LR_SGD(train)
         val w = l1lr.train()
-        bw.write("L1_LR_SGD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lr.regularizer.lambda)
+        bw.write("L1_LR_SGD: " + "lambda: " +
+          l1lr.regularizer.lambda + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, train)
         val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -172,8 +169,8 @@ object RUN {
       case "L1_LR_GD" => {
         val l1lr = new L1_LR_GD(train)
         val w = l1lr.train()
-        bw.write("L1_LR_GD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lr.regularizer.lambda)
+        bw.write("L1_LR_GD: " + "lambda: " +
+          l1lr.regularizer.lambda + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, train)
         val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -186,8 +183,8 @@ object RUN {
       case "L2_SVM_Cocoa" => {
         val l2svm = new L2_SVM_COCOA(train, test, false)
         val w = l2svm.train()
-        bw.write("L2_SVM_Cocoa: " + w.toDenseVector + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l2svm.regularizer.lambda)
+        bw.write("L2_SVM_Cocoa: " + "lambda: " +
+          l2svm.regularizer.lambda + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l2svm.getObjective(w.toDenseVector, train)
         val error = l2svm.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -200,8 +197,8 @@ object RUN {
       case "Mllib_Lasso_SGD" => {
         val lasso = new Mllib_Lasso_SGD(train)
         val w = lasso.fit()
-        bw.write("Mllib_Lasso_SGD: " + w + " elapsed: " + lasso.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          lasso.regularizer.lambda)
+        bw.write("Mllib_Lasso_SGD: " + "lambda: " +
+          lasso.regularizer.lambda + " elapsed: " + lasso.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = lasso.getObjective(w.toDenseVector, train)
         val error = lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -214,8 +211,8 @@ object RUN {
       case "Mllib_Lasso_GD" => {
         val lasso = new Mllib_Lasso_GD(train)
         val w = lasso.fit()
-        bw.write("Mllib_Lasso_GD: " + w + " elapsed: " + lasso.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          lasso.regularizer.lambda)
+        bw.write("Mllib_Lasso_GD: " + "lambda: " +
+          lasso.regularizer.lambda + " elapsed: " + lasso.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = lasso.getObjective(w.toDenseVector, train)
         val error = lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -228,6 +225,8 @@ object RUN {
       case "Mllib_L2_LR_LBFGS" => {
         val lbfgs = new Mllib_L2_LR_LBFGS(train)
         val w = lbfgs.train()
+        bw.write("Mllib_L2_LR_LBFGS: " + "lambda: " +
+          lbfgs.regularizer.lambda + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.write("Mllib_L2_LR_LBFGS: " + w + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
           lbfgs.regularizer.lambda)
         bw.newLine()
@@ -242,8 +241,8 @@ object RUN {
       case "Mllib_L1_LR_LBFGS" => {
         val lbfgs = new Mllib_L1_LR_LBFGS(train)
         val w = lbfgs.train()
-        bw.write("Mllib_L1_LR_LBFGS: " + w + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          lbfgs.regularizer.lambda)
+        bw.write("Mllib_L1_LR_LBFGS: " + "lambda: " +
+          lbfgs.regularizer.lambda + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = lbfgs.getObjective(w.toDenseVector, train)
         val error = lbfgs.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -257,8 +256,8 @@ object RUN {
       case "Mllib_L1_LR_GD" => {
         val l1lr = new Mllib_L1_LR_GD(train)
         val w = l1lr.train()
-        bw.write("Mllib_L1_LR_GD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lr.regularizer.lambda)
+        bw.write("Mllib_L1_LR_GD: " + "lambda: " +
+          l1lr.regularizer.lambda + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, train)
         val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -271,8 +270,8 @@ object RUN {
       case "Mllib_L1_LR_SGD" => {
         val l1lr = new Mllib_L1_LR_SGD(train)
         val w = l1lr.train()
-        bw.write("Mllib_L1_LR_SGD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lr.regularizer.lambda)
+        bw.write("Mllib_L1_LR_SGD: " + "lambda: " +
+          l1lr.regularizer.lambda + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, train)
         val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -285,8 +284,8 @@ object RUN {
       case "Mllib_L2_LR_SGD" => {
         val l1lr = new Mllib_L2_LR_SGD(train)
         val w = l1lr.train()
-        bw.write("Mllib_L2_LR_SGD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lr.regularizer.lambda)
+        bw.write("Mllib_L2_LR_SGD: " + "lambda: " +
+          l1lr.regularizer.lambda + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, train)
         val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -299,8 +298,8 @@ object RUN {
       case "Mllib_L2_LR_GD" => {
         val l1lr = new Mllib_L2_LR_GD(train)
         val w = l1lr.train()
-        bw.write("Mllib_L2_LR_GD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lr.regularizer.lambda)
+        bw.write("Mllib_L2_LR_GD: " + "lambda: " +
+          l1lr.regularizer.lambda + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, train)
         val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -313,8 +312,8 @@ object RUN {
       case "Mllib_L2_SVM_SGD" => {
         val l1lr = new Mllib_L2_SVM_SGD(train)
         val w = l1lr.train()
-        bw.write("Mllib_L2_SVM_SGD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lr.regularizer.lambda)
+        bw.write("Mllib_L2_SVM_SGD: " + "lambda: " +
+          l1lr.regularizer.lambda + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, train)
         val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))
@@ -328,8 +327,8 @@ object RUN {
       case "Mllib_L2_SVM_GD" => {
         val l1lr = new Mllib_L2_SVM_GD(train)
         val w = l1lr.train()
-        bw.write("Mllib_L2_SVM_GD: " + w + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + "lambda: " +
-          l1lr.regularizer.lambda)
+        bw.write("Mllib_L2_SVM_GD: " + "lambda: " +
+          l1lr.regularizer.lambda + " elapsed: " + l1lr.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
         val objective = l1lr.getObjective(w.toDenseVector, train)
         val error = l1lr.testError(w, test.map(p => p.features), test.map(p => p.label))

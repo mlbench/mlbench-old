@@ -33,12 +33,12 @@ object Evaluate {
     val parser = new EvalParser(args)
     val workinDir = parser.dir()
     val inputLines = Source.fromFile(workinDir + "res.out").getLines.toList
-    val pattern = "^([^:]+): .*Vector\\((.*)\\) elapsed: ([0-9]*)ms (.*)".r
+    val pattern = "^([^:]+): (.*) elapsed: ([0-9]*)ms .*Vector\\((.*)\\)".r
 
     val train: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workinDir + "train/", sc)
 
     inputLines.foreach { line =>
-      val pattern(method, weights_row, elapsed_row, regs) = line
+      val pattern(method, regs, elapsed_row, weights_row) = line
       val weights = DenseVector(weights_row.split(",").map(_.trim).map(_.toDouble))
       val elapsed = elapsed_row.toInt
 
