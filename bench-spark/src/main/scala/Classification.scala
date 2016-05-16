@@ -118,7 +118,8 @@ object Classification {
                          lambda: Double = DEFAULT_LABMDA,
                          params: SGDParameters = new SGDParameters(miniBatchFraction = DEFAULT_BATCH_FRACTION))
     extends LinearClassifier(new HingeLoss, new L2Regularizer(lambda)) with Serializable {
-    val optimizer = new MllibSGD(data, loss, regularizer, params, "SVM")
+    val mllibData = Utils.toMllibClassificationlabeling(data)
+    val optimizer = new MllibSGD(mllibData, loss, regularizer, params, "SVM")
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
@@ -126,7 +127,8 @@ object Classification {
                         lambda: Double = DEFAULT_LABMDA,
                         params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearClassifier(new HingeLoss, new L2Regularizer(lambda)) with Serializable {
-    val optimizer = new MllibSGD(data, loss, regularizer, params, "SVM")
+    val mllibData = Utils.toMllibClassificationlabeling(data)
+    val optimizer = new MllibSGD(mllibData, loss, regularizer, params, "SVM")
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
@@ -134,7 +136,8 @@ object Classification {
                         lambda: Double = DEFAULT_LABMDA,
                         params: SGDParameters = new SGDParameters(miniBatchFraction = DEFAULT_BATCH_FRACTION))
     extends LinearClassifier(new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
-    val optimizer = new MllibSGD(data, loss, regularizer, params, "LR")
+    val mllibData = Utils.toMllibClassificationlabeling(data)
+    val optimizer = new MllibSGD(mllibData, loss, regularizer, params, "LR")
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
@@ -142,7 +145,8 @@ object Classification {
                        lambda: Double = DEFAULT_LABMDA,
                        params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearClassifier(new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
-    val optimizer = new MllibSGD(data, loss, regularizer, params, "LR")
+    val mllibData = Utils.toMllibClassificationlabeling(data)
+    val optimizer = new MllibSGD(mllibData, loss, regularizer, params, "LR")
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
@@ -151,7 +155,8 @@ object Classification {
                         lambda: Double = DEFAULT_LABMDA,
                         params: SGDParameters = new SGDParameters(miniBatchFraction = DEFAULT_BATCH_FRACTION))
     extends LinearClassifier(new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
-    val optimizer = new MllibSGD(data, loss, regularizer, params, "LR")
+    val mllibData = Utils.toMllibClassificationlabeling(data)
+    val optimizer = new MllibSGD(mllibData, loss, regularizer, params, "LR")
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
   }
 
@@ -159,7 +164,8 @@ object Classification {
                        lambda: Double = DEFAULT_LABMDA,
                        params: SGDParameters = new SGDParameters(miniBatchFraction = 1.0))
     extends LinearClassifier(new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
-    val optimizer = new MllibSGD(data, loss, regularizer, params, "LR")
+    val mllibData = Utils.toMllibClassificationlabeling(data)
+    val optimizer = new MllibSGD(mllibData, loss, regularizer, params, "LR")
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
@@ -167,14 +173,16 @@ object Classification {
                           lambda: Double = DEFAULT_LABMDA,
                           params: LBFGSParameters = new LBFGSParameters)
     extends LinearClassifier(new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
-    val optimizer = new MllibLBFGS(data, loss, regularizer, params)
+    val mllibData = Utils.toMllibClassificationlabeling(data)
+    val optimizer = new MllibLBFGS(mllibData, loss, regularizer, params)
   }
 
   class Mllib_L2_LR_LBFGS(data: RDD[LabeledPoint],
                           lambda: Double = DEFAULT_LABMDA,
                           params: LBFGSParameters = new LBFGSParameters)
     extends LinearClassifier(new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
-    val optimizer = new MllibLBFGS(data, loss, regularizer, params)
+    val mllibData = Utils.toMllibClassificationlabeling(data)
+    val optimizer = new MllibLBFGS(mllibData, loss, regularizer, params)
   }
 
 }

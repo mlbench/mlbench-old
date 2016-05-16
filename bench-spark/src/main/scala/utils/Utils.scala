@@ -10,8 +10,6 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 
-import scala.xml.XML
-
 /**
   * Created by amirreza on 12/04/16.
   */
@@ -46,6 +44,11 @@ object Utils {
 
     val Array(train, test) = points.randomSplit(Array(0.8, 0.2), seed = 13)
     return (train, test)
+  }
+  def toMllibClassificationlabeling(data: RDD[LabeledPoint]): RDD[LabeledPoint] = {
+    val points = data.map(p => if(p.label == -1) LabeledPoint(0, p.features)
+    else LabeledPoint(p.label, p.features))
+    return points
   }
   def toProxCocoaTranspose(data: RDD[LabeledPoint]): ProxCocoaDataMatrix = {
     val numEx = data.count().toInt
