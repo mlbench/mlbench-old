@@ -34,7 +34,7 @@ object PrepareData {
     //Parse arguments
     val parser = new PrepArgParser(args)
     val dataset = parser.dataset()
-    val workingDir = parser.dir()
+    var workingDir = parser.dir()
     val numPartitions = parser.partitions()
     val method = parser.method()
 
@@ -45,6 +45,8 @@ object PrepareData {
       case _ => throw new IllegalArgumentException("The method " + method + " is not supported.")
     }
 
+    // append "/" to workingDir if necessary
+    workingDir = workingDir + ( if (workingDir.takeRight(1) != "/") "/" else "" )
     val trainPath: Path = Path.fromString(workingDir + "train")
     Try(trainPath.deleteRecursively(continueOnFailure = false))
     val testPath: Path = Path.fromString(workingDir + "test")

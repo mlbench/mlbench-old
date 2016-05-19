@@ -7,6 +7,8 @@ import breeze.linalg.{DenseVector, SparseVector}
 import l1distopt.utils.{DebugParams, Params}
 import optimizers.{CocoaParameters, LBFGSParameters, ProxCocoaParameters, SGDParameters}
 import org.apache.spark.SparkContext
+import org.apache.spark.mllib.random._
+import org.apache.spark.mllib.linalg.{Vectors, Vector}
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
@@ -178,4 +180,58 @@ object Utils {
     require(params.eta == 1.0, "eta must be 1 for L1-regularization")
     params
   }
+
+
+  // Data generation function for linear regression.
+  // Function forked from spark-perf project.
+
+  def generateLabeledPoints(
+    sc: SparkContext,
+    numRows: Long,
+    numCols: Int,
+    intercept: Double,
+    labelNoise: Double,
+    numPartitions: Int,
+    seed: Long = System.currentTimeMillis(),
+    problem: String = ""): RDD[LabeledPoint] = {
+
+    RandomRDDs.randomRDD(sc, new LinearDataGenerator(numCols,intercept, seed, labelNoise, problem),
+      numRows, numPartitions, seed)
+  }
+
+  class LinearDataGenerator(
+    val numFeatures: Int,
+    val intercept: Double,
+    val seed: Long,
+    val labelNoise: Double,
+    val problem: String = "",
+    val sparsity: Double = 1.0) extends RandomDataGenerator[LabeledPoint] {
+
+    private val rng = new java.util.Random(seed)
+    private val weights = Array.fill(numFeatures)(rng.nextDouble())
+    private val nnz: Int = math.ceil(numFeatures*sparsity).toInt
+
+    override def nextValue(): LabeledPoint = {
+      val x = Array.fill[Double](nnz)(2*rng.nextDouble()-1)
+
+      val y = weights.zip(x).map(p => p._1 * p._2).sum + intercept + labelNoise*rng.nextGaussian()
+      val yD =
+        if (problem == "SVM"){
+          if (y < 0.0) 0.0 else 1.0
+        } else{
+          y
+        }
+
+      LabeledPoint(yD, Vectors.dense(x))
+    }
+
+    override def setSeed(seed: Long) {
+      rng.setSeed(seed)
+    }
+
+    override def copy(): LinearDataGenerator =
+      new LinearDataGenerator(numFeatures, intercept, seed, labelNoise, problem, sparsity)
+    }
+
+
 }
