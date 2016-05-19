@@ -5,19 +5,39 @@ import java.io.File
 import Functions.{CocoaLabeledPoint, ProxCocoaDataMatrix, ProxCocoaLabeledPoint}
 import breeze.linalg.{DenseVector, SparseVector}
 import l1distopt.utils.{DebugParams, Params}
+import optimizers.{CocoaParameters, LBFGSParameters, ProxCocoaParameters, SGDParameters}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 
+import scala.xml.XML
+
 /**
   * Created by amirreza on 12/04/16.
   */
 object Utils {
+  /**
+    * Loads all different partitions already saved using MLUtils.saveAsLibSVMFile(...) contained in directory given by
+    * argument. Name of all partitions starts with part*.
+    *
+    * @param dir directory in which partitions are saved.
+    * @param sc SparkContext
+    * @return RDD[LabeledPoint] containing all partitions
+    */
   def loadLibSVMFromDir(dir: String, sc: SparkContext): RDD[LabeledPoint] = {
     val files = (new File(dir)).listFiles.filter(_.getName.startsWith("part")).map(_.getName)
     return files.map(part => MLUtils.loadLibSVMFile(sc, dir + part)).reduceLeft(_.union(_))
   }
+
+  /**
+    * Loads LibSvm dataset and split it to train 4/5th and test with 1/5th
+    *
+    * @param dataset absolute address of the LibSvm dataset
+    * @param numPartitions
+    * @param sc SparkContext
+    * @return train and test data split from original data
+    */
   def loadAbsolutLibSVMRegression(dataset: String, numPartitions: Int = 4, sc: SparkContext):
   (RDD[LabeledPoint], RDD[LabeledPoint]) = {
     //Load data
@@ -71,66 +91,91 @@ object Utils {
     data.map(p => distopt.utils.LabeledPoint(p.label, SparseVector(p.features.toArray.map(x => x.toDouble))))
   }
 
-
-  def defaultL1ProxParams(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): (
-    l1distopt.utils.Params, l1distopt.utils.DebugParams) = {
-    val seed = 13
-    //Regularization parameters
-    val lambda = 0.1
-    val eta = 1.0
-    //optimization parameters
-    val iterations = 100
-    val localIterFrac = 0.9
-    val debugIter = 10
-    val force_cache = train.count().toInt
-    val n = train.count().toInt
-    var localIters = (localIterFrac * train.first().features.size / train.partitions.size).toInt
-    localIters = Math.max(localIters, 1)
-    val alphaInit = SparseVector.zeros[Double](10)
-    val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
-    val debug = DebugParams(Utils.toProxCocoaFormat(test), debugIter, seed)
-    return (proxParams, debug)
-  }
-
-
-  def defaultCocoa(train: RDD[LabeledPoint], test: RDD[LabeledPoint]):
-  (distopt.utils.Params, distopt.utils.DebugParams) = {
-    val lambda = 0.01
-    val numRounds = 200 // number of outer iterations, called T in the paper
-    val localIterFrac = 1.0 // fraction of local points to be processed per round, H = localIterFrac * n
-    val beta = 1.0 // scaling parameter when combining the updates of the workers (1=averaging for CoCoA)
-    val gamma = 1.0 // aggregation parameter for CoCoA+ (1=adding, 1/K=averaging)
+  def defaultDebugCocoa(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): distopt.utils.DebugParams = {
     val debugIter = 10 // set to -1 to turn off debugging output
     val seed = 13 // set seed for debug purposes
-    val n = train.count().toInt
-    var localIters = (localIterFrac * n / train.partitions.size).toInt
-    localIters = Math.max(localIters, 1)
     var chkptIter = 100
-    val wInit = DenseVector.zeros[Double](train.first().features.size)
-    // set to solve hingeloss SVM
-    val loss = distopt.utils.OptUtils.hingeLoss _
-    val params = distopt.utils.Params(loss, n, wInit, numRounds, localIters, lambda, beta, gamma)
     val debug = distopt.utils.DebugParams(Utils.toCocoaFormat(test), debugIter, seed, chkptIter)
-    return (params, debug)
+    return debug
   }
 
-  def defaultElasticProxParams(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): (
-    l1distopt.utils.Params, l1distopt.utils.DebugParams) = {
+  def defaultDebugProxCocoa(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): l1distopt.utils.DebugParams = {
     val seed = 13
-    //Regularization parameters
-    val lambda = 0.1
-    val eta = 0.5
-    //optimization parameters
-    val iterations = 100
-    val localIterFrac = 0.9
     val debugIter = 10
-    val force_cache = train.count().toInt
-    val n = train.count().toInt
-    var localIters = (localIterFrac * train.first().features.size / train.partitions.size).toInt
-    localIters = Math.max(localIters, 1)
-    val alphaInit = SparseVector.zeros[Double](10)
-    val proxParams = Params(alphaInit, n, iterations, localIters, lambda, eta)
     val debug = DebugParams(Utils.toProxCocoaFormat(test), debugIter, seed)
-    return (proxParams, debug)
+    return debug
+  }
+
+  def readGDParameters(workingDir: String): SGDParameters ={
+    val params = new SGDParameters(miniBatchFraction = 1.0)
+    if(new java.io.File(workingDir + "parameters.xml").exists()) {
+      val xml = XML.loadFile(workingDir + "parameters.xml")
+      params.iterations = (xml \\ "Parameters" \\ "GDParameters" \\ "iterations").text.toInt
+      params.miniBatchFraction = (xml \\ "Parameters" \\ "GDParameters" \\ "miniBatchFraction").text.toDouble
+      params.stepSize = (xml \\ "Parameters" \\ "GDParameters" \\ "stepSize").text.toDouble
+      params.seed = (xml \\ "Parameters" \\ "GDParameters" \\ "seed").text.toInt
+    }
+    require(params.miniBatchFraction == 1.0, s"Use optimizers.SGD for miniBatchFraction less than 1.0")
+    params
+  }
+  def readSGDParameters(workingDir: String): SGDParameters = {
+    val params = new SGDParameters(miniBatchFraction = Functions.DEFAULT_BATCH_FRACTION)
+    if(new java.io.File(workingDir + "parameters.xml").exists()) {
+      val xml = XML.loadFile(workingDir + "parameters.xml")
+      params.iterations = (xml \\ "Parameters" \\ "SGDParameters" \\ "iterations").text.toInt
+      params.miniBatchFraction = (xml \\ "Parameters"  \\ "SGDParameters" \\ "miniBatchFraction").text.toDouble
+      params.stepSize = (xml \\ "Parameters" \\ "SGDParameters" \\ "stepSize").text.toDouble
+      params.seed = (xml \\ "Parameters" \\ "SGDParameters" \\ "seed").text.toInt
+    }
+    require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
+    params
+  }
+  def readLBFGSParameters(workingDir: String): LBFGSParameters = {
+    val params = new LBFGSParameters()
+    if(new java.io.File(workingDir + "parameters.xml").exists()) {
+      val xml = XML.loadFile(workingDir + "parameters.xml")
+
+      params.iterations = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "iterations").text.toInt
+      params.numCorrections = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "numCorrections").text.toInt
+      params.convergenceTol = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "convergenceTol").text.toDouble
+      params.seed = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "seed").text.toInt
+    }
+    params
+  }
+  def readCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): CocoaParameters = {
+    val params = new CocoaParameters(train, test)
+    if(new java.io.File(workingDir + "parameters.xml").exists()) {
+      val xml = XML.loadFile(workingDir + "parameters.xml")
+      params.numRounds = (xml \\ "Parameters" \\ "CocoaParameters" \\ "numRounds").text.toInt
+      params.localIterFrac = (xml \\ "Parameters" \\ "CocoaParameters" \\ "localIterFrac").text.toDouble
+      params.lambda = (xml \\ "Parameters" \\ "CocoaParameters" \\ "lambda").text.toDouble
+      params.beta = (xml \\ "Parameters" \\ "CocoaParameters" \\ "beta").text.toDouble
+      params.gamma = (xml \\ "Parameters" \\ "CocoaParameters" \\ "gamma").text.toDouble
+    }
+    params
+  }
+
+  def readElasticProxCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): ProxCocoaParameters = {
+    val params = new ProxCocoaParameters(train, test)
+    if(new java.io.File(workingDir + "parameters.xml").exists()) {
+      val xml = XML.loadFile(workingDir + "parameters.xml")
+      params.iterations = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "iterations").text.toInt
+      params.localIterFrac = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "localIterFrac").text.toDouble
+      params.lambda = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "lambda").text.toDouble
+      params.eta = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "eta").text.toDouble
+    }
+    params
+  }
+  def readL1ProxCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): ProxCocoaParameters = {
+    val params = new ProxCocoaParameters(train, test)
+    if(new java.io.File(workingDir + "parameters.xml").exists()) {
+      val xml = XML.loadFile(workingDir + "parameters.xml")
+      params.iterations = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "iterations").text.toInt
+      params.localIterFrac = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "localIterFrac").text.toDouble
+      params.lambda = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "lambda").text.toDouble
+      params.eta = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "eta").text.toDouble
+    }
+    require(params.eta == 1.0, "eta must be 1 for L1-regularization")
+    params
   }
 }
