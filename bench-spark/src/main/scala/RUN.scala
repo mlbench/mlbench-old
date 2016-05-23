@@ -255,6 +255,7 @@ object RUN {
     log.write("ElasticProx:" + elasticparams.toString)
     log.newLine()
     log.write("L1LassoProx" + l1cocoaparams.toString)
+    log.close()
     sc.stop()
   }
 }
