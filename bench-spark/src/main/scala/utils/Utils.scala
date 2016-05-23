@@ -4,11 +4,11 @@ import java.io.File
 
 import Functions.{CocoaLabeledPoint, ProxCocoaDataMatrix, ProxCocoaLabeledPoint}
 import breeze.linalg.{DenseVector, SparseVector}
-import l1distopt.utils.{DebugParams, Params}
+import l1distopt.utils.{DebugParams}
 import optimizers.{CocoaParameters, LBFGSParameters, ProxCocoaParameters, SGDParameters}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.random._
-import org.apache.spark.mllib.linalg.{Vectors, Vector}
+import org.apache.spark.mllib.linalg.{Vectors}
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
@@ -112,10 +112,14 @@ object Utils {
     val params = new SGDParameters(miniBatchFraction = 1.0)
     if(new java.io.File(workingDir + "parameters.xml").exists()) {
       val xml = XML.loadFile(workingDir + "parameters.xml")
-      params.iterations = (xml \\ "Parameters" \\ "GDParameters" \\ "iterations").text.toInt
-      params.miniBatchFraction = (xml \\ "Parameters" \\ "GDParameters" \\ "miniBatchFraction").text.toDouble
-      params.stepSize = (xml \\ "Parameters" \\ "GDParameters" \\ "stepSize").text.toDouble
-      params.seed = (xml \\ "Parameters" \\ "GDParameters" \\ "seed").text.toInt
+      if((xml \\ "Parameters" \\ "GDParameters" \\ "iterations").text != "")
+        params.iterations = (xml \\ "Parameters" \\ "GDParameters" \\ "iterations").text.toInt
+      if((xml \\ "Parameters" \\ "GDParameters" \\ "miniBatchFraction").text != "")
+        params.miniBatchFraction = (xml \\ "Parameters" \\ "GDParameters" \\ "miniBatchFraction").text.toDouble
+      if((xml \\ "Parameters" \\ "GDParameters" \\ "stepSize").text != "")
+        params.stepSize = (xml \\ "Parameters" \\ "GDParameters" \\ "stepSize").text.toDouble
+      if((xml \\ "Parameters" \\ "GDParameters" \\ "seed").text != "")
+        params.seed = (xml \\ "Parameters" \\ "GDParameters" \\ "seed").text.toInt
     }
     require(params.miniBatchFraction == 1.0, s"Use optimizers.SGD for miniBatchFraction less than 1.0")
     params
@@ -124,10 +128,14 @@ object Utils {
     val params = new SGDParameters(miniBatchFraction = Functions.DEFAULT_BATCH_FRACTION)
     if(new java.io.File(workingDir + "parameters.xml").exists()) {
       val xml = XML.loadFile(workingDir + "parameters.xml")
-      params.iterations = (xml \\ "Parameters" \\ "SGDParameters" \\ "iterations").text.toInt
-      params.miniBatchFraction = (xml \\ "Parameters"  \\ "SGDParameters" \\ "miniBatchFraction").text.toDouble
-      params.stepSize = (xml \\ "Parameters" \\ "SGDParameters" \\ "stepSize").text.toDouble
-      params.seed = (xml \\ "Parameters" \\ "SGDParameters" \\ "seed").text.toInt
+      if((xml \\ "Parameters" \\ "SGDParameters" \\ "iterations").text != "")
+        params.iterations = (xml \\ "Parameters" \\ "SGDParameters" \\ "iterations").text.toInt
+      if((xml \\ "Parameters" \\ "SGDParameters" \\ "miniBatchFraction").text != "")
+        params.miniBatchFraction = (xml \\ "Parameters"  \\ "SGDParameters" \\ "miniBatchFraction").text.toDouble
+      if((xml \\ "Parameters" \\ "SGDParameters" \\ "stepSize").text != "")
+        params.stepSize = (xml \\ "Parameters" \\ "SGDParameters" \\ "stepSize").text.toDouble
+      if((xml \\ "Parameters" \\ "SGDParameters" \\ "seed").text != "")
+        params.seed = (xml \\ "Parameters" \\ "SGDParameters" \\ "seed").text.toInt
     }
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
     params
@@ -137,10 +145,14 @@ object Utils {
     if(new java.io.File(workingDir + "parameters.xml").exists()) {
       val xml = XML.loadFile(workingDir + "parameters.xml")
 
-      params.iterations = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "iterations").text.toInt
-      params.numCorrections = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "numCorrections").text.toInt
-      params.convergenceTol = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "convergenceTol").text.toDouble
-      params.seed = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "seed").text.toInt
+      if((xml \\ "Parameters" \\ "LBFGSParameters" \\ "iterations").text != "")
+        params.iterations = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "iterations").text.toInt
+      if((xml \\ "Parameters" \\ "LBFGSParameters" \\ "numCorrections").text != "")
+        params.numCorrections = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "numCorrections").text.toInt
+      if((xml \\ "Parameters" \\ "LBFGSParameters" \\ "convergenceTol").text != "")
+        params.convergenceTol = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "convergenceTol").text.toDouble
+      if((xml \\ "Parameters" \\ "LBFGSParameters" \\ "seed").text != "")
+        params.seed = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "seed").text.toInt
     }
     params
   }
@@ -148,11 +160,16 @@ object Utils {
     val params = new CocoaParameters(train, test)
     if(new java.io.File(workingDir + "parameters.xml").exists()) {
       val xml = XML.loadFile(workingDir + "parameters.xml")
-      params.numRounds = (xml \\ "Parameters" \\ "CocoaParameters" \\ "numRounds").text.toInt
-      params.localIterFrac = (xml \\ "Parameters" \\ "CocoaParameters" \\ "localIterFrac").text.toDouble
-      params.lambda = (xml \\ "Parameters" \\ "CocoaParameters" \\ "lambda").text.toDouble
-      params.beta = (xml \\ "Parameters" \\ "CocoaParameters" \\ "beta").text.toDouble
-      params.gamma = (xml \\ "Parameters" \\ "CocoaParameters" \\ "gamma").text.toDouble
+      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "numRounds").text != "")
+        params.numRounds = (xml \\ "Parameters" \\ "CocoaParameters" \\ "numRounds").text.toInt
+      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "localIterFrac").text != "")
+        params.localIterFrac = (xml \\ "Parameters" \\ "CocoaParameters" \\ "localIterFrac").text.toDouble
+      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "lambda").text != "")
+        params.lambda = (xml \\ "Parameters" \\ "CocoaParameters" \\ "lambda").text.toDouble
+      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "beta").text != "")
+        params.beta = (xml \\ "Parameters" \\ "CocoaParameters" \\ "beta").text.toDouble
+      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "gamma").text != "")
+        params.gamma = (xml \\ "Parameters" \\ "CocoaParameters" \\ "gamma").text.toDouble
     }
     params
   }
@@ -161,21 +178,30 @@ object Utils {
     val params = new ProxCocoaParameters(train, test)
     if(new java.io.File(workingDir + "parameters.xml").exists()) {
       val xml = XML.loadFile(workingDir + "parameters.xml")
-      params.iterations = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "iterations").text.toInt
-      params.localIterFrac = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "localIterFrac").text.toDouble
-      params.lambda = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "lambda").text.toDouble
-      params.eta = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "eta").text.toDouble
+      if((xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "iterations").text != "")
+        params.iterations = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "iterations").text.toInt
+      if((xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "localIterFrac").text != "")
+        params.localIterFrac = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "localIterFrac").text.toDouble
+      if((xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "lambda").text != "")
+        params.lambda = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "lambda").text.toDouble
+      if((xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "eta").text != "")
+        params.eta = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "eta").text.toDouble
     }
     params
   }
   def readL1ProxCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): ProxCocoaParameters = {
     val params = new ProxCocoaParameters(train, test)
-    if(new java.io.File(workingDir + "parameters.xml").exists()) {
+    params.eta = 1.0
+      if(new java.io.File(workingDir + "parameters.xml").exists()) {
       val xml = XML.loadFile(workingDir + "parameters.xml")
-      params.iterations = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "iterations").text.toInt
-      params.localIterFrac = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "localIterFrac").text.toDouble
-      params.lambda = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "lambda").text.toDouble
-      params.eta = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "eta").text.toDouble
+      if((xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "iterations").text != "")
+        params.iterations = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "iterations").text.toInt
+      if((xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "localIterFrac").text != "")
+        params.localIterFrac = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "localIterFrac").text.toDouble
+      if((xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "lambda").text != "")
+        params.lambda = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "lambda").text.toDouble
+      if((xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "eta").text != "")
+        params.eta = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "eta").text.toDouble
     }
     require(params.eta == 1.0, "eta must be 1 for L1-regularization")
     params
