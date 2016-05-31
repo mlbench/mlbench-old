@@ -3,7 +3,7 @@ import java.io.Serializable
 import optimizers._
 import org.apache.spark.rdd.RDD
 import breeze.linalg.{DenseVector, Vector}
-import distopt.utils.{DebugParams, Params}
+import distopt.utils.DebugParams
 import org.apache.spark.mllib.regression.LabeledPoint
 import utils.Functions._
 import utils.Utils
@@ -98,7 +98,7 @@ object Classification {
 
   class L2_SVM_COCOA(train: RDD[LabeledPoint],
                      test: RDD[LabeledPoint],
-                     params: Params,
+                     params: CocoaParameters,
                      debug: DebugParams,
                      plus: Boolean)
     extends LinearClassifier(new HingeLoss, new L2Regularizer(params.lambda)) with Serializable {
@@ -106,7 +106,7 @@ object Classification {
     def this(train: RDD[LabeledPoint],
              test: RDD[LabeledPoint],
              plus: Boolean) {
-      this(train, test, Utils.defaultCocoa(train, test)._1, Utils.defaultCocoa(train, test)._2, plus)
+      this(train, test, new CocoaParameters(train, test), Utils.defaultDebugCocoa(train, test), plus)
     }
 
     val cocoaData = Utils.toCocoaFormat(train)

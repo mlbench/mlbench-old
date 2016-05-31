@@ -1,8 +1,8 @@
 import java.io.Serializable
 
 import breeze.linalg.{DenseVector, Vector}
-import l1distopt.utils.{DebugParams, Params}
-import optimizers.{MllibSGD, ProxCocoa, SGD, SGDParameters}
+import l1distopt.utils.DebugParams
+import optimizers._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 import utils.Functions._
@@ -59,12 +59,12 @@ object Regression {
 
   class Elastic_ProxCOCOA(train: RDD[LabeledPoint],
                           test: RDD[LabeledPoint],
-                          params: Params,
+                          params: ProxCocoaParameters,
                           debug: DebugParams)
     extends LinearRegression(new SquaredLoss, new ElasticNet(params.lambda, params.eta)) {
     def this(train: RDD[LabeledPoint],
              test: RDD[LabeledPoint]) {
-      this(train, test, Utils.defaultElasticProxParams(train, test)._1, Utils.defaultElasticProxParams(train, test)._2)
+      this(train, test, new ProxCocoaParameters(train, test), Utils.defaultDebugProxCocoa(train, test))
     }
 
     val dataProx = Utils.toProxCocoaTranspose(train)
@@ -73,13 +73,13 @@ object Regression {
 
   class L1_Lasso_ProxCocoa(train: RDD[LabeledPoint],
                            test: RDD[LabeledPoint],
-                           params: Params,
+                           params: ProxCocoaParameters,
                            debug: DebugParams)
     extends LinearRegression(new SquaredLoss, new ElasticNet(params.lambda, params.eta)) {
 
     def this(train: RDD[LabeledPoint],
              test: RDD[LabeledPoint]) {
-      this(train, test, Utils.defaultL1ProxParams(train, test)._1, Utils.defaultL1ProxParams(train, test)._2)
+      this(train, test, new ProxCocoaParameters(train ,test, eta = 1.0), Utils.defaultDebugProxCocoa(train, test))
     }
 
     val dataProx = Utils.toProxCocoaTranspose(train)
