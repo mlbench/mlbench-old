@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   "com.github.scala-incubator.io" %% "scala-io-file"           % "0.4.2",
   "org.rogach"                    %% "scallop"                 % "1.0.0"
 )
+unmanagedBase := baseDirectory.value / "libs"
 
 // META-INF discarding
 assemblyMergeStrategy in assembly := {

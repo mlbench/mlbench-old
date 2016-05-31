@@ -1,19 +1,18 @@
 package utils
 
-import java.io.File
+import java.io.{File, FileInputStream}
 
 import Functions.{CocoaLabeledPoint, ProxCocoaDataMatrix, ProxCocoaLabeledPoint}
 import breeze.linalg.{DenseVector, SparseVector}
-import l1distopt.utils.{DebugParams}
+import l1distopt.utils.DebugParams
 import optimizers.{CocoaParameters, LBFGSParameters, ProxCocoaParameters, SGDParameters}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.random._
-import org.apache.spark.mllib.linalg.{Vectors}
+import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
-
-import scala.xml.XML
+import org.yaml.snakeyaml.Yaml
 
 /**
   * Created by amirreza on 12/04/16.
@@ -110,101 +109,228 @@ object Utils {
 
   def readGDParameters(workingDir: String): SGDParameters ={
     val params = new SGDParameters(miniBatchFraction = 1.0)
-    if(new java.io.File(workingDir + "parameters.xml").exists()) {
-      val xml = XML.loadFile(workingDir + "parameters.xml")
-      if((xml \\ "Parameters" \\ "GDParameters" \\ "iterations").text != "")
-        params.iterations = (xml \\ "Parameters" \\ "GDParameters" \\ "iterations").text.toInt
-      if((xml \\ "Parameters" \\ "GDParameters" \\ "miniBatchFraction").text != "")
-        params.miniBatchFraction = (xml \\ "Parameters" \\ "GDParameters" \\ "miniBatchFraction").text.toDouble
-      if((xml \\ "Parameters" \\ "GDParameters" \\ "stepSize").text != "")
-        params.stepSize = (xml \\ "Parameters" \\ "GDParameters" \\ "stepSize").text.toDouble
-      if((xml \\ "Parameters" \\ "GDParameters" \\ "seed").text != "")
-        params.seed = (xml \\ "Parameters" \\ "GDParameters" \\ "seed").text.toInt
+    if(new java.io.File(workingDir + "parameters.yaml").exists()) {
+      val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
+      val yaml = new Yaml()
+      val data = yaml.load(file).asInstanceOf[java.util.Map[String, java.util.Map[String, java.util.Map[String, Object]]]]
+      if (data != null) {
+        val optParams = data.get("OptParameters")
+        if (optParams != null) {
+          val sgdParams = optParams.get("GDParameters")
+          if (sgdParams != null) {
+            val iterations = sgdParams.get("iterations").asInstanceOf[Int]
+            if (iterations != 0) {
+              params.iterations = iterations
+            }
+            val miniBatchFraction = sgdParams.get("miniBatchFraction").asInstanceOf[Double]
+            if (miniBatchFraction != 0) {
+              params.miniBatchFraction = miniBatchFraction
+            }
+            val stepSize = sgdParams.get("stepSize").asInstanceOf[Double]
+            if (stepSize != 0) {
+              params.stepSize = stepSize
+            }
+            val seed = sgdParams.get("seed").asInstanceOf[Int]
+            if (seed != 0) {
+              params.seed = seed
+            }
+          }
+        }
+      }
     }
     require(params.miniBatchFraction == 1.0, s"Use optimizers.SGD for miniBatchFraction less than 1.0")
     params
   }
   def readSGDParameters(workingDir: String): SGDParameters = {
     val params = new SGDParameters(miniBatchFraction = Functions.DEFAULT_BATCH_FRACTION)
-    if(new java.io.File(workingDir + "parameters.xml").exists()) {
-      val xml = XML.loadFile(workingDir + "parameters.xml")
-      if((xml \\ "Parameters" \\ "SGDParameters" \\ "iterations").text != "")
-        params.iterations = (xml \\ "Parameters" \\ "SGDParameters" \\ "iterations").text.toInt
-      if((xml \\ "Parameters" \\ "SGDParameters" \\ "miniBatchFraction").text != "")
-        params.miniBatchFraction = (xml \\ "Parameters"  \\ "SGDParameters" \\ "miniBatchFraction").text.toDouble
-      if((xml \\ "Parameters" \\ "SGDParameters" \\ "stepSize").text != "")
-        params.stepSize = (xml \\ "Parameters" \\ "SGDParameters" \\ "stepSize").text.toDouble
-      if((xml \\ "Parameters" \\ "SGDParameters" \\ "seed").text != "")
-        params.seed = (xml \\ "Parameters" \\ "SGDParameters" \\ "seed").text.toInt
+    if(new java.io.File(workingDir + "parameters.yaml").exists()) {
+      val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
+      val yaml = new Yaml()
+      val data = yaml.load(file).asInstanceOf[java.util.Map[String, java.util.Map[String, java.util.Map[String, Object]]]]
+      if(data != null){
+      val optParams = data.get("OptParameters")
+      if(optParams != null) {
+        val sgdParams = optParams.get("SGDParameters")
+        if (sgdParams != null) {
+          val iterations = sgdParams.get("iterations").asInstanceOf[Int]
+          if (iterations != 0) {
+            params.iterations = iterations
+          }
+          val miniBatchFraction = sgdParams.get("miniBatchFraction").asInstanceOf[Double]
+          if (miniBatchFraction != 0) {
+            params.miniBatchFraction = miniBatchFraction
+          }
+          val stepSize = sgdParams.get("stepSize").asInstanceOf[Double]
+          if (stepSize != 0) {
+            params.stepSize = stepSize
+          }
+          val seed = sgdParams.get("seed").asInstanceOf[Int]
+          if (seed != 0) {
+            params.seed = seed
+          }
+        }
+       }
+      }
     }
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
     params
   }
   def readLBFGSParameters(workingDir: String): LBFGSParameters = {
     val params = new LBFGSParameters()
-    if(new java.io.File(workingDir + "parameters.xml").exists()) {
-      val xml = XML.loadFile(workingDir + "parameters.xml")
-
-      if((xml \\ "Parameters" \\ "LBFGSParameters" \\ "iterations").text != "")
-        params.iterations = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "iterations").text.toInt
-      if((xml \\ "Parameters" \\ "LBFGSParameters" \\ "numCorrections").text != "")
-        params.numCorrections = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "numCorrections").text.toInt
-      if((xml \\ "Parameters" \\ "LBFGSParameters" \\ "convergenceTol").text != "")
-        params.convergenceTol = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "convergenceTol").text.toDouble
-      if((xml \\ "Parameters" \\ "LBFGSParameters" \\ "seed").text != "")
-        params.seed = (xml \\ "Parameters" \\ "LBFGSParameters" \\ "seed").text.toInt
+    if(new java.io.File(workingDir + "parameters.yaml").exists()) {
+      val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
+      val yaml = new Yaml()
+      val data = yaml.load(file).asInstanceOf[java.util.Map[String, java.util.Map[String, java.util.Map[String, Object]]]]
+      if(data != null) {
+        val optParams = data.get("OptParameters")
+        if (optParams != null) {
+          val lbfgsParams = optParams.get("LBFGSParameters")
+          if (lbfgsParams != null) {
+            val iterations = lbfgsParams.get("iterations").asInstanceOf[Int]
+            if (iterations != 0) {
+              params.iterations = iterations
+            }
+            val numCorrections = lbfgsParams.get("numCorrections").asInstanceOf[Int]
+            if (numCorrections != 0) {
+              params.numCorrections = numCorrections
+            }
+            val convergenceTol = lbfgsParams.get("convergenceTol").asInstanceOf[Double]
+            if (convergenceTol != 0) {
+              params.convergenceTol = convergenceTol
+            }
+            val seed = lbfgsParams.get("seed").asInstanceOf[Int]
+            if (seed != 0) {
+              params.seed = seed
+            }
+          }
+        }
+      }
     }
     params
   }
   def readCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): CocoaParameters = {
     val params = new CocoaParameters(train, test)
-    if(new java.io.File(workingDir + "parameters.xml").exists()) {
-      val xml = XML.loadFile(workingDir + "parameters.xml")
-      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "numRounds").text != "")
-        params.numRounds = (xml \\ "Parameters" \\ "CocoaParameters" \\ "numRounds").text.toInt
-      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "localIterFrac").text != "")
-        params.localIterFrac = (xml \\ "Parameters" \\ "CocoaParameters" \\ "localIterFrac").text.toDouble
-      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "lambda").text != "")
-        params.lambda = (xml \\ "Parameters" \\ "CocoaParameters" \\ "lambda").text.toDouble
-      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "beta").text != "")
-        params.beta = (xml \\ "Parameters" \\ "CocoaParameters" \\ "beta").text.toDouble
-      if((xml \\ "Parameters" \\ "CocoaParameters" \\ "gamma").text != "")
-        params.gamma = (xml \\ "Parameters" \\ "CocoaParameters" \\ "gamma").text.toDouble
+    if(new java.io.File(workingDir + "parameters.yaml").exists()) {
+      val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
+      val yaml = new Yaml()
+      val data = yaml.load(file).asInstanceOf[java.util.Map[String, java.util.Map[String, java.util.Map[String, Object]]]]
+      if(data != null) {
+        val optParams = data.get("OptParameters")
+        if (optParams != null) {
+          val cocoaParams = optParams.get("CocoaParameters")
+          if (cocoaParams != null) {
+            val iterations = cocoaParams.get("numRounds").asInstanceOf[Int]
+            if (iterations != 0) {
+              params.numRounds = iterations
+            }
+            val localIterFrac = cocoaParams.get("localIterFrac").asInstanceOf[Double]
+            if (localIterFrac != 0) {
+              params.localIterFrac = localIterFrac
+            }
+            val lambda = cocoaParams.get("lambda").asInstanceOf[Double]
+            if (lambda != 0) {
+              params.lambda = lambda
+            }
+            val beta = cocoaParams.get("beta").asInstanceOf[Double]
+            if (beta != 0) {
+              params.beta = beta
+            }
+            val gamma = cocoaParams.get("gamma").asInstanceOf[Double]
+            if (gamma != 0) {
+              params.gamma = gamma
+            }
+          }
+        }
+      }
     }
     params
   }
 
   def readElasticProxCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): ProxCocoaParameters = {
     val params = new ProxCocoaParameters(train, test)
-    if(new java.io.File(workingDir + "parameters.xml").exists()) {
-      val xml = XML.loadFile(workingDir + "parameters.xml")
-      if((xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "iterations").text != "")
-        params.iterations = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "iterations").text.toInt
-      if((xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "localIterFrac").text != "")
-        params.localIterFrac = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "localIterFrac").text.toDouble
-      if((xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "lambda").text != "")
-        params.lambda = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "lambda").text.toDouble
-      if((xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "eta").text != "")
-        params.eta = (xml \\ "Parameters" \\ "ElasticProxCocoaParameters" \\ "eta").text.toDouble
+    if(new java.io.File(workingDir + "parameters.yaml").exists()) {
+      val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
+      val yaml = new Yaml()
+      val data = yaml.load(file).asInstanceOf[java.util.Map[String, java.util.Map[String, java.util.Map[String, Object]]]]
+      if(data != null) {
+        val optParams = data.get("OptParameters")
+        if (optParams != null) {
+          val elasticParams = optParams.get("L1ProxCocoaParameters")
+          if (elasticParams != null) {
+            val iterations = elasticParams.get("iterations").asInstanceOf[Int]
+            if (iterations != 0) {
+              params.iterations = iterations
+            }
+            val localIterFrac = elasticParams.get("localIterFrac").asInstanceOf[Double]
+            if (localIterFrac != 0) {
+              params.localIterFrac = localIterFrac
+            }
+            val lambda = elasticParams.get("lambda").asInstanceOf[Double]
+            if (lambda != 0) {
+              params.lambda = lambda
+            }
+            val eta = elasticParams.get("eta").asInstanceOf[Double]
+            if (eta != 0) {
+              params.eta = eta
+            }
+          }
+        }
+      }
     }
     params
   }
   def readL1ProxCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): ProxCocoaParameters = {
     val params = new ProxCocoaParameters(train, test)
     params.eta = 1.0
-      if(new java.io.File(workingDir + "parameters.xml").exists()) {
-      val xml = XML.loadFile(workingDir + "parameters.xml")
-      if((xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "iterations").text != "")
-        params.iterations = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "iterations").text.toInt
-      if((xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "localIterFrac").text != "")
-        params.localIterFrac = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "localIterFrac").text.toDouble
-      if((xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "lambda").text != "")
-        params.lambda = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "lambda").text.toDouble
-      if((xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "eta").text != "")
-        params.eta = (xml \\ "Parameters" \\ "L1ProxCocoaParameters" \\ "eta").text.toDouble
+      if(new java.io.File(workingDir + "parameters.yaml").exists()) {
+        val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
+        val yaml = new Yaml()
+        val data = yaml.load(file).asInstanceOf[java.util.Map[String, java.util.Map[String, java.util.Map[String, Object]]]]
+        if(data != null) {
+          val optParams = data.get("OptParameters")
+          if (optParams != null) {
+            val proxParams = optParams.get("L1ProxCocoaParameters")
+            if (proxParams != null) {
+              val iterations = proxParams.get("iterations").asInstanceOf[Int]
+              if (iterations != 0) {
+                params.iterations = iterations
+              }
+              val localIterFrac = proxParams.get("localIterFrac").asInstanceOf[Double]
+              if (localIterFrac != 0) {
+                params.localIterFrac = localIterFrac
+              }
+              val lambda = proxParams.get("lambda").asInstanceOf[Double]
+              if (lambda != 0) {
+                params.lambda = lambda
+              }
+              val eta = proxParams.get("eta").asInstanceOf[Double]
+              if (eta != 0) {
+                params.eta = eta
+              }
+            }
+          }
+        }
     }
     require(params.eta == 1.0, "eta must be 1 for L1-regularization")
     params
+  }
+
+  def readRegParameters(workingDir: String): Double= {
+    if(new java.io.File(workingDir + "parameters.yaml").exists()) {
+      val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
+      val yaml = new Yaml()
+      val data = yaml.load(file).asInstanceOf[java.util.Map[String, java.util.Map[String, java.util.Map[String, Object]]]]
+      if(data != null) {
+        val regParams = data.get("RegParameters")
+        if (regParams != null) {
+          val lambda = regParams.get("lambda").asInstanceOf[Double]
+          if (lambda != 0) {
+            return lambda
+          }
+        }
+      }
+    }
+    return Functions.DEFAULT_LABMDA
   }
 
 
