@@ -5,7 +5,7 @@ import java.io.Serializable
 /**
   * Created by amirreza on 16/04/16.
   */
-class SGDParameters(val iterations: Int = 100,
+class SGDParameters(val iterations: Int = 20,
                     val miniBatchFraction: Double = 1.0,
                     val stepSize: Double = 0.001,
                     val seed: Int = 13) extends Serializable {

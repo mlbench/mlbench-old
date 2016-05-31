@@ -6,6 +6,7 @@ import org.rogach.scallop._
 import org.apache.spark._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
+import org.apache.spark.mllib.util.MLUtils
 import java.io._
 import utils.Functions.ElasticNet
 
@@ -20,20 +21,30 @@ object RUN {
 
   def main(args: Array[String]) {
     //Spark conf
-    val conf = new SparkConf().setAppName("Distributed Machine Learning").setMaster("local[*]")
+    val conf = new SparkConf().setAppName("Distributed Machine Learning")
     val sc = new SparkContext(conf)
+    sc.hadoopConfiguration.setInt("fs.local.block.size", 128 * 1024 * 1024)
+    sc.hadoopConfiguration.setInt("dfs.block.size", 128 * 1024 * 1024)
+
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     //Turn off logs
-    val rootLogger = Logger.getRootLogger()
-    rootLogger.setLevel(Level.ERROR)
+    //val rootLogger = Logger.getRootLogger()
+    //rootLogger.setLevel(Level.ERROR)
     //Parse arguments
     val parser = new RunParser(args)
     val optimizers: List[String] = parser.optimizers()
     assert(optimizers.length > 0)
     val workingDir = parser.dir()
 
-    val train: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workingDir + "train/", sc)
-    val test: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workingDir + "test/", sc)
+    val startTime = System.nanoTime()
+    // val train: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workingDir + "train/", sc)
+    val train: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, workingDir + "train/", -1, 72)
+    val endTime = System.nanoTime() - startTime
+    val numParts = train.getNumPartitions
+    print("Number of partitions of training set " + train.getNumPartitions + ".\n")
+    print("Loading dataset into " + numParts + " took " + endTime + "ms.\n")
+
+    val test = train //: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workingDir + "test/", sc)
 
     val output = new File(workingDir + "res.out")
     val bw = new BufferedWriter(new FileWriter(output))
@@ -214,12 +225,12 @@ object RUN {
         bw.write("Mllib_Lasso_GD: " + "lambda: " +
           lasso.regularizer.lambda + " elapsed: " + lasso.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
         bw.newLine()
-        val objective = lasso.getObjective(w.toDenseVector, train)
-        val error = lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
+        // val objective = lasso.getObjective(w.toDenseVector, train)
+        // val error = lasso.testError(w, test.map(p => p.features), test.map(p => p.label))
         println("Training took: " + lasso.elapsed.get / 1000 / 1000 + "ms")
         println("Mllib_Lasso_GD w: " + w)
-        println("Mllib_Lasso_GD Objective value: " + objective)
-        println("Mllib_Lasso_GD test error: " + error)
+        // println("Mllib_Lasso_GD Objective value: " + objective)
+        // println("Mllib_Lasso_GD test error: " + error)
         println("----------------------------")
       }
       case "Mllib_L2_LR_LBFGS" => {
