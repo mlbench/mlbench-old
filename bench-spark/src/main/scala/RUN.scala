@@ -22,7 +22,7 @@ object RUN {
   def main(args: Array[String]) {
     //Spark conf
     val a: Map[String, Object] = null
-    val conf = new SparkConf().setAppName("Distributed Machine Learning").setMaster("local[*]")
+    val conf = new SparkConf().setAppName("Distributed Machine Learning")
     val sc = new SparkContext(conf)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     //Turn off logs
