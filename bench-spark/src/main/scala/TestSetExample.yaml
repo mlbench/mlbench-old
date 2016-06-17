@@ -1,0 +1,66 @@
+SystemParameters:
+  fileSystem : ["/scratch/user/", "/tmpfs"]
+  inputSizeInGB : [8, 16, 32, 64, 128]
+  numOfNodes :
+    - 4
+    - 8
+    - 16
+    - 32
+
+# option 1: same concept as above. This has the problem that parameters
+# cannot be defined in combination, as e.g. execPerNode:4 AND ramPerExec:16
+SparkParameters:
+  driverMemory: [4, 8, 16]
+  coresPerExecutor : [4, 8, 12]
+  ramPerExecutor : [16, 8, 6]
+  coresPerTask: [1, 2]
+
+# option 2: maybe a solution?
+SparkParameters:
+  driverMemory: [4, 8, 16]
+  combined:
+    - {coresPerExectuor: 4, ramPerExecutor : 16}
+    - {coresPerExectuor: 8, ramPerExecutor : 8}
+    - {coresPerExectuor: 12, ramPerExecutor : 6}
+  coresPerTask: [1, 2]
+
+AlgorithmParameters:
+  - algorithms: [("L1_Lasso_GD", "L2_SVM_SGD"]
+    
+
+
+
+## EXAMPLE -- Strong Scaling ##
+SystemParameters:
+  fileSystem : ["/scratch/user/", "/tmpfs"]
+  inputSizeInGB : 128
+  numOfNodes : [8, 16, 32, 64, 128]
+
+SparkParameters:
+  driverMemory: [8]
+  combined:
+    - {coresPerExectuor: 4, ramPerExecutor : 16}
+    - {coresPerExectuor: 8, ramPerExecutor : 8}
+    - {coresPerExectuor: 12, ramPerExecutor : 5}
+  coresPerTask: [2]
+
+
+
+## EXAMPLE -- Weak Scaling ##
+SystemParameters:
+  fileSystem : ["/scratch/user/", "/tmpfs"]
+  combined:
+    - {inputSizeInGB : 8, numOfNodes : 4}
+    - {inputSizeInGB : 16, numOfNodes : 8}
+    - {inputSizeInGB : 32, numOfNodes : 16}
+    - {inputSizeInGB : 64, numOfNodes : 32}
+
+SparkParameters:
+  driverMemory: [8]
+  combined:
+    - {coresPerExectuor: 4, ramPerExecutor : 16}
+    - {coresPerExectuor: 8, ramPerExecutor : 8}
+    - {coresPerExectuor: 12, ramPerExecutor : 5}
+  coresPerTask: [2]
+
+
