@@ -3,11 +3,13 @@ A public and reproducible comparison of distributed machine learning systems. Be
 
 Here is the [design doc](https://docs.google.com/document/d/1jM4zXRDezEJmIKwoDOKNlGvuNNJk5_FxcBrn1mfYp0E/edit#)
 
-Towards a more precise definition of the benchmark task, work in progress
+Towards a more precise definition of the benchmark task, work in progress.
+TODO: more clearly show and document all reference implemenations we provide (one per task), and clearly distinguish them from the wrappers we provide for other frameworks, solving the same tasks.
+
 ## Set up the repository
 ###### Clone the repository: 
 ```bash
-git clone https://github.com/dalab/distributed-ML-benchmark
+git clone https://github.com/mlbench/mlbench
 ```
 ###### Add submodule projects:
 ```bash
