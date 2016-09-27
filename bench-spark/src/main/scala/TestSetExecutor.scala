@@ -1,8 +1,13 @@
 // this script is currently only meant for demonstration purposes
+import collection.mutable.ArrayBuffer
+import collection.mutable.LinkedHashMap
+import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+
+import java.io.{File, FileInputStream}
 
 import org.rogach.scallop._
-import java.io.{File, FileInputStream}
-import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.Yaml 
 
 class CLI(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(arguments) {
   val experiments = opt[String](required = true, descr="YAML file that describes the experiment" )
@@ -10,9 +15,7 @@ class CLI(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(argumen
 }
 
 
-class Experiment {
-  val test = 1
-//  var types: java.util.Map[ String, java.util.List[ java.util.Map[String, Object] ] ]
+class TestSet (obj: Object) {
 }
 
 
@@ -21,55 +24,92 @@ object TestSetExecutor {
   def main(args: Array[String]) {
     val parser = new CLI(args)
     val filename = parser.experiments()
-    val file = new FileInputStream(new File(filename))
-    var yamlParser = new Yaml()
-    var output = yamlParser.load(file).asInstanceOf[java.util.Map[ String, java.util.List[ java.util.Map[String, Object] ] ]]
-    print(output)
+    val newParamCategory = loadYAML(filename)
+    println(newParamCategory)
+    println()
 
+    var aTestSet : LinkedHashMap[String, LinkedHashMap[String, Object]] = LinkedHashMap()
+    aTestSet = genNextTestSet(aTestSet, newParamCategory)
+    var testSetArray = ArrayBuffer(aTestSet)
+    aTestSet = genNextTestSet(aTestSet, newParamCategory)
+    while (aTestSet != testSetArray(0)) {
+      testSetArray.append(aTestSet)
+      aTestSet = genNextTestSet(aTestSet, newParamCategory)
+    }
 
-    // system specific parameters
-    val fileSystem = Array("/scratch/user/", "/tmpfs")
-    val inputSizeInGB = Array(8, 16, 32, 64, 128)
-    val numOfNodes = Array(4, 8, 16, 32)
+    testSetArray.foreach{ case e => 
+      println(e)
+    }
 
-    // spark specific parameters
-    // here the parameters should also be definable in combination: execPerNode:4 AND ramPerExec:16
-    val coresPerExecutor = Array(4, 8, 12)
-    val ramPerExecutor = Array(16, 8, 6)
+  }
 
-    // alg specific parameters
-    val jar  = "/path/to/target/scala-2.10/bench_2.10-0.1.jar"
-    val algorithms = Array("L1_Lasso_GD", "L2_SVM_SGD")
-    val linRegIterations = Array(1, 10, 20)
-    val linRegBatchSize = Array(0.1, 0.2, 0.3)
+  def genNextTestSet(aTestSet: LinkedHashMap[String, LinkedHashMap[String, Object]], testSetsDef: LinkedHashMap[String, LinkedHashMap[String, ArrayBuffer[Object]]]) : LinkedHashMap[String, LinkedHashMap[String, Object]] = {
+    var result : LinkedHashMap[String, LinkedHashMap[String, Object]] = LinkedHashMap()
+    var found = false
 
-    def main(angs: Array[String]) {
-      for (fs <- fileSystem) {
-        for (inSize <- inputSizeInGB) {
-          for (nnodes <- numOfNodes) {
-            for (cpe <- coresPerExecutor) {
-              for (alg <- algorithms) {
-                for (rpe <- ramPerExecutor) {
-                  for (lri <- linRegIterations) {
-                    for (lrb <- linRegBatchSize) {
-                      // prepare
-
-                      // run
-                      val sparkSpec = "spark-submit --executor-cores " + cpe + " --executor-memory " + rpe
-                      val algSpec = " --class " + alg + " " + jar + " --iterations " + lri + " --batch-size " + lrb
-                      val cmd = sparkSpec + algSpec
-                      print("Run somehow this command (running the command is different on HPC infrastructure and AWS -> abstraction required.\n")
-                      print(cmd + "\n")
-
-                      // evaluate
-                    }
-                  }
-                }
-              }
-            }
-          }
+    if (aTestSet.size <= 0) {
+      testSetsDef.foreach{ case (paramCatName, paramCatVal) =>
+        val newParam : LinkedHashMap[String, Object] = LinkedHashMap()
+        paramCatVal.foreach{ case (paramName, paramArray) =>
+          newParam.put(paramName,paramArray(0))
         }
+        result.put(paramCatName, newParam)
       }
     }
+
+    else {
+      var carry = 1
+      aTestSet.foreach{ case (paramCatName, paramCatVal) =>
+        val newParam : LinkedHashMap[String, Object] = LinkedHashMap()
+        paramCatVal.foreach{ case (paramName, paramValue) =>
+          val paramArray = testSetsDef(paramCatName)(paramName)
+          val count = paramArray.size
+          val index = paramArray.indexOf(paramValue)
+          newParam.put(paramName, paramArray((index+carry)%count))
+          if (index + carry == count) {
+            carry = 1
+          } else {
+            carry = 0
+          }
+        }
+        result.put(paramCatName, newParam)
+      }
+    }
+    return result
   }
+
+  def loadYAML(filename : String) : LinkedHashMap[String, LinkedHashMap[String, ArrayBuffer[Object]]] = {
+    val file = new FileInputStream(new File(filename))
+    var yamlParser = new Yaml()
+    var testSetDef : LinkedHashMap[String, LinkedHashMap[String, Array[Object]]] = LinkedHashMap()
+    val testSetDefJava = yamlParser.load(file).asInstanceOf[java.util.LinkedHashMap[String, Object]]
+
+    // Convert Java structure to Scala structure
+    var newParamCategory : LinkedHashMap[String, LinkedHashMap[String,  ArrayBuffer[Object]]] = LinkedHashMap()
+    testSetDefJava.foreach{ case(paramCategoryName, paramCategoryValues) =>
+      var newParamMap : LinkedHashMap[String,  ArrayBuffer[Object]] = LinkedHashMap()
+      paramCategoryValues.asInstanceOf[java.util.LinkedHashMap[String, Object]].foreach{ case(paramName, paramArray) =>
+        val normalizedParamArray = paramArray match {
+          case paramArray : java.lang.Integer => Seq(paramArray).asJava
+          case paramArray : java.util.List[Object] => paramArray
+          case _ => paramArray.getClass
+        }
+        var newParamArray : ArrayBuffer[Object] = ArrayBuffer()
+        normalizedParamArray.asInstanceOf[java.util.List[Object]].foreach{ case(param) =>
+          val newParam = param match {
+            case param : String => param
+            case param : java.lang.Integer => param.toString
+            case param : java.util.LinkedHashMap[String, String] => mapAsScalaMapConverter(param).asScala
+            case _ => param.getClass
+          }
+          newParamArray.append(newParam)
+        }
+        newParamMap.put(paramName, newParamArray)
+      }
+      newParamCategory.put(paramCategoryName, newParamMap)
+    }
+    return newParamCategory
+  }
+
 }
+

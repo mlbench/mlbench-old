@@ -1,0 +1,13 @@
+## EXAMPLE -- Strong Scaling ##
+SystemParameters:
+  fileSystem : ["/scratch/user/", "/tmpfs"]
+  inputSizeInGB : 128
+  numOfNodes : [8, 16, 32, 64]
+
+SparkParameters:
+  driverMemory: [8]
+  combined:
+    - {coresPerExectuor: 4, ramPerExecutor : 16}
+    - {coresPerExectuor: 8, ramPerExecutor : 8}
+    - {coresPerExectuor: 12, ramPerExecutor : 5}
+  coresPerTask: [2]
