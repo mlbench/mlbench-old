@@ -13,9 +13,9 @@ import scala.math._
   */
 object Functions {
 
-  type CocoaLabeledPoint = RDD[distopt.utils.LabeledPoint]
-  type ProxCocoaLabeledPoint = RDD[l1distopt.utils.LabeledPoint]
-  type ProxCocoaDataMatrix = (RDD[(Int, SparseVector[Double])], Vector[Double])
+  //type CocoaLabeledPoint = RDD[distopt.utils.LabeledPoint]
+  //type ProxCocoaLabeledPoint = RDD[l1distopt.utils.LabeledPoint]
+  //type ProxCocoaDataMatrix = (RDD[(Int, SparseVector[Double])], Vector[Double])
 
   val DEFAULT_LABMDA = 0.01
   val DEFAULT_BATCH_FRACTION = 0.5

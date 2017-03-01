@@ -7,7 +7,7 @@ import org.apache.spark.mllib.regression.{LabeledPoint, LinearRegressionWithSGD}
 import org.apache.spark.rdd.RDD
 import utils.Functions._
 
-import scala.tools.cmd.gen.AnyVals.D
+//import scala.tools.cmd.gen.AnyVals.D
 
 /**
   * Created by amirreza on 10/05/16.

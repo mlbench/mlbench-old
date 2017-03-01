@@ -39,10 +39,10 @@ object RUN {
 
     val gdparams = Utils.readGDParameters(workingDir)
     val sgdparams = Utils.readSGDParameters(workingDir)
-    val lbfgsparams = Utils.readLBFGSParameters(workingDir)
-    val cocoaparams = Utils.readCocoaParameters(workingDir, train, test)
-    val elasticparams = Utils.readElasticProxCocoaParameters(workingDir, train, test)
-    val l1cocoaparams = Utils.readL1ProxCocoaParameters(workingDir, train, test)
+    //val lbfgsparams = Utils.readLBFGSParameters(workingDir)
+    //val cocoaparams = Utils.readCocoaParameters(workingDir, train, test)
+    //val elasticparams = Utils.readElasticProxCocoaParameters(workingDir, train, test)
+    //val l1cocoaparams = Utils.readL1ProxCocoaParameters(workingDir, train, test)
     val lambda = Utils.readRegParameters(workingDir)
 
     val output = new File(workingDir + "res.out")
@@ -50,22 +50,22 @@ object RUN {
     //Run all optimisers given in the args
     optimizers.foreach { opt => opt match {
       case "Elastic_ProxCocoa" => {
-        val l1net = new Elastic_ProxCOCOA(train, test, elasticparams, Utils.defaultDebugProxCocoa(train, test))
-        val w = l1net.fit()
-        bw.write("Elastic_ProxCocoa: " + "lambda: " +
-          l1net.regularizer.lambda + " alpha: " + l1net.regularizer.asInstanceOf[ElasticNet].alpha + " elapsed: " +
-          l1net.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector)
-        bw.newLine()
-        println("Elastic_ProxCocoa Training took: " + l1net.elapsed.get / 1000 / 1000 + "ms")
+        //val l1net = new Elastic_ProxCOCOA(train, test, elasticparams, Utils.defaultDebugProxCocoa(train, test))
+        //val w = l1net.fit()
+        //bw.write("Elastic_ProxCocoa: " + "lambda: " +
+          //l1net.regularizer.lambda + " alpha: " + l1net.regularizer.asInstanceOf[ElasticNet].alpha + " elapsed: " +
+          //l1net.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector)
+        //bw.newLine()
+        //println("Elastic_ProxCocoa Training took: " + l1net.elapsed.get / 1000 / 1000 + "ms")
         println("----------------------------")
       }
       case "L1_Lasso_ProxCocoa" => {
-        val l1lasso = new L1_Lasso_ProxCocoa(train, test, l1cocoaparams, Utils.defaultDebugProxCocoa(train, test))
-        val w = l1lasso.fit()
-        bw.write("L1_Lasso_ProxCocoa: " + "lambda: " +
-          l1lasso.regularizer.lambda + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
-        bw.newLine()
-        println("L1_Lasso_ProxCocoa Training took: " + l1lasso.elapsed.get / 1000 / 1000 + "ms")
+        //val l1lasso = new L1_Lasso_ProxCocoa(train, test, l1cocoaparams, Utils.defaultDebugProxCocoa(train, test))
+        //val w = l1lasso.fit()
+        //bw.write("L1_Lasso_ProxCocoa: " + "lambda: " +
+          //l1lasso.regularizer.lambda + " elapsed: " + l1lasso.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
+        //bw.newLine()
+        //println("L1_Lasso_ProxCocoa Training took: " + l1lasso.elapsed.get / 1000 / 1000 + "ms")
         println("----------------------------")
       }
       case "L1_Lasso_GD" => {
@@ -141,12 +141,12 @@ object RUN {
         println("----------------------------")
       }
       case "L2_SVM_Cocoa" => {
-        val l2svm = new L2_SVM_COCOA(train, test, cocoaparams, Utils.defaultDebugCocoa(train, test),false)
-        val w = l2svm.train()
-        bw.write("L2_SVM_Cocoa: " + "lambda: " +
-          l2svm.regularizer.lambda + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
-        bw.newLine()
-        println("L2_SVM_Cocoa Training took: " + l2svm.elapsed.get / 1000 / 1000 + "ms")
+        //val l2svm = new L2_SVM_COCOA(train, test, cocoaparams, Utils.defaultDebugCocoa(train, test),false)
+        //val w = l2svm.train()
+        //bw.write("L2_SVM_Cocoa: " + "lambda: " +
+          //l2svm.regularizer.lambda + " elapsed: " + l2svm.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
+        //bw.newLine()
+        //println("L2_SVM_Cocoa Training took: " + l2svm.elapsed.get / 1000 / 1000 + "ms")
         println("----------------------------")
       }
       case "Mllib_Lasso_SGD" => {
@@ -168,21 +168,21 @@ object RUN {
         println("----------------------------")
       }
       case "Mllib_L2_LR_LBFGS" => {
-        val lbfgs = new Mllib_L2_LR_LBFGS(train, params = lbfgsparams, lambda = lambda)
-        val w = lbfgs.train()
-        bw.write("Mllib_L2_LR_LBFGS: " + "lambda: " +
-          lbfgs.regularizer.lambda + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
-        bw.newLine()
-        println("Mllib_L2_LR_LBFGS Training took: " + lbfgs.elapsed.get / 1000 / 1000 + "ms")
+        //val lbfgs = new Mllib_L2_LR_LBFGS(train, params = lbfgsparams, lambda = lambda)
+        //val w = lbfgs.train()
+        //bw.write("Mllib_L2_LR_LBFGS: " + "lambda: " +
+          //lbfgs.regularizer.lambda + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
+        //bw.newLine()
+        //println("Mllib_L2_LR_LBFGS Training took: " + lbfgs.elapsed.get / 1000 / 1000 + "ms")
         println("----------------------------")
       }
       case "Mllib_L1_LR_LBFGS" => {
-        val lbfgs = new Mllib_L1_LR_LBFGS(train, params = lbfgsparams, lambda = lambda)
-        val w = lbfgs.train()
-        bw.write("Mllib_L1_LR_LBFGS: " + "lambda: " +
-          lbfgs.regularizer.lambda + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
-        bw.newLine()
-        println("Mllib_L1_LR_LBFGS Training took: " + lbfgs.elapsed.get / 1000 / 1000 + "ms")
+        //val lbfgs = new Mllib_L1_LR_LBFGS(train, params = lbfgsparams, lambda = lambda)
+        //val w = lbfgs.train()
+        //bw.write("Mllib_L1_LR_LBFGS: " + "lambda: " +
+          //lbfgs.regularizer.lambda + " elapsed: " + lbfgs.elapsed.get / 1000 / 1000 + "ms " + w.toDenseVector )
+        //bw.newLine()
+        //println("Mllib_L1_LR_LBFGS Training took: " + lbfgs.elapsed.get / 1000 / 1000 + "ms")
         println("----------------------------")
       }
 
@@ -251,13 +251,13 @@ object RUN {
     log.newLine()
     log.write("SGD: " + sgdparams.toString)
     log.newLine()
-    log.write("LBFGS:" + lbfgsparams.toString)
+    //log.write("LBFGS:" + lbfgsparams.toString)
     log.newLine()
-    log.write("Cocoa:" + cocoaparams.toString)
+    //log.write("Cocoa:" + cocoaparams.toString)
     log.newLine()
-    log.write("ElasticProx:" + elasticparams.toString)
+    //log.write("ElasticProx:" + elasticparams.toString)
     log.newLine()
-    log.write("L1LassoProx" + l1cocoaparams.toString)
+    //log.write("L1LassoProx" + l1cocoaparams.toString)
     log.close()
     sc.stop()
   }

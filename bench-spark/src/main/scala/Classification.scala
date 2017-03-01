@@ -3,7 +3,7 @@ import java.io.Serializable
 import optimizers._
 import org.apache.spark.rdd.RDD
 import breeze.linalg.{DenseVector, Vector}
-import distopt.utils.DebugParams
+//import distopt.utils.DebugParams
 import org.apache.spark.mllib.regression.LabeledPoint
 import utils.Functions._
 import utils.Utils
@@ -96,7 +96,7 @@ object Classification {
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
-  class L2_SVM_COCOA(train: RDD[LabeledPoint],
+  /*class L2_SVM_COCOA(train: RDD[LabeledPoint],
                      test: RDD[LabeledPoint],
                      params: CocoaParameters,
                      debug: DebugParams,
@@ -112,7 +112,7 @@ object Classification {
     val cocoaData = Utils.toCocoaFormat(train)
     val optimizer = new Cocoa(cocoaData, loss, regularizer, params, debug, plus)
 
-  }
+  }*/
 
   class Mllib_L2_SVM_SGD(data: RDD[LabeledPoint],
                          lambda: Double = DEFAULT_LABMDA,
@@ -169,20 +169,20 @@ object Classification {
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
-  class Mllib_L1_LR_LBFGS(data: RDD[LabeledPoint],
+  /*class Mllib_L1_LR_LBFGS(data: RDD[LabeledPoint],
                           lambda: Double = DEFAULT_LABMDA,
                           params: LBFGSParameters = new LBFGSParameters)
     extends LinearClassifier(new BinaryLogistic, new L1Regularizer(lambda)) with Serializable {
     val mllibData = Utils.toMllibClassificationlabeling(data)
     val optimizer = new MllibLBFGS(mllibData, loss, regularizer, params)
-  }
+  }*/
 
-  class Mllib_L2_LR_LBFGS(data: RDD[LabeledPoint],
+  /*class Mllib_L2_LR_LBFGS(data: RDD[LabeledPoint],
                           lambda: Double = DEFAULT_LABMDA,
                           params: LBFGSParameters = new LBFGSParameters)
     extends LinearClassifier(new BinaryLogistic, new L2Regularizer(lambda)) with Serializable {
     val mllibData = Utils.toMllibClassificationlabeling(data)
     val optimizer = new MllibLBFGS(mllibData, loss, regularizer, params)
-  }
+  }*/
 
 }

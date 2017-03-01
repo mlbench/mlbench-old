@@ -2,10 +2,10 @@ package utils
 
 import java.io.{File, FileInputStream}
 
-import Functions.{CocoaLabeledPoint, ProxCocoaDataMatrix, ProxCocoaLabeledPoint}
+//import Functions.{CocoaLabeledPoint, ProxCocoaDataMatrix, ProxCocoaLabeledPoint}
 import breeze.linalg.{DenseVector, SparseVector}
-import l1distopt.utils.DebugParams
-import optimizers.{CocoaParameters, LBFGSParameters, ProxCocoaParameters, SGDParameters}
+//import l1distopt.utils.DebugParams
+import optimizers.{SGDParameters}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.random._
 import org.apache.spark.mllib.linalg.Vectors
@@ -71,7 +71,7 @@ object Utils {
     else LabeledPoint(p.label, p.features))
     return points
   }
-  def toProxCocoaTranspose(data: RDD[LabeledPoint]): ProxCocoaDataMatrix = {
+  /*def toProxCocoaTranspose(data: RDD[LabeledPoint]): ProxCocoaDataMatrix = {
     val numEx = data.count().toInt
     val myData: RDD[(Double, Array[(Int, (Int, Double))])] = data.zipWithIndex().
       map(p => (p._2, p._1.label, p._1.features.toArray.zipWithIndex)).
@@ -82,30 +82,30 @@ object Utils {
     val feats: RDD[(Int, SparseVector[Double])] = myData.flatMap(x => x._2.iterator)
       .groupByKey().map(x => (x._1, x._2.toArray)).map(x => (x._1, new SparseVector[Double](x._2.map(y => y._1), x._2.map(y => y._2), numEx)))
     return (feats, y)
-  }
+  }*/
 
-  def toProxCocoaFormat(data: RDD[LabeledPoint]): ProxCocoaLabeledPoint = {
+  /*def toProxCocoaFormat(data: RDD[LabeledPoint]): ProxCocoaLabeledPoint = {
     data.map(p => l1distopt.utils.LabeledPoint(p.label, SparseVector(p.features.toArray.map(x => x.toDouble))))
-  }
+  }*/
 
-  def toCocoaFormat(data: RDD[LabeledPoint]): CocoaLabeledPoint = {
+  /*def toCocoaFormat(data: RDD[LabeledPoint]): CocoaLabeledPoint = {
     data.map(p => distopt.utils.LabeledPoint(p.label, SparseVector(p.features.toArray.map(x => x.toDouble))))
-  }
+  }*/
 
-  def defaultDebugCocoa(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): distopt.utils.DebugParams = {
+  /*def defaultDebugCocoa(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): distopt.utils.DebugParams = {
     val debugIter = 10 // set to -1 to turn off debugging output
     val seed = 13 // set seed for debug purposes
     var chkptIter = 100
     val debug = distopt.utils.DebugParams(Utils.toCocoaFormat(test), debugIter, seed, chkptIter)
     return debug
-  }
+  }*/
 
-  def defaultDebugProxCocoa(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): l1distopt.utils.DebugParams = {
+  /*def defaultDebugProxCocoa(train: RDD[LabeledPoint], test: RDD[LabeledPoint]): l1distopt.utils.DebugParams = {
     val seed = 13
     val debugIter = 10
     val debug = DebugParams(Utils.toProxCocoaFormat(test), debugIter, seed)
     return debug
-  }
+  }*/
 
   def readGDParameters(workingDir: String): SGDParameters ={
     val params = new SGDParameters(miniBatchFraction = 1.0)
@@ -175,7 +175,7 @@ object Utils {
     require(params.miniBatchFraction < 1.0, "miniBatchFraction must be less than 1. Use GD otherwise.")
     params
   }
-  def readLBFGSParameters(workingDir: String): LBFGSParameters = {
+  /*def readLBFGSParameters(workingDir: String): LBFGSParameters = {
     val params = new LBFGSParameters()
     if(new java.io.File(workingDir + "parameters.yaml").exists()) {
       val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
@@ -207,8 +207,8 @@ object Utils {
       }
     }
     params
-  }
-  def readCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): CocoaParameters = {
+  }*/
+  /*def readCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): CocoaParameters = {
     val params = new CocoaParameters(train, test)
     if(new java.io.File(workingDir + "parameters.yaml").exists()) {
       val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
@@ -244,9 +244,9 @@ object Utils {
       }
     }
     params
-  }
+  }*/
 
-  def readElasticProxCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): ProxCocoaParameters = {
+  /*def readElasticProxCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): ProxCocoaParameters = {
     val params = new ProxCocoaParameters(train, test)
     if(new java.io.File(workingDir + "parameters.yaml").exists()) {
       val file = new FileInputStream(new File(workingDir + "parameters.yaml"));
@@ -278,8 +278,8 @@ object Utils {
       }
     }
     params
-  }
-  def readL1ProxCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): ProxCocoaParameters = {
+  }*/
+  /*def readL1ProxCocoaParameters(workingDir: String, train: RDD[LabeledPoint], test: RDD[LabeledPoint]): ProxCocoaParameters = {
     val params = new ProxCocoaParameters(train, test)
     params.eta = 1.0
       if(new java.io.File(workingDir + "parameters.yaml").exists()) {
@@ -313,7 +313,7 @@ object Utils {
     }
     require(params.eta == 1.0, "eta must be 1 for L1-regularization")
     params
-  }
+  }*/
 
   def readRegParameters(workingDir: String): Double= {
     if(new java.io.File(workingDir + "parameters.yaml").exists()) {

@@ -44,13 +44,13 @@ object Evaluate {
 
       method match {
         case "Elastic_ProxCocoa" => {
-          val regPattern = "lambda: ([0-9]*\\.[0-9]*) alpha: ([0-9]*\\.[0-9]*)".r
-          val regPattern(lambda_raw, alpha_raw) = regs
-          val lambda = lambda_raw.toDouble
-          val alpha = alpha_raw.toDouble
-          val eval = new Evaluation(new SquaredLoss, new ElasticNet(lambda, alpha))
-          val objective = eval.getObjective(weights, train)
-          println("objective: " + objective)
+          //val regPattern = "lambda: ([0-9]*\\.[0-9]*) alpha: ([0-9]*\\.[0-9]*)".r
+          //val regPattern(lambda_raw, alpha_raw) = regs
+          //val lambda = lambda_raw.toDouble
+          //val alpha = alpha_raw.toDouble
+          //val eval = new Evaluation(new SquaredLoss, new ElasticNet(lambda, alpha))
+          //val objective = eval.getObjective(weights, train)
+          //println("objective: " + objective)
         }
         case "L1_Lasso_SGD" | "L1_Lasso_GD" | "L1_Lasso_ProxCocoa" | "Mllib_Lasso_GD" | "Mllib_Lasso_SGD" => {
           val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r

@@ -1,7 +1,7 @@
 import java.io.Serializable
 
 import breeze.linalg.{DenseVector, Vector}
-import l1distopt.utils.DebugParams
+//import l1distopt.utils.DebugParams
 import optimizers._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
@@ -57,7 +57,7 @@ object Regression {
     require(params.miniBatchFraction == 1.0, "Use optimizers.SGD for miniBatchFraction less than 1.0")
   }
 
-  class Elastic_ProxCOCOA(train: RDD[LabeledPoint],
+  /*class Elastic_ProxCOCOA(train: RDD[LabeledPoint],
                           test: RDD[LabeledPoint],
                           params: ProxCocoaParameters,
                           debug: DebugParams)
@@ -69,9 +69,9 @@ object Regression {
 
     val dataProx = Utils.toProxCocoaTranspose(train)
     val optimizer = new ProxCocoa(dataProx, loss, regularizer, params, debug)
-  }
+  }*/
 
-  class L1_Lasso_ProxCocoa(train: RDD[LabeledPoint],
+  /*class L1_Lasso_ProxCocoa(train: RDD[LabeledPoint],
                            test: RDD[LabeledPoint],
                            params: ProxCocoaParameters,
                            debug: DebugParams)
@@ -85,7 +85,7 @@ object Regression {
     val dataProx = Utils.toProxCocoaTranspose(train)
     val optimizer = new ProxCocoa(dataProx, loss, regularizer, params, debug)
     require(params.eta == 1.0, "eta must be 1 for L1-regularization")
-  }
+  }*/
 
   class Mllib_Lasso_SGD(data: RDD[LabeledPoint],
                         lambda: Double = DEFAULT_LABMDA,
