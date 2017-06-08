@@ -1,2 +1,0 @@
-logLevel := Level.Warn
-

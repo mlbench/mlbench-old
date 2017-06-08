@@ -1,11 +1,11 @@
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 
 # Install dependencies
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
       libblas3 \
       libgfortran3 \
       liblapack3 \
-      openjdk-7-jre-headless \
+      openjdk-8-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
 ENV SPARK_VERSION 2.1.0
@@ -14,7 +14,7 @@ ENV MIRROR  https://d3kbcqa49mib13.cloudfront.net/
 ENV SPARK_HOME /opt/spark-${SPARK_VERSION}
 
 # Install Spark
-RUN BUILD_DEPS="curl openjdk-7-jdk" \
+RUN BUILD_DEPS="curl openjdk-8-jdk" \
     && set -x \
     && apt-get update -y && apt-get install -y --no-install-recommends ${BUILD_DEPS} \
     && rm -rf /var/lib/apt/lists/* \
