@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 
 # Install packages
-RUN BUILD_DEPS="wget bunzip2" \
+RUN BUILD_DEPS="wget bzip2" \
     && apt-get update && apt-get install -y --no-install-recommends ${BUILD_DEPS} \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /data \
