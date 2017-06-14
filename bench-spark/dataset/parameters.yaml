@@ -1,0 +1,12 @@
+#parameters
+#
+
+RegParameters:
+        lambda: 0.001
+
+OptParameters:
+        SGDParameters:
+                iterations: 200
+                miniBatchFraction: 0.7
+                stepSize: 0.1
+                seed: 13
