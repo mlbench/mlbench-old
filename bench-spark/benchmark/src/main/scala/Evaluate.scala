@@ -58,7 +58,7 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new SquaredLoss, new L1Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
-          println("objective: " + objective)
+          println( method + ": " + objective)
         }
         case "L2_LR_SGD" | "L2_LR_GD" | "Mllib_L2_LR_GD" | "Mllib_L2_LR_SGD" | "Mllib_L2_LR_LBFGS" => {
           val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
@@ -66,15 +66,15 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new BinaryLogistic, new L2Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
-          println("L2_LR objective: " + objective)
+          println(method + ": " + objective)
         }
-        case "L1_LR_SGD" | "L1_LR_SGD" | "L1_LR_SGD" | "L1_LR_GD" | "Mllib_L1_LR_LBFGS" => {
+        case "L1_LR_SGD" | "L1_LR_SGD" | "L1_LR_SGD" | "L1_LR_GD" | "Mllib_L1_LR_SGD" => {
           val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
           val regPattern(lambda_raw) = regs
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new BinaryLogistic, new L1Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
-          println("objective: " + objective)
+          println(method + ": " + objective)
         }
         case "L2_SVM_Cocoa" | "L2_SVM_GD" | "L2_SVM_SGD" | "Mllib_L2_SVM_GD" | "Mllib_L2_SVM_SGD" => {
           val regPattern = "lambda: ([0-9]*\\.[0-9]*)".r
@@ -82,7 +82,7 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new HingeLoss, new L2Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
-          println("objective: " + objective)
+          println(method + ": " + objective)
         }
         case _ => println("No such method.")
       }
