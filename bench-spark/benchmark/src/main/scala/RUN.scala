@@ -34,8 +34,8 @@ object RUN {
     assert(optimizers.length > 0)
     val workingDir = parser.dir()
 
-    val train: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workingDir + "train/", sc)
-    val test: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workingDir + "test/", sc)
+    val train: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workingDir + "/train/", sc)
+    val test: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workingDir + "/test/", sc)
 
     val gdparams = Utils.readGDParameters(workingDir)
     val sgdparams = Utils.readSGDParameters(workingDir)

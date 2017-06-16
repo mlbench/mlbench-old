@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import utils.Functions._
 import utils.Utils
+import java.io._
 
 import scala.io.Source
 
@@ -17,6 +18,7 @@ import scala.io.Source
 class EvalParser(arguments: Seq[String]) extends org.rogach.scallop.ScallopConf(arguments) {
   val dir = opt[String](required = true, default = Some("../results/"), short = 'd',
     descr = "absolute address of the working directory. This must be provided.")
+  //val output_file = opt[String](required = true, default = Some("test_result.out"), short = 'o', descr = "Output file name")
   verify()
 }
 
@@ -32,16 +34,20 @@ object Evaluate {
 
     val parser = new EvalParser(args)
     val workinDir = parser.dir()
-    val inputLines = Source.fromFile(workinDir + "res.out").getLines.toList
+    //val output_file = parser.output_file()
+    val inputLines = Source.fromFile(workinDir + "/res.out").getLines.toList
     val pattern = "^([^:]+): (.*) elapsed: ([0-9]*)ms .*Vector\\((.*)\\)".r
 
     val train: RDD[LabeledPoint] = Utils.loadLibSVMFromDir(workinDir + "train/", sc)
+
 
     inputLines.foreach { line =>
       val pattern(method, regs, elapsed_row, weights_row) = line
       val weights = DenseVector(weights_row.split(",").map(_.trim).map(_.toDouble))
       val elapsed = elapsed_row.toInt
 
+      val output = new File(workinDir + "/" + method + "_output.out")
+      val bw = new BufferedWriter(new FileWriter(output, true))
       method match {
         case "Elastic_ProxCocoa" => {
           //val regPattern = "lambda: ([0-9]*\\.[0-9]*) alpha: ([0-9]*\\.[0-9]*)".r
@@ -58,6 +64,8 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new SquaredLoss, new L1Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
+          bw.write(method + ": lambda: " + lambda + " elapsed: " + elapsed + " objective: " + objective)
+          bw.newLine()
           println( method + ": " + objective)
         }
         case "L2_LR_SGD" | "L2_LR_GD" | "Mllib_L2_LR_GD" | "Mllib_L2_LR_SGD" | "Mllib_L2_LR_LBFGS" => {
@@ -66,6 +74,8 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new BinaryLogistic, new L2Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
+          bw.write(method + ": lambda: " + lambda + " elapsed: " + elapsed + " objective: " + objective)
+          bw.newLine()
           println(method + ": " + objective)
         }
         case "L1_LR_SGD" | "L1_LR_SGD" | "L1_LR_SGD" | "L1_LR_GD" | "Mllib_L1_LR_SGD" => {
@@ -74,6 +84,8 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new BinaryLogistic, new L1Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
+          bw.write(method + ": lambda: " + lambda + " elapsed: " + elapsed + " objective: " + objective)
+          bw.newLine()
           println(method + ": " + objective)
         }
         case "L2_SVM_Cocoa" | "L2_SVM_GD" | "L2_SVM_SGD" | "Mllib_L2_SVM_GD" | "Mllib_L2_SVM_SGD" => {
@@ -82,10 +94,13 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new HingeLoss, new L2Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
+          bw.write(method + ": lambda: " + lambda + " elapsed: " + elapsed + " objective: " + objective)
+          bw.newLine()
           println(method + ": " + objective)
         }
         case _ => println("No such method.")
       }
+      bw.close()
     }
   }
 }

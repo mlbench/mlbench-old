@@ -134,6 +134,10 @@ object Utils {
             if (seed != 0) {
               params.seed = seed
             }
+            val convergenceTol = sgdParams.get("convergenceTol").asInstanceOf[Double]
+            if (stepSize != 0) {
+              params.convergenceTol = convergenceTol
+            }
           }
         }
       }
@@ -167,6 +171,10 @@ object Utils {
           val seed = sgdParams.get("seed").asInstanceOf[Int]
           if (seed != 0) {
             params.seed = seed
+          }
+          val convergenceTol = sgdParams.get("convergenceTol").asInstanceOf[Double]
+            if (stepSize != 0) {
+            params.convergenceTol = convergenceTol
           }
         }
        }

@@ -1,13 +1,14 @@
 package optimizers
 
 import breeze.linalg.DenseVector
+import breeze.linalg.norm
 import breeze.numerics.sqrt
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 import utils.Functions.{LossFunction, Regularizer}
-
+import scala.util.control.Breaks._
 import scala.util.Random
-
+import scala.math.max
 
 /**
   * Created by amirreza on 09/03/16.
@@ -32,12 +33,14 @@ class SGD(val data: RDD[LabeledPoint],
 
     //TODO: Isn't this inefficient ??!! I think it is inefficient unless number of datapoints per partition is not a lot
     val dataArr:RDD[Array[LabeledPoint]] = data.mapPartitions(p => Iterator(p.toArray)).cache()
-    for (i <- 1 to params.iterations) {
+    breakable { for (i <- 1 to params.iterations) {
       gamma = params.stepSize / sqrt(i)
       val loss_gradient = dataArr.mapPartitions(partitionUpdate(_, w, params.miniBatchFraction, params.seed)).reduce(_ + _)
       val reg_gradient: DenseVector[Double] = regularizer.subgradient(w) * n
-      w -= gamma * (loss_gradient + regularizer.lambda * reg_gradient)
-    }
+      val w_diff = gamma * (loss_gradient + regularizer.lambda * reg_gradient)
+      if((norm(w_diff) < params.convergenceTol ) || norm(w_diff).isNaN || norm(w_diff).isInfinity) break
+      w -= w_diff
+    } }
 
     return w;
   }

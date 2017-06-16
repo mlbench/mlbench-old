@@ -38,19 +38,22 @@ class MllibSGD(val data: RDD[LabeledPoint],
       setMiniBatchFraction(params.miniBatchFraction).
       setStepSize(params.stepSize).
       setRegParam(regularizer.lambda).
-      setUpdater(reg)
+      setUpdater(reg).
+      setConvergenceTol(params.convergenceTol)
     case "LR" => opt.asInstanceOf[LogisticRegressionWithSGD].optimizer.
       setNumIterations(params.iterations).
       setMiniBatchFraction(params.miniBatchFraction).
       setStepSize(params.stepSize).
       setRegParam(regularizer.lambda).
-      setUpdater(reg)
+      setUpdater(reg).
+      setConvergenceTol(params.convergenceTol)
     case "Regression" => opt.asInstanceOf[LinearRegressionWithSGD].optimizer.
       setNumIterations(params.iterations).
       setMiniBatchFraction(params.miniBatchFraction).
       setStepSize(params.stepSize).
       setRegParam(regularizer.lambda).
-      setUpdater(reg)
+      setUpdater(reg).
+      setConvergenceTol(params.convergenceTol)
   }
 
   override def optimize(): Vector[Double] = {
