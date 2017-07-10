@@ -36,7 +36,7 @@ mkdir /data/results
 #/bin/bash
 echo "********************************************************************************************************Dividing the dataset************************************************************"
 ${SPARK_HOME}/bin/spark-submit --class "PrepareData" "$@" ${BENCHMARK_DIR}/target/scala-2.11/bench-spark-assembly-1.0.jar \
-       -d $DATASET -w "/data/results/" -m $METHOD -p $PARTITIONS 
+       -d "/data/$DATASET" -w "/data/results/" -m $METHOD -p $PARTITIONS 
 echo "********************************************************************************************************Running the benchmark***********************************************************"
 if [ $STEP -eq 0 ]; then
 	if [ $METHOD = "Regression" ]; then
