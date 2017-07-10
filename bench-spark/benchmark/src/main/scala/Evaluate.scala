@@ -46,7 +46,7 @@ object Evaluate {
       val weights = DenseVector(weights_row.split(",").map(_.trim).map(_.toDouble))
       val elapsed = elapsed_row.toInt
 
-      val output = new File(workinDir + "/" + method + "_output.out")
+      val output = new File(workinDir + "/" + method + "_output.csv")
       val bw = new BufferedWriter(new FileWriter(output, true))
       method match {
         case "Elastic_ProxCocoa" => {
@@ -64,7 +64,7 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new SquaredLoss, new L1Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
-          bw.write(method + ": lambda: " + lambda + " elapsed: " + elapsed + " objective: " + objective)
+          bw.write(method + "," + lambda + "," + elapsed + "," + objective)
           bw.newLine()
           println( method + ": " + objective)
         }
@@ -74,7 +74,7 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new BinaryLogistic, new L2Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
-          bw.write(method + ": lambda: " + lambda + " elapsed: " + elapsed + " objective: " + objective)
+          bw.write(method + "," + lambda + "," + elapsed + "," + objective)
           bw.newLine()
           println(method + ": " + objective)
         }
@@ -94,7 +94,7 @@ object Evaluate {
           val lambda = lambda_raw.toDouble
           val eval = new Evaluation(new HingeLoss, new L2Regularizer(lambda))
           val objective = eval.getObjective(weights, train)
-          bw.write(method + ": lambda: " + lambda + " elapsed: " + elapsed + " objective: " + objective)
+          bw.write(method + "," + lambda + "," + elapsed + "," + objective)
           bw.newLine()
           println(method + ": " + objective)
         }
