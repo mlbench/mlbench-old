@@ -1,6 +1,0 @@
-[submodule "legacy-bench-spark/src/main/scala/proxcocoa"]
-	path = legacy-bench-spark/src/main/scala/proxcocoa
-	url = https://github.com/gingsmith/proxcocoa.git
-[submodule "legacy-bench-spark/src/main/scala/cocoa"]
-	path = legacy-bench-spark/src/main/scala/cocoa
-	url = https://github.com/gingsmith/cocoa.git
