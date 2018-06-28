@@ -25,5 +25,5 @@ deploy:
     secure: PLEASE_REPLACE_ME
   on:
     tags: true
-    repo: Panaetius/mlbench
+    repo: mlbench/mlbench
     python: 3.6

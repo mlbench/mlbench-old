@@ -48,7 +48,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/Panaetius/mlbench',
+    url='https://github.com/mlbench/mlbench',
     version='0.1.0',
     zip_safe=False,
 )
