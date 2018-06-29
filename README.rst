@@ -7,7 +7,7 @@ mlbench: Distributed Machine Learning Benchmark
         :target: https://pypi.python.org/pypi/mlbench
 
 .. image:: https://img.shields.io/travis/mlbench/mlbench.svg
-        :target: https://travis-ci.org/mlbench/mlbench
+        :target: https://travis-ci.com/mlbench/mlbench
 
 .. image:: https://readthedocs.org/projects/mlbench/badge/?version=latest
         :target: https://mlbench.readthedocs.io/en/latest/?badge=latest
