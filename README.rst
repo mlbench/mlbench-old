@@ -44,6 +44,7 @@ Community
 ---------
 
 About us: See `Authors`_
+
 Mailing list: https://groups.google.com/d/forum/mlbench
 
 Credits
@@ -54,4 +55,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
 
-.. _Authors: authors.rst
+.. _Authors: AUTHORS.rst
