@@ -1,0 +1,32 @@
+
+
+coordinator:
+  enabled: true
+
+  name: coordinator
+
+  image:
+    repository: localhost:5000/mlbench_coordinator
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 80
+
+
+experiment:
+  enabled: true
+
+  name: experiment
+
+  image:
+    repository: localhost:5000/mlbench_experiment
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 22
+  
+  replicaCount: 2

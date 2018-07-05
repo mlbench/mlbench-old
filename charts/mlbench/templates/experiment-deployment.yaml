@@ -1,0 +1,55 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "mlbench.experiment.fullname" . }}
+  labels:
+    app: {{ template "mlbench.name" . }}
+    chart: {{ template "mlbench.chart" . }}
+    component: "{{ .Values.experiment.name }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "mlbench.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "mlbench.name" . }}
+        component: "{{ .Values.experiment.name }}"
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ template "mlbench.name" . }}-{{ .Values.experiment.name }}
+          image: "{{ .Values.experiment.image.repository }}:{{ .Values.experiment.image.tag }}"
+          imagePullPolicy: {{ .Values.experiment.image.pullPolicy }}
+          ports:
+            - name: ssh
+              containerPort: 22
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: ssh
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: ssh
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
