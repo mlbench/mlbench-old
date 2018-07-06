@@ -8,7 +8,7 @@ coordinator:
   image:
     repository: localhost:5000/mlbench_coordinator
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
   service:
     type: NodePort
@@ -23,7 +23,7 @@ experiment:
   image:
     repository: localhost:5000/mlbench_experiment
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
   service:
     type: ClusterIP

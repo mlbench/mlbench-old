@@ -28,6 +28,7 @@ spec:
           ports:
             - name: ssh
               containerPort: 22
+              hostPort: 22
               protocol: TCP
           livenessProbe:
             tcpSocket:
