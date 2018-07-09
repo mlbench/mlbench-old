@@ -9,6 +9,7 @@ Welcome to mlbench's documentation!
    installation
    usage
    modules
+   devguide
    contributing
    authors
    history
