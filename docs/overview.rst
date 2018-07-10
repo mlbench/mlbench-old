@@ -1,5 +1,8 @@
+========
+Overview
+========
+
 .. figure:: images/DeploymentArchitecture.png
-   :scale: 50 %
    :alt: Deployment Architecture Overview
 
    Deployment Overview: Relation between Experiment and Coordinator
