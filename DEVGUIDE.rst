@@ -2,6 +2,10 @@
 Developer Guide
 =======
 
+Code Style
+----------
+Python code should follow PEP8 guidelines. flake8 checks PEP8 compliance
+
 Installation
 ------------
 - Install docker and kubernetes binaries on your system
