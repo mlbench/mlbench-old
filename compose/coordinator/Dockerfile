@@ -40,11 +40,18 @@ COPY ./compose/coordinator/supervisord.conf /etc/supervisor/conf.d/
 # Copy your application code to the container (make sure you create a .dockerignore file if any large files or directories should be excluded)
 RUN mkdir /app/
 RUN mkdir /app/code/
+RUN mkdir /app/static/
+RUN mkdir /app/media/
+
 WORKDIR /app/
-ADD ./mlbench/coordinator/ /app/code/
+
 COPY ./compose/coordinator/uwsgi.ini /app/
 COPY ./compose/coordinator/uwsgi_params /app/
 
-
 EXPOSE 80
+
+ADD ./mlbench/coordinator/ /app/code/
+
+#Setup django
+RUN /venv/bin/python code/manage.py collectstatic
 CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

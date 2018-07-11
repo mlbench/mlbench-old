@@ -1,3 +1,5 @@
 Django==2.0.7
-uwsgi
-django-livesync
+uwsgi==2.0.17
+django-livesync==0.4
+django-constance==2.2.0
+django-picklefield==1.0.0
