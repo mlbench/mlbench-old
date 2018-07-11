@@ -8,44 +8,15 @@ Installation
 Stable release
 --------------
 
-To install mlbench, run this command in your terminal:
+Install `Link text <https://helm.sh/>`_
 
-.. code-block:: console
+Use helm to install the mlbench chart:
 
-    $ pip install mlbench
+.. code-block:: bash
 
-This is the preferred method to install mlbench, as it will always install the most recent stable release.
-
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide
-you through the process.
-
-.. _pip: https://pip.pypa.io
-.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
-
+   $ helm install mlbench
 
 From sources
 ------------
 
-The sources for mlbench can be downloaded from the `Github repo`_.
-
-You can either clone the public repository:
-
-.. code-block:: console
-
-    $ git clone git://github.com/mlbench/mlbench
-
-Or download the `tarball`_:
-
-.. code-block:: console
-
-    $ curl  -OL https://github.com/mlbench/mlbench/tarball/master
-
-Once you have a copy of the source, you can install it with:
-
-.. code-block:: console
-
-    $ python setup.py install
-
-
-.. _Github repo: https://github.com/mlbench/mlbench
-.. _tarball: https://github.com/mlbench/mlbench/tarball/master
+TODO:

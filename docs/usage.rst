@@ -2,9 +2,8 @@
 Usage
 =====
 
-To use mlbench in a project, install it with helm:
-
-    helm install mlbench
+Access the dashboard at: TODO
 
 
-Then acces the dashboard at: TODO
+.. warning::
+   Login to /admin/ on the dashboard with mlbench_admin:mlbench_password and change the password of the admin user for security reasons
