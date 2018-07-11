@@ -131,5 +131,5 @@ STATIC_ROOT = '/app/static'
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 
 CONSTANCE_CONFIG = {
-    'FIRST_TIME': (True, 'Whether to execute first time setup wizard'),
+    'FIRST_TIME': (True, 'Whether to execute first time setup wizard')
 }

@@ -9,6 +9,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  serviceAccountName: {{ template "mlbench.coordinator.fullname" . }}
   replicas: 1
   selector:
     matchLabels:
@@ -21,6 +22,7 @@ spec:
         component: "{{ .Values.coordinator.name }}"
         release: {{ .Release.Name }}
     spec:
+      serviceAccountName: {{ template "mlbench.coordinator.fullname" . }}
       containers:
         - name: {{ template "mlbench.name" . }}-{{ .Values.coordinator.name }}
           image: "{{ .Values.coordinator.image.repository }}:{{ .Values.coordinator.image.tag }}"
@@ -39,6 +41,7 @@ spec:
           #     path: /
           #     port: http
           resources:
+          serviceAccountName: {{ template "mlbench.coordinator.fullname" . }}
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}
       nodeSelector:

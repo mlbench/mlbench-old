@@ -9,6 +9,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  serviceAccountName: {{ template "mlbench.coordinator.fullname" . }}
   type: {{ .Values.coordinator.service.type }}
   ports:
     - port: {{ .Values.coordinator.service.port }}

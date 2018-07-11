@@ -5,6 +5,8 @@ coordinator:
 
   name: coordinator
 
+  imagePullSecret: regcred
+
   image:
     repository: localhost:5000/mlbench_coordinator
     tag: latest
@@ -28,5 +30,5 @@ experiment:
   service:
     type: ClusterIP
     port: 22
-  
+
   replicaCount: 2
