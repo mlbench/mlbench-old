@@ -14,9 +14,9 @@ def first_time(request):
 
         v1 = client.CoreV1Api()
         result = "Listing pods with their IPs:"
-        ret = v1.list_pod_for_all_namespaces(watch=False)
+        ret = v1.list_namespaced_pod("default")
         for i in ret.items:
-            result += "\n%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name)
+            result += "<br>%s&nbsp;&nbsp;&nbsp;&nbsp;%s&nbsp;&nbsp;&nbsp;&nbsp;%s&nbsp;&nbsp;&nbsp;&nbsp;%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name, str(i.metadata.labels))
         return HttpResponse(result)
     except Exception as e:
         return HttpResponse(str(e))
