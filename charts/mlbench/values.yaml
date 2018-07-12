@@ -1,14 +1,14 @@
 
 
-coordinator:
+master:
   enabled: true
 
-  name: coordinator
+  name: master
 
   imagePullSecret: regcred
 
   image:
-    repository: localhost:5000/mlbench_coordinator
+    repository: localhost:5000/mlbench_master
     tag: latest
     pullPolicy: Always
 
@@ -17,13 +17,13 @@ coordinator:
     port: 80
 
 
-experiment:
+worker:
   enabled: true
 
-  name: experiment
+  name: worker
 
   image:
-    repository: localhost:5000/mlbench_experiment
+    repository: localhost:5000/mlbench_worker
     tag: latest
     pullPolicy: Always
 

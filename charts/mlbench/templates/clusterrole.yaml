@@ -3,11 +3,11 @@ kind: ClusterRole
 metadata:
   labels:
     app: {{ template "mlbench.name" . }}
-    component: "{{ .Values.coordinator.name }}"
+    component: "{{ .Values.master.name }}"
     chart: {{ template "mlbench.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-  name: {{ template "mlbench.coordinator.fullname" . }}
+  name: {{ template "mlbench.master.fullname" . }}
 rules:
 - apiGroups: [""]
   resources: ["pods", "pods/exec"]

@@ -1,15 +1,15 @@
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: {{ template "mlbench.experiment.fullname" . }}
+  name: {{ template "mlbench.worker.fullname" . }}
   labels:
     app: {{ template "mlbench.name" . }}
     chart: {{ template "mlbench.chart" . }}
-    component: "{{ .Values.experiment.name }}"
+    component: "{{ .Values.worker.name }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: {{ .Values.experiment.replicaCount }}
+  replicas: {{ .Values.worker.replicaCount }}
   selector:
     matchLabels:
       app: {{ template "mlbench.name" . }}
@@ -18,13 +18,13 @@ spec:
     metadata:
       labels:
         app: {{ template "mlbench.name" . }}
-        component: "{{ .Values.experiment.name }}"
+        component: "{{ .Values.worker.name }}"
         release: {{ .Release.Name }}
     spec:
       containers:
-        - name: {{ template "mlbench.name" . }}-{{ .Values.experiment.name }}
-          image: "{{ .Values.experiment.image.repository }}:{{ .Values.experiment.image.tag }}"
-          imagePullPolicy: {{ .Values.experiment.image.pullPolicy }}
+        - name: {{ template "mlbench.name" . }}-{{ .Values.worker.name }}
+          image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"
+          imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
           ports:
             - name: ssh
               containerPort: 22

@@ -43,15 +43,15 @@ RUN echo "hwloc_base_binding_policy = none" >> /etc/openmpi/openmpi-mca-params.c
     echo "rmaps_base_mapping_policy = slot" >> /etc/openmpi/openmpi-mca-params.conf && \
     echo "btl_tcp_if_exclude = lo,docker0" >> /etc/openmpi/openmpi-mca-params.conf
 
-#COPY ./compose/experiment/supervisord.conf /etc/supervisor/conf.d/
-ADD ./compose/experiment/entrypoint.sh /usr/local/bin/
+#COPY ./compose/worker/supervisord.conf /etc/supervisor/conf.d/
+ADD ./compose/worker/entrypoint.sh /usr/local/bin/
 RUN chmod a+x /usr/local/bin/entrypoint.sh
 
 # Copy your application code to the container (make sure you create a .dockerignore file if any large files or directories should be excluded)
 RUN mkdir /app/
 WORKDIR /app/
 
-ADD ./mlbench/experiment/ /app/
+ADD ./mlbench/worker/ /app/
 
 EXPOSE 22
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

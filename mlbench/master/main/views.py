@@ -15,7 +15,7 @@ def run_mpi(request):
 
     ret = v1.list_namespaced_pod(
         "default",
-        label_selector="component=experiment,app=mlbench")
+        label_selector="component=worker,app=mlbench")
     result = ""
     hosts = []
     for i in ret.items:
