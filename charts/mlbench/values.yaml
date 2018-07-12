@@ -1,12 +1,14 @@
 
 
-coordinator:
+master:
   enabled: true
 
-  name: coordinator
+  name: master
+
+  imagePullSecret: regcred
 
   image:
-    repository: localhost:5000/mlbench_coordinator
+    repository: localhost:5000/mlbench_master
     tag: latest
     pullPolicy: Always
 
@@ -15,18 +17,57 @@ coordinator:
     port: 80
 
 
-experiment:
+worker:
   enabled: true
 
-  name: experiment
+  name: worker
 
   image:
-    repository: localhost:5000/mlbench_experiment
+    repository: localhost:5000/mlbench_worker
     tag: latest
     pullPolicy: Always
 
   service:
     type: ClusterIP
     port: 22
-  
+
   replicaCount: 2
+
+  sshKey:
+    id_rsa: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEowIBAAKCAQEAo9N88wScRCnfTE5HMV1ydPq/Clv1gSRu68/Q3NHDJD17LwT2
+      PDWpYZ1Q88JKI2tuvjYsuff+zi1yzHCu2r0NtDTaY2iBU4EAyAf6vIf3qtHCMZyt
+      Ow3RGtMg6a2CYBtDiAowm4GIwERrvOzKnri4YZ7wHs2JE+paiPU4/Oc4O2BbKF7y
+      /ougWVgubnsz2pffQTznpKcxRLz9NPco+ycszbiWD+SksX+FP5TBzg6NGV2OOgpr
+      iXeHdgoIehHXalm40Tw0SMF7KPJZwgMZznwLSUAEg0D4VVlR+wmw0SQTTT8wfCe7
+      VQwhb8h9BpVioEHUsVid43cZ7mI0L6jzQbdwRQIDAQABAoIBADR1DsheDI+C/N5Z
+      HlC/RFwSwkNV6Mm+WcomVBGxFRQwn5YRt6rV3/PCxN4Ys1aeGurLPA0cTLnGMcEm
+      v8aIzK+MUPWNzANqBk8GxxHBU9udqNnr+kgzh2ZYfmx0w490i24vHRteIeS2w+zN
+      wZ+LNHcFxouGcsMuwmiiZOoOO6I/GAFY1b5qXS/iblMPEe4dLJua5fT8RrFHLFQg
+      2pcShKOtcGnYwMQfXRsZr5F+q0oatPcGQRRTpJWklNfx+W9SNquoCwzdeuENvSEb
+      CSnW67TJcKHBA5rPnGtAYp2ip0UjQZ0/4AusbOeZUZkkZgxmSIwBElKjR6XBM71C
+      1KgvD+0CgYEA1zgzM0RyBrbW1nGr91jCVlKVEIn2O9Zn1O1mWe/J7sboJ/rT9M+6
+      rYKhO1iM1SrkLhqZGBHYBU+LPYft2HMH+FmM3/edhUHcXDie2oBNkJH+g75oTSK7
+      WdnOSMljKvQJlPF58GGsCOKmPuDYzghj6cp/sWXH5xTJbxEvC/3T1csCgYEAwt5Q
+      L9J/P6aJH83mGQeY0qq2UFda33pWmgVoP/kjJzxz+8Kb3DDd6+XPE/3nKEnxleAv
+      7MeUeB6AttwM0zdYUKndF5QL60hqazJ1SUktyh+6WvL2r8Mpoo3eRGVthv1B9+hm
+      N25vX9rzHWlO2K3rQH/9CqahM+Lxc7uLxrSTkC8CgYBKpAIV0LIfJABEZS333b+g
+      gomSL9bHD+f4z9DEdkY5WqCfZP1nlTev/3L9iwtkzrhOSQk5cM7ToK+wylixzctA
+      1YXnExB9a8cJ8NUfAIpmDkwP0tSHk/kYA1LoqXeMKRC9qDXbKXSprDlt6zsl0YEd
+      Tw6ULrFysiHeND510TVLmwKBgQCMv9ZbNEcEylywxB82ZO5U+0jDrtTMJaj3hoBN
+      9L0XUerUJTQ+Tm18PXjcj7+usfn0rwDunRj3ydBeQ4Jf7NG1MXun1B7nyl5THxbn
+      4BtaqqAHoQXc3bHs31tzO29o2PQVA58Q2otHSPXggHeaucP5yngSgVheCcUsOoIy
+      +6q5sQKBgHLUqlcQrvs1S630TsFdE1eN33/5Go0ekLwJBk/J1zlUZtqLCXELz2xc
+      PASCSCq/Xg2YbctQhOyAggRHm5dhjPmD7NFdLGINa9kk/lAPMtsRGrD0YiNvhtfS
+      BLDg/sFuhLuKeN+plOZaYu2hoQE2cPHC5hpFboUbhR9GS7AFVYcH
+      -----END RSA PRIVATE KEY-----
+    id_rsa_pub: |
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCj03zzBJxEKd9MTkcxXXJ0+r8KW/WBJG7rz9Dc0cMkPXsvBPY8NalhnVDzwkoja26+Niy59/7OLXLMcK7avQ20NNpjaIFTgQDIB/q8h/eq0cIxnK07DdEa0yDprYJgG0OICjCbgYjARGu87MqeuLhhnvAezYkT6lqI9Tj85zg7YFsoXvL+i6BZWC5uezPal99BPOekpzFEvP009yj7JyzNuJYP5KSxf4U/lMHODo0ZXY46CmuJd4d2Cgh6EddqWbjRPDRIwXso8lnCAxnOfAtJQASDQPhVWVH7CbDRJBNNPzB8J7tVDCFvyH0GlWKgQdSxWJ3jdxnuYjQvqPNBt3BF
+
+
+
+
+
+
+

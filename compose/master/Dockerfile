@@ -1,7 +1,7 @@
 FROM python:3.6-alpine
 
 # Copy in your requirements file
-ADD ./compose/coordinator/requirements.txt /requirements.txt
+ADD ./compose/master/requirements.txt /requirements.txt
 
 # OR, if you’re using a directory for your requirements, copy everything (comment out the above and uncomment this if so):
 # ADD requirements /requirements
@@ -34,17 +34,24 @@ RUN set -ex \
     && apk del .build-deps
 
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
-COPY ./compose/coordinator/nginx-app.conf /etc/nginx/conf.d/default.conf
-COPY ./compose/coordinator/supervisord.conf /etc/supervisor/conf.d/
+COPY ./compose/master/nginx-app.conf /etc/nginx/conf.d/default.conf
+COPY ./compose/master/supervisord.conf /etc/supervisor/conf.d/
 
 # Copy your application code to the container (make sure you create a .dockerignore file if any large files or directories should be excluded)
 RUN mkdir /app/
 RUN mkdir /app/code/
-WORKDIR /app/
-ADD ./mlbench/coordinator/ /app/code/
-COPY ./compose/coordinator/uwsgi.ini /app/
-COPY ./compose/coordinator/uwsgi_params /app/
+RUN mkdir /app/static/
+RUN mkdir /app/media/
 
+WORKDIR /app/
+
+COPY ./compose/master/uwsgi.ini /app/
+COPY ./compose/master/uwsgi_params /app/
 
 EXPOSE 80
+
+ADD ./mlbench/master/ /app/code/
+
+#Setup django
+RUN /venv/bin/python code/manage.py collectstatic
 CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

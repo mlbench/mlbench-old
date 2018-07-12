@@ -24,28 +24,28 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 {{- end -}}
 
-{{- define "mlbench.coordinator.fullname" -}}
-{{- if .Values.coordinator.fullnameOverride -}}
-{{- .Values.coordinator.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- define "mlbench.master.fullname" -}}
+{{- if .Values.master.fullnameOverride -}}
+{{- .Values.master.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- if contains $name .Release.Name -}}
 {{- .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.coordinator.name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s-%s" .Release.Name $name .Values.master.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
 
-{{- define "mlbench.experiment.fullname" -}}
-{{- if .Values.experiment.fullnameOverride -}}
-{{- .Values.experiment.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- define "mlbench.worker.fullname" -}}
+{{- if .Values.worker.fullnameOverride -}}
+{{- .Values.worker.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- if contains $name .Release.Name -}}
 {{- .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.experiment.name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s-%s" .Release.Name $name .Values.worker.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

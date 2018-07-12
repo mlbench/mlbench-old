@@ -1,21 +1,22 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "mlbench.coordinator.fullname" . }}
+  name: {{ template "mlbench.master.fullname" . }}
   labels:
     app: {{ template "mlbench.name" . }}
-    component: "{{ .Values.coordinator.name }}"
+    component: "{{ .Values.master.name }}"
     chart: {{ template "mlbench.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  type: {{ .Values.coordinator.service.type }}
+  serviceAccountName: {{ template "mlbench.master.fullname" . }}
+  type: {{ .Values.master.service.type }}
   ports:
-    - port: {{ .Values.coordinator.service.port }}
+    - port: {{ .Values.master.service.port }}
       targetPort: http
       protocol: TCP
       name: http
   selector:
     app: {{ template "mlbench.name" . }}
-    component: "{{ .Values.coordinator.name }}"
+    component: "{{ .Values.master.name }}"
     release: {{ .Release.Name }}
