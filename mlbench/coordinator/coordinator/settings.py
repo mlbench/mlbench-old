@@ -49,7 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'coordinator.middleware.FirstVisitMiddleware'
+    #'coordinator.middleware.FirstVisitMiddleware'
 ]
 
 ROOT_URLCONF = 'coordinator.urls'

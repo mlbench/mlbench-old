@@ -16,9 +16,20 @@ RUN set -ex \
             openssh \
     && apk del .build-deps
 
+RUN mkdir /var/run/sshd
+
 RUN cat /etc/ssh/ssh_config | grep -v StrictHostKeyChecking > /etc/ssh/ssh_config.new && \
     echo "    StrictHostKeyChecking no" >> /etc/ssh/ssh_config.new && \
     mv /etc/ssh/ssh_config.new /etc/ssh/ssh_config
+
+ARG SSH_USER=root
+ENV SSH_USER=$SSH_USER
+RUN mkdir -p /ssh-key/$SSH_USER && chown -R $SSH_USER:$SSH_USER /ssh-key/$SSH_USER
+RUN mkdir -p /.sshd/host_keys && \
+  chown -R $SSH_USER:$SSH_USER /.sshd/host_keys && chmod 700 /.sshd/host_keys
+RUN mkdir -p /.sshd/user_keys/$SSH_USER && \
+  chown -R $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER && chmod 700 /.sshd/user_keys/$SSH_USER
+VOLUME /ssh-key/$SSH_USER
 
 # Create a wrapper for OpenMPI to allow running as root by default
 RUN mv /usr/bin/mpirun /usr/bin/mpirun.real && \
@@ -40,6 +51,8 @@ RUN chmod a+x /usr/local/bin/entrypoint.sh
 RUN mkdir /app/
 WORKDIR /app/
 
+ADD ./mlbench/experiment/ /app/
+
 EXPOSE 22
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["/usr/sbin/sshd","-D"]
+CMD ["/usr/sbin/sshd","-eD", "-f", "/.sshd/user_keys/root/sshd_config"]

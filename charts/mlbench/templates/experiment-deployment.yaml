@@ -42,6 +42,14 @@ spec:
             periodSeconds: 20
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+          volumeMounts:
+          - name: mlbench-ssh-key
+            mountPath: /ssh-key/root
+      volumes:
+      - name: mlbench-ssh-key
+        secret:
+          secretName: {{ .Release.Name }}-ssh-key
+          defaultMode: 256
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}

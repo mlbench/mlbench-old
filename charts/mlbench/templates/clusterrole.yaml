@@ -10,5 +10,5 @@ metadata:
   name: {{ template "mlbench.coordinator.fullname" . }}
 rules:
 - apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list"]
+  resources: ["pods", "pods/exec"]
+  verbs: ["get", "list", "create"]
