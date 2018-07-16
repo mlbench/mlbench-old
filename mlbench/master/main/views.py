@@ -19,7 +19,11 @@ def run_mpi(request):
     result = ""
     hosts = []
     for i in ret.items:
-        result += "<br>%s&nbsp;&nbsp;&nbsp;&nbsp;%s&nbsp;&nbsp;&nbsp;&nbsp;%s&nbsp;&nbsp;&nbsp;&nbsp;%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name, str(i.metadata.labels))
+        result += "<br>{}}&nbsp;&nbsp;&nbsp;&nbsp;{}&nbsp;&nbsp;&nbsp;&nbsp;"\
+            "{}&nbsp;&nbsp;&nbsp;&nbsp;{}".format(i.status.pod_ip,
+                                                  i.metadata.namespace,
+                                                  i.metadata.name,
+                                                  str(i.metadata.labels))
         hosts.append(i.status.pod_ip)
 
     exec_command = [
@@ -40,4 +44,3 @@ def run_mpi(request):
 
     result += "<br>" + resp
     return HttpResponse(result)
-
