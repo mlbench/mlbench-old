@@ -34,9 +34,9 @@ Installation
 
 - Build & Publish docker to registry (repeat if code changes):
 
-  - ./publish_docker.sh master
+  - make publish-docker component=master docker_registry=localhost:5000
 
-  - ./publish_docker.sh worker
+  - make publish-docker component=worker docker_registry=localhost:5000
 
 - Deploy app to cluster with:
 
