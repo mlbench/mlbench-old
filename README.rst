@@ -2,10 +2,6 @@
 mlbench: Distributed Machine Learning Benchmark
 ========
 
-
-.. image:: https://img.shields.io/pypi/v/mlbench.svg
-        :target: https://pypi.python.org/pypi/mlbench
-
 .. image:: https://img.shields.io/travis/mlbench/mlbench.svg
         :target: https://travis-ci.com/mlbench/mlbench
 
