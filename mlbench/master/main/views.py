@@ -1,11 +1,12 @@
 from django.http import HttpResponse
+from django.shortcuts import render
 from kubernetes import client, config
 from kubernetes.stream import stream
 
 
 # Create your views here.
 def index(request):
-    return HttpResponse("Welcome!")
+    return render(request, 'main/index.html')
 
 
 def run_mpi(request):
