@@ -29,7 +29,7 @@ jobs:
         - docker
       install: true
 
-      before_script: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${docker_url}
+      before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
       script:
         - docker build -f compose/master/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_master:travis-ci-test .
         - docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_worker:travis-ci-test .
@@ -77,7 +77,7 @@ jobs:
       language: bash
       services: docker
       before_install:
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${docker_url}
+        - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
       before_script:
         - docker pull ${docker_repository}/mlbench_master:travis-ci-test
         - docker pull ${docker_repository}/mlbench_worker:travis-ci-test
