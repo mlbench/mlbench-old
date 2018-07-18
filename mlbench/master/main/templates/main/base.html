@@ -13,6 +13,7 @@
         <script src="{% static 'js/popper.min.js' %}"></script>
         <script src="{% static 'js/bootstrap.min.js' %}"></script>
         <script src="{% static 'js/feather.min.js' %}"></script>
+        <script src="{% static 'js/jsrender.min.js' %}"></script>
     </head>
     <body>
         <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
@@ -73,5 +74,7 @@
         <script>
             feather.replace()
         </script>
+        {% block scripts %}
+        {% endblock %}
     </body>
 </html>
