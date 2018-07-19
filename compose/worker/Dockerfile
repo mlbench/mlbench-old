@@ -41,7 +41,8 @@ RUN mv /usr/bin/mpirun /usr/bin/mpirun.real && \
 #   --bind-to none --map-by slot --mca btl_tcp_if_exclude lo,docker0
 RUN echo "hwloc_base_binding_policy = none" >> /etc/openmpi/openmpi-mca-params.conf && \
     echo "rmaps_base_mapping_policy = slot" >> /etc/openmpi/openmpi-mca-params.conf && \
-    echo "btl_tcp_if_exclude = lo,docker0" >> /etc/openmpi/openmpi-mca-params.conf
+    echo "btl_tcp_if_exclude = lo,docker0" >> /etc/openmpi/openmpi-mca-params.conf && \
+    echo "orte_keep_fqdn_hostnames=t" >> /etc/openmpi/openmpi-mca-params.conf
 
 #COPY ./compose/worker/supervisord.conf /etc/supervisor/conf.d/
 ADD ./compose/worker/entrypoint.sh /usr/local/bin/

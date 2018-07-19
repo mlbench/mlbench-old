@@ -58,7 +58,7 @@ class MPIJobView(ViewSet):
                                     i.metadata.namespace,
                                     i.metadata.name,
                                     str(i.metadata.labels)))
-            hosts.append(str(i.status.pod_ip))
+            hosts.append("{}.{}".format(i.metadata.name, release_name))
 
         exec_command = [
             'sh',
