@@ -7,7 +7,7 @@
 <script id="card-template" type="text/x-jsrender">
     <div class="card w-25 node-card" style="max-width:40rem">
         <div class="card-header <%if phase === 'Running'%>bg-success<%else phase === 'Pending'%>bg-warning<%else%>bg-danger<%/if%>">
-            <%>name%>
+            <span data-feather="server"></span><%>name%>
         </div>
         <div class="card-body list-group">
             <div class="d-flex w-100 justify-content-between">
@@ -35,6 +35,7 @@
                 $.each(data, function(index, value){
                     var card = $("#card-template").render(value);
                     $("#nodes-list").append(card)
+                    feather.replace();
                 })
             })
 

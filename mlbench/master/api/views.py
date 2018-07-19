@@ -4,6 +4,7 @@ from api.models import KubeNode
 from api.serializers import KubeNodeSerializer
 
 from kubernetes import client, config
+from kubernetes.stream import stream
 
 import os
 
@@ -34,3 +35,46 @@ class KubeNodeView(ViewSet):
 
         serializer = KubeNodeSerializer(nodes, many=True)
         return Response(serializer.data)
+
+
+class MPIJobView(ViewSet):
+
+    def create(self, request):
+        config.load_incluster_config()
+
+        v1 = client.CoreV1Api()
+
+        release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
+
+        ret = v1.list_namespaced_pod(
+            "default",
+            label_selector="component=worker,app=mlbench,release={}"
+            .format(release_name))
+
+        result = {'nodes': []}
+        hosts = []
+        for i in ret.items:
+            result['nodes'].append((i.status.pod_ip,
+                                    i.metadata.namespace,
+                                    i.metadata.name,
+                                    str(i.metadata.labels)))
+            hosts.append(i.status.pod_ip)
+
+        exec_command = [
+            'sh',
+            '/usr/bin/mpirun',
+            '--host', ",".join(hosts),
+            '/usr/local/bin/python', '/app/main.py']
+        result['command'] = str(exec_command)
+
+        name = ret.items[0].metadata.name
+
+        result['master_name'] = name
+
+        resp = stream(v1.connect_get_namespaced_pod_exec, name, 'default',
+                      command=exec_command,
+                      stderr=True, stdin=False,
+                      stdout=True, tty=False)
+
+        result["response"] = resp
+        return Response(result)

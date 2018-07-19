@@ -1,4 +1,6 @@
 {% load static %}
+{% url 'index' as index_url%}
+{% url 'test' as test_url%}
 <html>
     <head>
         <meta charset="utf-8">
@@ -30,13 +32,13 @@
                     <div class="sidebar-sticky">
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link active" href="#">
+                                <a class="nav-link {% if request.get_full_path == index_url %}active{% endif %}" href="{{index_url}}">
                                     <span data-feather="home"></span>
                                     Dashboard <span class="sr-only">(current)</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">
+                                <a class="nav-link {% if request.get_full_path == test_url %}active{% endif %}" href="{{test_url}}">
                                         <span data-feather="bar-chart-2"></span>
                                     Tests
                                 </a>
