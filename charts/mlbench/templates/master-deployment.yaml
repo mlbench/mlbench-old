@@ -40,6 +40,11 @@ spec:
           #   httpGet:
           #     path: /
           #     port: http
+          env:
+            - name: MLBENCH_KUBE_SERVICENAME
+              value: {{ template "mlbench.master.fullname" . }}
+            - name: MLBENCH_KUBE_RELEASENAME
+              value: {{ .Release.Name }}
           resources:
           serviceAccountName: {{ template "mlbench.master.fullname" . }}
 {{ toYaml .Values.resources | indent 12 }}

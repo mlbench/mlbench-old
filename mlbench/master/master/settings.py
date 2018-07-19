@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'constance',
     'constance.backends.database',
+    'rest_framework',
+    'main',
+    'api'
 ]
 
 MIDDLEWARE = [
