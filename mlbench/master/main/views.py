@@ -16,17 +16,19 @@ def run_mpi(request):
     ret = v1.list_namespaced_pod(
         "default",
         label_selector="component=worker,app=mlbench")
+
     result = ""
     hosts = []
     for i in ret.items:
-        result += "<br>%s&nbsp;&nbsp;&nbsp;&nbsp;%s&nbsp;&nbsp;&nbsp;&nbsp;%s&nbsp;&nbsp;&nbsp;&nbsp;%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name, str(i.metadata.labels))
+        result += "<br>%s&nbsp;&nbsp;&nbsp;&nbsp;%s&nbsp;&nbsp;&nbsp;&nbsp;%s&nbsp;&nbsp;&nbsp;&nbsp;%s" % (
+            i.status.pod_ip, i.metadata.namespace, i.metadata.name, str(i.metadata.labels))
         hosts.append(i.status.pod_ip)
 
     exec_command = [
-        'sh',
-        '/usr/bin/mpirun',
+        '/.openmpi/bin/mpirun',
         '--host', ",".join(hosts),
-        '/usr/local/bin/python', '/app/main.py']
+        '/conda/bin/python', '/app/main.py', str(len(ret.items)), ",".join(hosts)]
+
     result += "<br>" + str(exec_command)
 
     name = ret.items[0].metadata.name
@@ -40,4 +42,3 @@ def run_mpi(request):
 
     result += "<br>" + resp
     return HttpResponse(result)
-
