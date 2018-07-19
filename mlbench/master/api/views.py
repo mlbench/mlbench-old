@@ -1,10 +1,11 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
+from rest_framework import status
 from api.models import KubeNode
 from api.serializers import KubeNodeSerializer
 
 from kubernetes import client, config
-from kubernetes.stream import stream
+import kubernetes.stream as stream
 
 import os
 
@@ -23,7 +24,6 @@ class KubeNodeView(ViewSet):
             "default",
             label_selector="component=worker,app=mlbench,release={}"
             .format(release_name))
-
         nodes = []
         for i in ret.items:
             node = KubeNode(
@@ -58,7 +58,7 @@ class MPIJobView(ViewSet):
                                     i.metadata.namespace,
                                     i.metadata.name,
                                     str(i.metadata.labels)))
-            hosts.append(i.status.pod_ip)
+            hosts.append(str(i.status.pod_ip))
 
         exec_command = [
             'sh',
@@ -71,10 +71,11 @@ class MPIJobView(ViewSet):
 
         result['master_name'] = name
 
-        resp = stream(v1.connect_get_namespaced_pod_exec, name, 'default',
-                      command=exec_command,
-                      stderr=True, stdin=False,
-                      stdout=True, tty=False)
+        resp = stream.stream(v1.connect_get_namespaced_pod_exec, name,
+                             'default',
+                             command=exec_command,
+                             stderr=True, stdin=False,
+                             stdout=True, tty=False)
 
         result["response"] = resp
-        return Response(result)
+        return Response(result, status=status.HTTP_201_CREATED)
