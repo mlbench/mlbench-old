@@ -1,29 +1,116 @@
 # Config file for automatic testing at travis-ci.org
+env:
+  global:
+    - docker_url=registry.hub.docker.com
+    - docker_repository=mlbench
+jobs:
+  include:
+    - stage: test
+      language: python
+      python:
+        - 3.4
+        - 3.5
+        - 3.6
 
-language: python
-python:
-  - 3.6
-  - 3.5
-  - 3.4
-  - 2.7
+      # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+      install:
+        - pip install -U tox-travis
+        - pip install -r requirements_dev.txt
 
-# Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: pip install -U tox-travis
+      # Command to run tests, e.g. python setup.py test
+      script:
+        - tox
 
-# Command to run tests, e.g. python setup.py test
-script: tox
+    - stage: build docker
+      language: bash
+      sudo: required
 
-# Assuming you have installed the travis-ci CLI tool, after you
-# create the Github repo and add it to Travis, run the
-# following command to finish PyPI deployment setup:
-# $ travis encrypt --add deploy.password
-deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: Panaetius
-  password:
-    secure: PLEASE_REPLACE_ME
-  on:
-    tags: true
-    repo: mlbench/mlbench
-    python: 3.6
+      services:
+        - docker
+      install: true
+
+      before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
+      script:
+        - docker build -f compose/master/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_master:travis-ci-test .
+        - docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_worker:travis-ci-test .
+      after_success:
+        - docker push ${docker_url}/${docker_repository}//mlbench_master:travis-ci-test
+        - docker push ${docker_url}/${docker_repository}//mlbench_worker:travis-ci-test
+    - stage: test helm
+      language: bash
+      sudo: required
+
+      before_install:
+        # install kubeadm-dind
+        - curl https://raw.githubusercontent.com/kubernetes-sigs/kubeadm-dind-cluster/master/fixed/dind-cluster-v1.10.sh > dind-cluster.sh
+        - chmod 700 dind-cluster.sh
+        - ./dind-cluster.sh up
+        # install kubectl
+        - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.11.0/bin/linux/amd64/kubectl
+        - chmod +x ./kubectl
+        # setup credentials
+        - ./kubectl create secret docker-registry regcred --docker-server=${docker_url} --docker-username=${DOCKER_USERNAME} --docker-password=${DOCKER_PASSWORD}
+        - "./kubectl patch serviceaccount default -p '{\"imagePullSecrets\": [{\"name\": \"regcred\"}]}'"
+      install:
+        # install helm
+        - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
+        - chmod 700 get_helm.sh
+        - ./get_helm.sh
+        - helm init --wait
+      script:
+        - |
+          helm install \
+          --set master.image.repository=${docker_url}/${docker_repository}/mlbench_master \
+          --set master.image.tag=travis-ci-test \
+          --set worker.image.repository=${docker_url}/${docker_repository}/mlbench_worker \
+          --set worker.image.tag=travis-ci-test \
+          --wait \
+          charts/mlbench/
+        - ./kubectl get services |grep 'mlbench-master'
+        - ./kubectl get pods |grep "mlbench-master.*Running"
+        - ./kubectl get pods |grep "mlbench-worker.*Running"
+        - curl --fail http://localhost:8080/api/v1/namespaces/default/services/$(./kubectl get services |grep -Po "^(.*mlbench-master)"):http/proxy/
+      after_failure: ./kubectl get pods --namespace kube-system
+
+    - stage: deploy develop
+      if: branch = develop
+      language: bash
+      services: docker
+      before_install:
+        - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
+      before_script:
+        - docker pull ${docker_repository}/mlbench_master:travis-ci-test
+        - docker pull ${docker_repository}/mlbench_worker:travis-ci-test
+        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:develop
+        - docker tag ${docker_repository}/mlbench_worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench_worker:develop
+      script:
+        - docker push ${docker_url}/${docker_repository}/mlbench_master:develop
+        - docker push ${docker_url}/${docker_repository}/mlbench_worker:develop
+
+    - stage: deploy
+      if: branch = master
+      language: bash
+      services: docker
+      before_install:
+        - master_version=$(awk '$1 == "version:" { print $2; exit }' charts/mlbench/Chart.yaml)
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${docker_url}
+      before_script:
+        - docker pull ${docker_repository}/mlbench_master:travis-ci-test
+        - docker pull ${docker_repository}/mlbench_worker:travis-ci-test
+        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:latest
+        - docker tag ${docker_repository}/mlbench_worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench_worker:latest
+        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:${version}
+        - docker tag ${docker_repository}/mlbench_worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench_worker:${version}
+      script:
+        - docker push ${docker_url}/${docker_repository}/mlbench_master:latest
+        - docker push ${docker_url}/${docker_repository}/mlbench_master:${version}
+        - docker push ${docker_url}/${docker_repository}/mlbench_worker:latest
+        - docker push ${docker_url}/${docker_repository}/mlbench_worker:${version}
+
+
+stages:
+  - test
+  - build docker
+  - test helm
+  - deploy develop
+  - deploy

@@ -1,5 +1,5 @@
 FROM ubuntu
-
+# TODO: reduce size and complexity of image.
 
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -79,6 +79,7 @@ RUN apt-get install -y vim net-tools
 
 
 # -------------------- Others --------------------
+RUN echo "orte_keep_fqdn_hostnames=t" >> /.openmpi/etc/openmpi-mca-params.conf
 
 ADD ./compose/worker/entrypoint.sh /usr/local/bin/
 RUN chmod a+x /usr/local/bin/entrypoint.sh

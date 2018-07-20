@@ -52,6 +52,7 @@ EXPOSE 80
 
 ADD ./mlbench/master/ /app/code/
 
+RUN /venv/bin/python -m pip install djangorestframework
 #Setup django
 RUN /venv/bin/python code/manage.py collectstatic
 CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

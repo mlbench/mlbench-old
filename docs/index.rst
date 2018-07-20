@@ -9,6 +9,8 @@ Welcome to mlbench's documentation!
    installation
    usage
    overview
+   dashboard
+   api
    modules
    devguide
    contributing

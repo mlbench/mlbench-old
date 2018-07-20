@@ -1,5 +1,5 @@
 apiVersion: apps/v1beta2
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ template "mlbench.worker.fullname" . }}
   labels:
@@ -14,12 +14,15 @@ spec:
     matchLabels:
       app: {{ template "mlbench.name" . }}
       release: {{ .Release.Name }}
+  serviceName: {{ .Release.Name }}
+  podManagementPolicy: Parallel
   template:
     metadata:
       labels:
         app: {{ template "mlbench.name" . }}
         component: "{{ .Values.worker.name }}"
         release: {{ .Release.Name }}
+        role: worker
     spec:
       containers:
         - name: {{ template "mlbench.name" . }}-{{ .Values.worker.name }}

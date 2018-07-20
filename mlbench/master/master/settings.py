@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'constance',
     'constance.backends.database',
+    'rest_framework',
+    'main',
+    'api'
 ]
 
 MIDDLEWARE = [
@@ -49,7 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    #'master.middleware.FirstVisitMiddleware'
+    # 'master.middleware.FirstVisitMiddleware'
 ]
 
 ROOT_URLCONF = 'master.urls'

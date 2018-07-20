@@ -1,10 +1,6 @@
-========
+===============================================
 mlbench: Distributed Machine Learning Benchmark
-========
-
-
-.. image:: https://img.shields.io/pypi/v/mlbench.svg
-        :target: https://pypi.python.org/pypi/mlbench
+===============================================
 
 .. image:: https://img.shields.io/travis/mlbench/mlbench.svg
         :target: https://travis-ci.com/mlbench/mlbench
@@ -17,7 +13,7 @@ mlbench: Distributed Machine Learning Benchmark
 
 
 A public and reproducible collection of reference implementations and benchmark suite for distributed machine learning systems. Benchmark for large scale solvers, implemented on different software frameworks & systems.
-This is a work in progress and not usable so far
+**This is a work in progress and not usable so far**
 
 
 * Free software: Apache Software License 2.0
