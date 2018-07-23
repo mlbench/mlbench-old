@@ -77,9 +77,7 @@ servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 
-publish-docker:
-	## Build, Tag and Publish a docker file to a local repository.
-	## Usage: make publish-docker component=master docker_registry=localhost:5000
+publish-docker: ## Build, Tag and Publish a docker file to a local repository. Usage: make publish-docker component=master docker_registry=localhost:5000
 	docker build -f compose/$(component)/Dockerfile -t mlbench_$(component):latest .
 	docker tag mlbench_$(component):latest $(docker_registry)/mlbench_$(component):latest
 	docker push $(docker_registry)/mlbench_$(component):latest

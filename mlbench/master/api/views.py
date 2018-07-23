@@ -63,7 +63,7 @@ class MPIJobView(ViewSet):
         exec_command = [
             '/.openmpi/bin/mpirun',
             '--host', ",".join(hosts),
-            '/conda/bin/python', '/app/main.py']
+            '/usr/local/bin/python', '/app/main.py']
         result['command'] = str(exec_command)
 
         name = ret.items[0].metadata.name

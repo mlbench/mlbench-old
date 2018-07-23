@@ -39,10 +39,13 @@ jobs:
     - stage: test helm
       language: bash
       sudo: required
+      env:
+        - CNI_PLUGIN=flannel
 
       before_install:
         # install kubeadm-dind
-        - curl https://raw.githubusercontent.com/kubernetes-sigs/kubeadm-dind-cluster/master/fixed/dind-cluster-v1.10.sh > dind-cluster.sh
+        - curl https://raw.githubusercontent.com/kubernetes-sigs/kubeadm-dind-cluster/master/fixed/dind-cluster-v1.11.sh > dind-cluster.sh
+        - patch dind-cluster.sh dind-flannel.patch
         - chmod 700 dind-cluster.sh
         - ./dind-cluster.sh up
         # install kubectl

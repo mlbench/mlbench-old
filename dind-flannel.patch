@@ -1,0 +1,2 @@
+1175a1176
+>       dind::retry "${kubectl}" --context "$ctx" apply --validate=false -f "https://github.com/coreos/flannel/blob/master/Documentation/k8s-manifests/kube-flannel-rbac.yml?raw=true"
