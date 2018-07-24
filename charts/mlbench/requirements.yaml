@@ -1,4 +1,4 @@
 dependencies:
-  - name: metrics-server
-    version: 0.0.3
+  - name: prometheus
+    version: 6.10.0
     repository: https://kubernetes-charts.storage.googleapis.com
