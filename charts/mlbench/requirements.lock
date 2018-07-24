@@ -1,0 +1,6 @@
+dependencies:
+- name: metrics-server
+  repository: https://kubernetes-charts.storage.googleapis.com
+  version: 0.0.3
+digest: sha256:f4a69e68abd5d121e8938a29b2b45d2324cbe2bdc71a43e3893bdb46b8e01f32
+generated: 2018-07-24T09:57:36.019223344+02:00
