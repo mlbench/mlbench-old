@@ -6,8 +6,11 @@ from api.serializers import KubeNodeSerializer
 
 from kubernetes import client, config
 import kubernetes.stream as stream
+from prometheus_client.parser import text_string_to_metric_families
 
 import os
+from collections import defaultdict
+import urllib.request
 
 
 class KubeNodeView(ViewSet):
@@ -35,6 +38,71 @@ class KubeNodeView(ViewSet):
 
         serializer = KubeNodeSerializer(nodes, many=True)
         return Response(serializer.data)
+
+
+class KubeMetricsView(ViewSet):
+    def list(self, request, format=None):
+        config.load_incluster_config()
+        v1 = client.CoreV1Api()
+        release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
+        ret = v1.list_namespaced_pod(
+            "default",
+            label_selector="component=worker,app=mlbench,release={}"
+            .format(release_name))
+
+        pods = defaultdict(list)
+        pod_names = []
+        for i in ret.items:
+            pods[i.spec.node_name].append(i.metadata.name)
+            pod_names.append(i.metadata.name)
+
+        metrics = []
+
+        for node in pods.keys():
+            url = 'http://{}:10255/metrics/cadvisor'.format(node)
+            with urllib.request.urlopen(url) as response:
+                metrics.append(response.read().decode('utf-8'))
+
+        metrics = "\n".join(metrics)
+
+        result = {}
+
+        for family in text_string_to_metric_families(metrics):
+            for sample in family.samples:
+                if ('pod_name' in sample[1]
+                        and sample[1]['pod_name'] in pod_names):
+                    if sample[1]['pod_name'] not in result:
+                        result[sample[1]['pod_name']] = {}
+                    result[sample[1]['pod_name']][sample[0]] = {
+                        'labels': sample[1],
+                        'value': sample[2]}
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, format=None):
+        config.load_incluster_config()
+        v1 = client.CoreV1Api()
+
+        pod = v1.read_namespaced_pod(pk, "default")
+
+        node = pod.spec.node_name
+
+        url = 'http://{}:10255/metrics/cadvisor'.format(node)
+        with urllib.request.urlopen(url) as response:
+            metrics = response.read().decode('utf-8')
+
+        result = {}
+
+        for family in text_string_to_metric_families(metrics):
+            for sample in family.samples:
+                if ('pod_name' in sample[1]
+                        and sample[1]['pod_name'] == pk):
+                    result[sample[0]] = {
+                        'labels': sample[1],
+                        'value': sample[2]}
+
+        return Response(result, status=status.HTTP_200_OK)
+
 
 
 class MPIJobView(ViewSet):
