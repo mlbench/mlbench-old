@@ -1,4 +1,1 @@
-dependencies:
-  - name: prometheus
-    version: 6.10.0
-    repository: "@stable"
+dependencies: []
