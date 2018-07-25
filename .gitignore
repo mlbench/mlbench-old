@@ -108,3 +108,5 @@ ENV/
 
 # helm
 **/charts/*.tgz
+
+setup_telepresence.sh

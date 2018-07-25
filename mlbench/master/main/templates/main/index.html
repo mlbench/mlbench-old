@@ -158,8 +158,8 @@
                 $("#nodes-list").append(card)
 
                 if(('node_metrics' in value)){
-                    self.plotMetrics("#card-" + node + " svg.cpu", value, "cpu_total", "CPU", function(cur, prev){return 1000 * (cur - prev) / self.metricsRefreshInterval});
-                    self.plotMetrics("#card-" + node + " svg.memory", value,  "memory", "Memory", function(cur, prev){return cur / 1024 / 1024});
+                    self.plotMetrics("#card-" + node + " svg.cpu", value, "cpu_total", "CPU (%)", function(cur, prev){return 100 * 1000 * (cur - prev) / self.metricsRefreshInterval});
+                    self.plotMetrics("#card-" + node + " svg.memory", value,  "memory", "Memory (Mb)", function(cur, prev){return cur / 1024 / 1024});
                 }
             });
 
