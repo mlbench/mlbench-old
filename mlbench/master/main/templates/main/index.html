@@ -1,6 +1,18 @@
 {% extends 'main/base.html' %}
 
 {% block content %}
+<style> /* set the CSS */
+
+    .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 2px;
+
+        stroke-linejoin: round;
+        stroke-linecap: round;
+    }
+
+</style>
 <div id="nodes-list" class="card-deck"></div>
 {% endblock %}
 {% block scripts %}
@@ -22,8 +34,9 @@
                 <span class="mb-1">Phase: </span>
                 <span><%>phase%></span>
             </div>
-            <div class="d-flex w-100 justify-content-between">
-                <svg width="600" height="600"></svg>
+            <div class="d-flex flex-column w-100 justify-content-between">
+                <svg class="d-flex w-100 cpu" style="height:10rem;"></svg>
+                <svg class="d-flex w-100 memory" style="height:10rem;"></svg>
             </div>
         </div>
     </div>
@@ -62,83 +75,91 @@
                         'cpu_total': data['container_cpu_usage_seconds_total']['value'],
                         'cpu_user': data['container_cpu_user_seconds_total']['value'],
                         'cpu_system': data['container_cpu_system_seconds_total']['value'],
-                        'memory': data['container_memory_usage_bytes']['value']})
+                        'memory': data['container_memory_usage_bytes']['value'],
+                        'date': new Date()})
                 });
             });
         }
 
+        this.plotMetrics = function(element, metrics, value, title, transform){
+            prev = [metrics['node_metrics'][0][value]]
+            data = []
+
+            len = metrics['node_metrics'].length;
+
+            var max = 0;
+
+            for(var i = 0; i < len; i++){
+                var cur = metrics['node_metrics'][i];
+                cur_val = transform(cur[value], prev);
+
+                if(cur_val > max){
+                    max = cur_val;
+                }
+
+                data.push({x: cur['date'], y: cur_val});
+                prev = cur[value];
+            }
+
+            if(data.length == 1){
+                var newData = {x: data[0].x, y: data[0].y};
+                data[0].x = new Date(newData.x.getTime() - 1000)
+                data.push(newData);
+            }
+
+            var el = $(element);
+            var svg = d3.select(el[0]),
+                margin = {top: 10, right: 10, bottom: 30, left: 40},
+                width = el.width() - margin.left - margin.right,
+                height = el.height() - margin.top - margin.bottom,
+                g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var x = d3.scaleTime().range([0, width]);
+            var y = d3.scaleLinear().range([height, 0]);
+
+            // define the line
+            var line = d3.line()
+                .x(function(d) { return x(d.x); })
+                .y(function(d) { return y(d.y); })
+                .curve(d3.curveMonotoneX);
+
+            x.domain(d3.extent(data, function(d) { return d.x; }));
+            y.domain([0, Math.max(1, d3.max(data, function(d) { return d.y; }))]);
+
+            g.append("path")
+                .data([data])
+                .attr("class", "line")
+                .attr("d", line);
+
+            // Add the X Axis
+            g.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x));
+
+            // Add the Y Axis
+            g.append("g")
+                .call(d3.axisLeft(y));
+
+            g.append("text")
+                .attr("x", (width / 2))
+                .attr("y", margin.top)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .text(title);
+        }
+
         this.renderNodes = function(){
-            var nodes = this.nodes;
-            var metricsRefreshInterval = this.metricsRefreshInterval;
+            var self = this;
 
             $("#nodes-list").empty();
 
-            $.each(nodes, function(node, value){
+            $.each(self.nodes, function(node, value){
                 var card = $("#card-template").render(value['node_info']);
                 $("#nodes-list").append(card)
 
                 if(('node_metrics' in value)){
-
-                    prev = [value['node_metrics'][0]['cpu_total']]
-                    data = []
-
-                    len = value['node_metrics'].length;
-
-                    var max = 0;
-
-                    for(var i = 0; i < len; i++){
-                        cur = value['node_metrics'][i]['cpu_total'];
-                        cur_val = (cur - prev) / metricsRefreshInterval;
-
-                        if(cur_val > max){
-                            max = cur_val;
-                        }
-
-                        data.push({x: i, y: cur_val});
-                        prev = cur;
-                    }
-
-                    var svg = d3.select($("#card-" + node + " svg")[0]),
-                        margin = {top: 20, right: 20, bottom: 30, left: 50},
-                        width = +svg.attr("width") - margin.left - margin.right,
-                        height = +svg.attr("height") - margin.top - margin.bottom,
-                        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-                    var x = d3.scaleLinear().range([0, len]);
-                    var y = d3.scaleLinear().range([max, 0]);
-
-                    // define the line
-                    var line = d3.line()
-                        .x(function(d) { return x(d.x); })
-                        .y(function(d) { return y(d.y); });
-
-                    x.domain(data.map(function(d) { return d.x; }));
-                    y.domain([0, d3.max(data, function(d) { return d.y; })]);
-
-                    g.append("g")
-                        .attr("transform", "translate(0," + height + ")")
-                        .call(d3.axisBottom(x))
-                        .select(".domain")
-                        .remove();
-
-                    g.append("g")
-                        .call(d3.axisLeft(y))
-                        .append("text")
-                        .attr("fill", "#000")
-                        .attr("transform", "rotate(-90)")
-                        .attr("y", 6)
-                        .attr("dy", "0.71em")
-                        .attr("text-anchor", "end")
-                        .text("Price ($)");
-
-                    g.append("path")
-                        .datum(data)
-                        .attr("fill", "none")
-                        .attr("stroke", "steelblue")
-                        .attr("stroke-linejoin", "round")
-                        .attr("stroke-linecap", "round")
-                        .attr("stroke-width", 1.5)
-                        .attr("d", line);
+                    self.plotMetrics("#card-" + node + " svg.cpu", value, "cpu_total", "CPU", function(cur, prev){return 1000 * (cur - prev) / self.metricsRefreshInterval});
+                    self.plotMetrics("#card-" + node + " svg.memory", value,  "memory", "Memory", function(cur, prev){return cur / 1024 / 1024});
                 }
             });
 
