@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from api.models import KubeNode
+from api.models import KubePod
 
 
-class KubeNodeSerializer(serializers.HyperlinkedModelSerializer):
+class KubePodSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = KubeNode
+        model = KubePod
         fields = ['name', 'labels', 'phase', 'ip']

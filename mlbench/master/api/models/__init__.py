@@ -1,3 +1,3 @@
-from api.models.kubenode import KubeNode
+from api.models.kubepod import KubePod
 
-__all__ = ["KubeNode"]
+__all__ = ["KubePod"]

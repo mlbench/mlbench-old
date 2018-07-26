@@ -1,15 +1,12 @@
 from django.apps import AppConfig
-from redis import Redis
-from rq import Queue
-from rq_scheduler import Scheduler
-from datetime import datetime
+from api.utils.node_monitor import setup
+
+import sys
 
 
 class ApiConfig(AppConfig):
     name = 'api'
 
     def ready(self):
-        scheduler = Scheduler(connection=Redis())
-
-        scheduler.schedule(scheduled_time=datetime.utcnow(), func=..., interval=1, repeat=None)
-
+        if 'migrate' not in sys.argv and 'collectstatic' not in sys.argv:
+            setup()

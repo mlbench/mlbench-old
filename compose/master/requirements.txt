@@ -6,3 +6,4 @@ django-picklefield==1.0.0
 djangorestframework==3.8.2
 kubernetes==6.0.0
 prometheus_client==0.3.0
+rq-scheduler==0.8.3

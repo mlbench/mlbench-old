@@ -1,8 +1,8 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from api.models import KubeNode
-from api.serializers import KubeNodeSerializer
+from api.models import KubePod
+from api.serializers import KubePodSerializer
 
 from kubernetes import client, config
 import kubernetes.stream as stream
@@ -13,8 +13,8 @@ from collections import defaultdict
 import urllib.request
 
 
-class KubeNodeView(ViewSet):
-    serializer_class = KubeNodeSerializer
+class KubePodView(ViewSet):
+    serializer_class = KubePodSerializer
 
     def list(self, request, format=None):
         config.load_incluster_config()
@@ -29,14 +29,14 @@ class KubeNodeView(ViewSet):
             .format(release_name))
         nodes = []
         for i in ret.items:
-            node = KubeNode(
+            node = KubePod(
                 name=i.metadata.name,
                 labels=str(i.metadata.labels),
                 phase=i.status.phase,
                 ip=i.status.pod_ip)
             nodes.append(node)
 
-        serializer = KubeNodeSerializer(nodes, many=True)
+        serializer = KubePodSerializer(nodes, many=True)
         return Response(serializer.data)
 
 

@@ -29,7 +29,11 @@ RUN set -ex \
     && apk add --no-cache \
             nginx \
             sqlite \
-	        supervisor \
+            supervisor \
+            redis \
+    && mkdir /data \
+    && chown -R redis:redis /data\
+    && echo -e "include /etc/redis-local.conf\n" >> /etc/redis.conf \
     && mkdir /run/nginx/ \
     && apk del .build-deps
 
