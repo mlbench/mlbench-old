@@ -31,6 +31,7 @@ Installation
 - run dind-proxy.sh to setup portforward for DIND cluster to local repository
 
 - Install helm: https://github.com/kubernetes/helm/blob/master/docs/install.md
+  - initialize helm: helm init
 
 - Build & Publish docker to registry (repeat if code changes):
 
@@ -44,6 +45,8 @@ Installation
 
   - Redeploy: helm upgrade <release> charts/mlbench
     with release being something like "jumpy-rodent" (check deployment name)
+
+  - Deploy/Upgrade with specified release: helm upgrade --wait --recreate-pods --install <release> charts/mlbench
 
   Access server at (replace <release>): http://localhost:8080/api/v1/namespaces/default/services/<release>-mlbench-master:http/proxy/main/
 
