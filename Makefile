@@ -83,4 +83,4 @@ publish-docker: ## Build, Tag and Publish a docker file to a local repository. U
 	docker push $(docker_registry)/mlbench_$(component):latest
 
 release: ## Install or upgrade a release with specified ${name}
-	helm upgrade --wait --recreate-pods --install ${name:-default} charts/mlbench
+	helm upgrade --wait --recreate-pods --install ${name} charts/mlbench
