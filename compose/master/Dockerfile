@@ -58,4 +58,6 @@ ADD ./mlbench/master/ /app/code/
 
 #Setup django
 RUN /venv/bin/python code/manage.py collectstatic
+RUN /venv/bin/python code/manage.py flush
+RUN /venv/bin/python code/manage.py loaddata scheduled_tasks
 CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

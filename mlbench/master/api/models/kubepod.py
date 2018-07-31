@@ -6,3 +6,4 @@ class KubePod(models.Model):
     labels = models.CharField(max_length=100)
     phase = models.CharField(max_length=20)
     ip = models.CharField(max_length=15)
+    node_name = models.CharField(max_length=100)

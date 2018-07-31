@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'constance',
     'constance.backends.database',
     'rest_framework',
+    'django_rq',
+	'scheduler',
     'main',
     'api'
 ]
@@ -145,3 +147,7 @@ RQ_QUEUES = {
         'DEFAULT_TIMEOUT': 360,
     }
 }
+
+FIXTURE_DIRS = (
+   'api/fixtures/',
+)

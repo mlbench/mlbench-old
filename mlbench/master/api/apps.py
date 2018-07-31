@@ -9,4 +9,4 @@ class ApiConfig(AppConfig):
 
     def ready(self):
         if 'migrate' not in sys.argv and 'collectstatic' not in sys.argv:
-            setup()
+            pass  # setup()

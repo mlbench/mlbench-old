@@ -1,108 +1,77 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from api.models import KubePod
+from api.models import KubePod, KubeMetric
 from api.serializers import KubePodSerializer
 
 from kubernetes import client, config
 import kubernetes.stream as stream
-from prometheus_client.parser import text_string_to_metric_families
 
 import os
 from collections import defaultdict
 import urllib.request
+from itertools import groupby
+from datetime import datetime
 
 
 class KubePodView(ViewSet):
     serializer_class = KubePodSerializer
 
     def list(self, request, format=None):
-        config.load_incluster_config()
+        pod = KubePod.objects.all()
 
-        v1 = client.CoreV1Api()
-
-        release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
-
-        ret = v1.list_namespaced_pod(
-            "default",
-            label_selector="component=worker,app=mlbench,release={}"
-            .format(release_name))
-        nodes = []
-        for i in ret.items:
-            node = KubePod(
-                name=i.metadata.name,
-                labels=str(i.metadata.labels),
-                phase=i.status.phase,
-                ip=i.status.pod_ip)
-            nodes.append(node)
-
-        serializer = KubePodSerializer(nodes, many=True)
+        serializer = KubePodSerializer(pod, many=True)
         return Response(serializer.data)
 
 
 class KubeMetricsView(ViewSet):
     def list(self, request, format=None):
-        config.load_incluster_config()
-        v1 = client.CoreV1Api()
-        release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
-        ret = v1.list_namespaced_pod(
-            "default",
-            label_selector="component=worker,app=mlbench,release={}"
-            .format(release_name))
-
-        pods = defaultdict(list)
-        pod_names = []
-        for i in ret.items:
-            pods[i.spec.node_name].append(i.metadata.name)
-            pod_names.append(i.metadata.name)
-
-        metrics = []
-
-        for node in pods.keys():
-            url = 'http://{}:10255/metrics/cadvisor'.format(node)
-            with urllib.request.urlopen(url) as response:
-                metrics.append(response.read().decode('utf-8'))
-
-        metrics = "\n".join(metrics)
-
-        result = {}
-
-        for family in text_string_to_metric_families(metrics):
-            for sample in family.samples:
-                if ('pod_name' in sample[1]
-                        and sample[1]['pod_name'] in pod_names):
-                    if sample[1]['pod_name'] not in result:
-                        result[sample[1]['pod_name']] = {}
-                    result[sample[1]['pod_name']][sample[0]] = {
-                        'labels': sample[1],
-                        'value': sample[2]}
+        result = {p.name: {
+            g.key: [
+                e.value for e in sorted(g, lambda x: x.date)
+            ] for g in groupby(p.metrics, lambda m: m.name)
+            } for p in KubePod.objects.all()}
 
         return Response(result, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None, format=None):
-        config.load_incluster_config()
-        v1 = client.CoreV1Api()
+        since = self.request.query_params.get('since', None)
 
-        pod = v1.read_namespaced_pod(pk, "default")
+        if since is not None:
+            since = datetime.strptime(since, "yyyy-MM-dd HH:mm:ss")
 
-        node = pod.spec.node_name
+        pod = KubePod.objects.filter(name=pk).first()
 
-        url = 'http://{}:10255/metrics/cadvisor'.format(node)
-        with urllib.request.urlopen(url) as response:
-            metrics = response.read().decode('utf-8')
-
-        result = {}
-
-        for family in text_string_to_metric_families(metrics):
-            for sample in family.samples:
-                if ('pod_name' in sample[1]
-                        and sample[1]['pod_name'] == pk):
-                    result[sample[0]] = {
-                        'labels': sample[1],
-                        'value': sample[2]}
+        result = {
+            g.key: [
+                e.value for e in sorted(g, lambda x: x.date)
+                if since is None or e.date > since
+            ] for g in groupby(pod.metrics, lambda m: m.name)
+            }
 
         return Response(result, status=status.HTTP_200_OK)
 
+    def create(self, request):
+        d = request.data
+        pod = KubePod.objects.filter(name=d.pod_name).first()
+
+        if pod is None:
+            return Response({
+                'status': 'Not Found',
+                'message': 'Pod not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        metric = KubeMetric(
+            name=d.name,
+            date=d.date,
+            value=d.value,
+            metadata=d.metadata,
+            pod=pod)
+        metric.save()
+
+        return Response(
+            metric, status=status.HTTP_201_CREATED
+        )
 
 
 class MPIJobView(ViewSet):

@@ -7,3 +7,4 @@ djangorestframework==3.8.2
 kubernetes==6.0.0
 prometheus_client==0.3.0
 rq-scheduler==0.8.3
+django-rq-scheduler==1.1.1

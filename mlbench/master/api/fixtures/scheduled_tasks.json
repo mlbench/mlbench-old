@@ -1,0 +1,47 @@
+[
+    {
+      "model": "scheduler.RepeatableJob",
+      "pk": 1,
+      "fields": {
+        "name": "CheckNewNodes",
+        "queue": "default",
+        "callable": "api.utils.node_monitor.check_new_nodes",
+        "enabled": true,
+        "interval": 1,
+        "interval_unit": "minutes",
+        "scheduled_time": "2018-01-01T00:00:00.000",
+        "repeat": null,
+        "result_ttl": 0
+      }
+    },
+    {
+        "model": "scheduler.RepeatableJob",
+        "pk": 1,
+        "fields": {
+          "name": "CheckNodeStatus",
+          "queue": "default",
+          "callable": "api.utils.node_monitor.check_node_status",
+          "enabled": true,
+          "interval": 5,
+          "interval_unit": "seconds",
+          "scheduled_time": "2018-01-01T00:00:20.000",
+          "repeat": null,
+          "result_ttl": 0
+        }
+    },
+    {
+        "model": "scheduler.RepeatableJob",
+        "pk": 1,
+        "fields": {
+          "name": "CheckNodeMetrics",
+          "queue": "default",
+          "callable": "api.utils.node_monitor.check_node_metrics",
+          "enabled": true,
+          "interval": 11,
+          "interval_unit": "seconds",
+          "scheduled_time": "2018-01-01T00:00:40.000",
+          "repeat": null,
+          "result_ttl": 0
+        }
+    }
+]
