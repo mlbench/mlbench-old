@@ -42,16 +42,18 @@ def check_new_nodes():
 
     all_pods = KubePod.objects.all().values_list('name')
 
+    print(str(ret.items))
+
     for i in ret.items:
-        if not KubePod.objects.filter(name=i.metadata.name):
+        if not KubePod.objects.filter(name=i.metadata.name).count() > 0:
             pod = KubePod(name=i.metadata.name,
                           labels=i.metadata.labels,
                           phase=i.status.phase,
                           ip=i.status.pod_ip,
                           node_name=i.spec.node_name)
             pod.save()
-        else:
-            all_pods.remove(i.metadata.name)
+
+        all_pods.remove(i.metadata.name)
 
     KubePod.objects.filter(name__in=all_pods).delete()
 

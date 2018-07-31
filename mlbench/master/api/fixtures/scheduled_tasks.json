@@ -16,7 +16,7 @@
     },
     {
         "model": "scheduler.RepeatableJob",
-        "pk": 1,
+        "pk": 2,
         "fields": {
           "name": "CheckNodeStatus",
           "queue": "default",
@@ -31,7 +31,7 @@
     },
     {
         "model": "scheduler.RepeatableJob",
-        "pk": 1,
+        "pk": 3,
         "fields": {
           "name": "CheckNodeMetrics",
           "queue": "default",
