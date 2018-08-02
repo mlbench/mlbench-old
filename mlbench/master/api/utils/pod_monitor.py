@@ -85,6 +85,10 @@ def check_pod_metrics():
 
     for family in text_string_to_metric_families(metrics):
         for sample in family.samples:
+            if ('container_name' in sample[1]
+                    and sample[1]['container_name'] != "mlbench-worker"):
+                continue
+
             if ('pod_name' in sample[1]
                     and sample[1]['pod_name'] in pods.keys()):
                 metric = KubeMetric(

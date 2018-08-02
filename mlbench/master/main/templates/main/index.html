@@ -18,9 +18,9 @@
 {% block scripts %}
 <script id="card-template" type="text/x-jsrender">
     <div class="card w-25 node-card" style="max-width:40rem" id="card-<%>name%>">
-        <div class="card-header <%if phase === 'Running'%>bg-success<%else phase === 'Pending'%>bg-warning<%else%>bg-danger<%/if%>">
+        <h4 class="card-header <%if phase === 'Running'%>bg-success<%else phase === 'Pending'%>bg-warning<%else%>bg-danger<%/if%>">
             <span data-feather="server"></span><%>name%>
-        </div>
+        </h4>
         <div class="card-body list-group">
             <!--<div class="d-flex w-100 justify-content-between">
                 <span class="mb-1">Labels: </span>
@@ -55,10 +55,10 @@
                 $.each(data, function(index, value){
                     if(!(value['name'] in nodes)){
                         nodes[value['name']] = {};
+                        nodes[value['name']]['last_metrics_update'] = new Date(0);
                     }
 
                     nodes[value['name']]['node_info'] = value;
-                    nodes[value['name']]['last_metrics_update'] = new Date(0);
                 });
             });
         }
