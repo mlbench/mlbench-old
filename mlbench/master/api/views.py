@@ -10,6 +10,7 @@ import kubernetes.stream as stream
 import os
 from itertools import groupby
 from datetime import datetime
+import pytz
 
 
 class KubePodView(ViewSet):
@@ -26,7 +27,8 @@ class KubeMetricsView(ViewSet):
     def list(self, request, format=None):
         result = {pod.name: {
             g[0]: [
-                e.value for e in sorted(g[1], key=lambda x: x.date)
+                {'date': e.date, 'value': e.value}
+                for e in sorted(g[1], key=lambda x: x.date)
             ] for g in groupby(
                 sorted(pod.metrics.all(), key=lambda m: m.name),
                 key=lambda m: m.name)
@@ -38,13 +40,15 @@ class KubeMetricsView(ViewSet):
         since = self.request.query_params.get('since', None)
 
         if since is not None:
-            since = datetime.strptime(since, "yyyy-MM-dd HH:mm:ss")
+            since = datetime.strptime(since, "%Y-%m-%dT%H:%M:%S.%fZ")
+            since = pytz.utc.localize(since)
 
         pod = KubePod.objects.filter(name=pk).first()
 
         result = {
             g[0]: [
-                e.value for e in sorted(g[1], key=lambda x: x.date)
+                {'date': e.date, 'value': e.value}
+                for e in sorted(g[1], key=lambda x: x.date)
                 if since is None or e.date > since
             ] for g in groupby(
                 sorted(pod.metrics.all(), key=lambda m: m.name),

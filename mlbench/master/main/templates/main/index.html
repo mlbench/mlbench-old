@@ -58,6 +58,7 @@
                     }
 
                     nodes[value['name']]['node_info'] = value;
+                    nodes[value['name']]['last_metrics_update'] = new Date(0);
                 });
             });
         }
@@ -66,39 +67,44 @@
             var nodes = this.nodes;
 
             $.each(nodes, function(node, value){
-                $.getJSON("api/metrics/" + node + "/", function(data){
-                    if(!('node_metrics' in value)){
-                        value['node_metrics'] = [];
-                    }
+                $.getJSON("api/metrics/" + node + "/",
+                    {since: value['last_metrics_update'].toJSON()},
+                    function(data){
+                        if(!('node_metrics' in value)){
+                            value['node_metrics'] = [];
+                        }
 
-                    value['node_metrics'].push({
-                        'cpu_total': data['container_cpu_usage_seconds_total']['value'],
-                        'cpu_user': data['container_cpu_user_seconds_total']['value'],
-                        'cpu_system': data['container_cpu_system_seconds_total']['value'],
-                        'memory': data['container_memory_usage_bytes']['value'],
-                        'date': new Date()})
-                });
+                        $.each(data, function(key, values){
+                            if(!(key in value['node_metrics'])){
+                                value['node_metrics'][key] = [];
+                            }
+                            value['node_metrics'][key] = value['node_metrics'][key].concat(values);
+                            value['last_metrics_update'] = new Date();
+                        });
+                    });
             });
         }
 
         this.plotMetrics = function(element, metrics, value, title, transform){
-            prev = [metrics['node_metrics'][0][value]]
-            data = []
+            prev = metrics['node_metrics'][value][0]['value'];
+            data = [];
 
-            len = metrics['node_metrics'].length;
+            len = metrics['node_metrics'][value].length;
 
             var max = 0;
 
+            var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S.%fZ");
+
             for(var i = 0; i < len; i++){
-                var cur = metrics['node_metrics'][i];
-                cur_val = transform(cur[value], prev);
+                var cur = metrics['node_metrics'][value][i];
+                cur_val = transform(cur['value'], prev);
 
                 if(cur_val > max){
                     max = cur_val;
                 }
 
-                data.push({x: cur['date'], y: cur_val});
-                prev = cur[value];
+                data.push({x: parseTime(cur['date']), y: cur_val});
+                prev = cur['value'];
             }
 
             if(data.length == 1){
@@ -158,8 +164,8 @@
                 $("#nodes-list").append(card)
 
                 if(('node_metrics' in value)){
-                    self.plotMetrics("#card-" + node + " svg.cpu", value, "cpu_total", "CPU (%)", function(cur, prev){return 100 * 1000 * (cur - prev) / self.metricsRefreshInterval});
-                    self.plotMetrics("#card-" + node + " svg.memory", value,  "memory", "Memory (Mb)", function(cur, prev){return cur / 1024 / 1024});
+                    self.plotMetrics("#card-" + node + " svg.cpu", value, "container_cpu_usage_seconds_total", "CPU (%)", function(cur, prev){return 100 * 1000 * (cur - prev) / self.metricsRefreshInterval});
+                    self.plotMetrics("#card-" + node + " svg.memory", value,  "container_memory_usage_bytes", "Memory (Mb)", function(cur, prev){return cur / 1024 / 1024});
                 }
             });
 

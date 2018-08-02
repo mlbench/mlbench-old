@@ -1,5 +1,6 @@
 from kubernetes import client, config
 from django.utils import timezone
+from django_rq import job
 
 import os
 import json
@@ -8,6 +9,7 @@ import urllib
 from prometheus_client.parser import text_string_to_metric_families
 
 
+@job
 def check_new_pods():
     from api.models.kubepod import KubePod
 
@@ -26,6 +28,10 @@ def check_new_pods():
 
     for i in ret.items:
         if not KubePod.objects.filter(name=i.metadata.name).count() > 0:
+            ip = i.status.pod_ip
+            if ip is None:
+                ip = ""
+
             pod = KubePod(name=i.metadata.name,
                           labels=i.metadata.labels,
                           phase=i.status.phase,
@@ -38,6 +44,7 @@ def check_new_pods():
     KubePod.objects.filter(name__in=all_pods).delete()
 
 
+@job
 def check_pod_status():
     from api.models.kubepod import KubePod
 
@@ -57,6 +64,7 @@ def check_pod_status():
             pod.save()
 
 
+@job
 def check_pod_metrics():
     from api.models.kubemetric import KubeMetric
     from api.models.kubepod import KubePod
@@ -66,6 +74,7 @@ def check_pod_metrics():
     pods = {p.name: p for p in pods}
 
     metrics = []
+    print(nodes)
 
     for node in nodes:
         url = 'http://{}:10255/metrics/cadvisor'.format(node)

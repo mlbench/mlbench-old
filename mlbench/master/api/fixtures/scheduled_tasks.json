@@ -10,8 +10,7 @@
         "interval": 1,
         "interval_unit": "minutes",
         "scheduled_time": "2018-01-01T00:00:00.000+00:00",
-        "repeat": null,
-        "result_ttl": 0
+        "result_ttl": 120
       }
     },
     {
@@ -25,8 +24,7 @@
           "interval": 5,
           "interval_unit": "seconds",
           "scheduled_time": "2018-01-01T00:00:20.000+00:00",
-          "repeat": null,
-          "result_ttl": 0
+          "result_ttl": 120
         }
     },
     {
@@ -37,11 +35,10 @@
           "queue": "default",
           "callable": "api.utils.pod_monitor.check_pod_metrics",
           "enabled": true,
-          "interval": 11,
+          "interval": 10,
           "interval_unit": "seconds",
           "scheduled_time": "2018-01-01T00:00:40.000+00:00",
-          "repeat": null,
-          "result_ttl": 0
+          "result_ttl": 120
         }
     }
 ]

@@ -8,4 +8,8 @@ class KubeMetric(models.Model):
     value = models.CharField(max_length=100)
     metadata = models.TextField()
 
-    pod = models.ForeignKey(KubePod, related_name='metrics', on_delete=models.CASCADE)
+    pod = models.ForeignKey(
+        KubePod,
+        related_name='metrics',
+        blank=True,
+        on_delete=models.CASCADE)
