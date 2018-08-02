@@ -60,10 +60,28 @@ class MPIJobView(ViewSet):
                                     str(i.metadata.labels)))
             hosts.append("{}.{}".format(i.metadata.name, release_name))
 
+        # exec_command = [
+        #     '/.openmpi/bin/mpirun',
+        #     '--host', ",".join(hosts),
+        #     '/conda/bin/python', '/app/main.py', 'test_synchronize_sgd']
+
         exec_command = [
             '/.openmpi/bin/mpirun',
             '--host', ",".join(hosts),
-            '/conda/bin/python', '/app/main.py', 'test_synchronize_sgd']
+            '/conda/bin/python', '/app/sgd-mnist.py', "--epochs", "1",
+            "--batch-size", "128"]
+
+        # exec_command = [
+        #     '/.openmpi/bin/mpirun',
+        #     "--mca", "btl_tcp_if_exclude", "docker0,lo",
+        #     '--host', ",".join(hosts),
+        #     '/conda/bin/python', "/app/run.py",
+        #     "--arch", "resnet20",
+        #     "--batch_size", "128", "--num_epochs", "1",
+        #     "--lr", "0.1", "--momentum", "0.0",
+        #     "--data", "cifar10", "--blocks", "1,1",
+        # ]
+
         result['command'] = str(exec_command)
 
         name = ret.items[0].metadata.name

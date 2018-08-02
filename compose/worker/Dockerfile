@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM nvidia/cuda:8.0-cudnn6-devel-ubuntu14.04
 # TODO: reduce size and complexity of image.
 
 RUN apt-get update && apt-get install -y \
@@ -39,13 +39,14 @@ ENV LD_LIBRARY_PATH /conda/lib:$LD_LIBRARY_PATH
 RUN conda install -y -c anaconda numpy pyyaml scipy mkl setuptools cmake cffi mkl-include typing
 RUN conda install -y -c mingfeima mkldnn
 # RUN conda install -y -c conda-forge openmpi
+RUN conda install -y -c soumith magma-cuda80
 
 # -------------------- Open MPI --------------------
 RUN mkdir /.openmpi/
 RUN wget https://www.open-mpi.org/software/ompi/v3.0/downloads/openmpi-3.0.0.tar.gz
 RUN gunzip -c openmpi-3.0.0.tar.gz | tar xf - \
     && cd openmpi-3.0.0 \
-    && ./configure --prefix=/.openmpi/ \
+    && ./configure --prefix=/.openmpi/ --with-cuda\
     && make all install
 
 ENV PATH /.openmpi/bin:$PATH
@@ -71,7 +72,32 @@ RUN echo export 'LD_LIBRARY_PATH=$HOME/.openmpi/lib:$LD_LIBRARY_PATH' >> ~/.bash
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 
 # Install basic dependencies
-RUN git clone --recursive https://github.com/pytorch/pytorch && cd pytorch && python setup.py install
+# RUN git clone --recursive https://github.com/pytorch/pytorch && cd pytorch && python setup.py install
+RUN git clone --recursive https://github.com/pytorch/pytorch && \
+    cd pytorch && \
+    git submodule update --init && \
+    TORCH_CUDA_ARCH_LIST="3.5 3.7 5.2 6.0 6.1+PTX" TORCH_NVCC_FLAGS="-Xfatbin -compress-all" \
+    CMAKE_PREFIX_PATH="$(dirname $(which conda))/../" \
+    pip install -v .
+
+
+RUN git clone https://github.com/pytorch/vision.git && cd vision && pip install -v .
+
+RUN conda install -y -c conda-forge python-lmdb \
+        opencv 
+
+RUN apt-get install -y libgl1-mesa-glx
+
+RUN conda install -y -c conda-forge numpy
+
+RUN pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
+
+# RUN conda install -y -c anaconda msgpack
+# RUN conda install -y -c anaconda msgpack msgpack-numpy pyzmq pillow
+# RUN conda install -y -c conda-forge tqdm 
+# # RUN conda install -y -c pchrapka zmq
+# # RUN conda install -c omnia termcolor
+
 
 # -------------------- Debug --------------------
 RUN apt-get install -y vim net-tools
