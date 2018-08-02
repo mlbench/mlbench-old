@@ -1,48 +1,28 @@
-from redis import Redis
-from rq import Queue
-from rq_scheduler import Scheduler
-
 from kubernetes import client, config
+from django.utils import timezone
 
 import os
-from datetime import datetime
 import json
 import urllib
 
 from prometheus_client.parser import text_string_to_metric_families
 
 
-def setup():
-    print(datetime.utcnow())
-    connection = Redis()
-    queue = Queue(connection=connection)
-    scheduler = Scheduler(queue=queue, connection=connection)
-
-    res = scheduler.schedule(
-        scheduled_time=datetime.utcnow(),
-        func=check_new_nodes,
-        interval=60,
-        repeat=None
-    )
-    print("scheduled")
-    print(res)
-    print(scheduler.get_jobs())
-
-
-def check_new_nodes():
+def check_new_pods():
     from api.models.kubepod import KubePod
 
     config.load_incluster_config()
     v1 = client.CoreV1Api()
+
     release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
+    ns = os.environ.get('MLBENCH_NAMESPACE')
+
     ret = v1.list_namespaced_pod(
-        "default",
+        ns,
         label_selector="component=worker,app=mlbench,release={}"
         .format(release_name))
 
-    all_pods = KubePod.objects.all().values_list('name')
-
-    print(str(ret.items))
+    all_pods = list(KubePod.objects.all().values_list('name'))
 
     for i in ret.items:
         if not KubePod.objects.filter(name=i.metadata.name).count() > 0:
@@ -52,17 +32,32 @@ def check_new_nodes():
                           ip=i.status.pod_ip,
                           node_name=i.spec.node_name)
             pod.save()
-
-        all_pods.remove(i.metadata.name)
+        if i.metadata.name in all_pods:
+            all_pods.remove(i.metadata.name)
 
     KubePod.objects.filter(name__in=all_pods).delete()
 
 
-def check_node_status():
-    pass
+def check_pod_status():
+    from api.models.kubepod import KubePod
+
+    ns = os.environ.get('MLBENCH_NAMESPACE')
+
+    config.load_incluster_config()
+    v1 = client.CoreV1Api()
+
+    pods = pods = KubePod.objects.all()
+
+    for pod in pods:
+        ret = v1.read_namespaced_pod(pod.name, ns)
+        phase = ret.status.phase
+
+        if phase != pod.phase:
+            pod.phase = phase
+            pod.save()
 
 
-def check_node_metrics():
+def check_pod_metrics():
     from api.models.kubemetric import KubeMetric
     from api.models.kubepod import KubePod
 
@@ -85,7 +80,7 @@ def check_node_metrics():
                     and sample[1]['pod_name'] in pods.keys()):
                 metric = KubeMetric(
                     name=sample[0],
-                    date=datetime.utcnow(),
+                    date=timezone.now(),
                     value=sample[2],
                     metadata=json.dumps(sample[1]),
                     pod=pods[sample[1]['pod_name']]

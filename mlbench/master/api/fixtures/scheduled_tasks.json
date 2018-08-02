@@ -3,13 +3,13 @@
       "model": "scheduler.RepeatableJob",
       "pk": 1,
       "fields": {
-        "name": "CheckNewNodes",
+        "name": "CheckNewPods",
         "queue": "default",
-        "callable": "api.utils.node_monitor.check_new_nodes",
+        "callable": "api.utils.pod_monitor.check_new_pods",
         "enabled": true,
         "interval": 1,
         "interval_unit": "minutes",
-        "scheduled_time": "2018-01-01T00:00:00.000",
+        "scheduled_time": "2018-01-01T00:00:00.000+00:00",
         "repeat": null,
         "result_ttl": 0
       }
@@ -18,13 +18,13 @@
         "model": "scheduler.RepeatableJob",
         "pk": 2,
         "fields": {
-          "name": "CheckNodeStatus",
+          "name": "CheckPodStatus",
           "queue": "default",
-          "callable": "api.utils.node_monitor.check_node_status",
+          "callable": "api.utils.pod_monitor.check_pod_status",
           "enabled": true,
           "interval": 5,
           "interval_unit": "seconds",
-          "scheduled_time": "2018-01-01T00:00:20.000",
+          "scheduled_time": "2018-01-01T00:00:20.000+00:00",
           "repeat": null,
           "result_ttl": 0
         }
@@ -33,13 +33,13 @@
         "model": "scheduler.RepeatableJob",
         "pk": 3,
         "fields": {
-          "name": "CheckNodeMetrics",
+          "name": "CheckPodMetrics",
           "queue": "default",
-          "callable": "api.utils.node_monitor.check_node_metrics",
+          "callable": "api.utils.pod_monitor.check_pod_metrics",
           "enabled": true,
           "interval": 11,
           "interval_unit": "seconds",
-          "scheduled_time": "2018-01-01T00:00:40.000",
+          "scheduled_time": "2018-01-01T00:00:40.000+00:00",
           "repeat": null,
           "result_ttl": 0
         }

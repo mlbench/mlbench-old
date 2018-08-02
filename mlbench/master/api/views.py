@@ -8,8 +8,6 @@ from kubernetes import client, config
 import kubernetes.stream as stream
 
 import os
-from collections import defaultdict
-import urllib.request
 from itertools import groupby
 from datetime import datetime
 
@@ -26,11 +24,13 @@ class KubePodView(ViewSet):
 
 class KubeMetricsView(ViewSet):
     def list(self, request, format=None):
-        result = {p.name: {
-            g.key: [
-                e.value for e in sorted(g, lambda x: x.date)
-            ] for g in groupby(p.metrics, lambda m: m.name)
-            } for p in KubePod.objects.all()}
+        result = {pod.name: {
+            g[0]: [
+                e.value for e in sorted(g[1], key=lambda x: x.date)
+            ] for g in groupby(
+                sorted(pod.metrics.all(), key=lambda m: m.name),
+                key=lambda m: m.name)
+            } for pod in KubePod.objects.all()}
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -43,10 +43,12 @@ class KubeMetricsView(ViewSet):
         pod = KubePod.objects.filter(name=pk).first()
 
         result = {
-            g.key: [
-                e.value for e in sorted(g, lambda x: x.date)
+            g[0]: [
+                e.value for e in sorted(g[1], key=lambda x: x.date)
                 if since is None or e.date > since
-            ] for g in groupby(pod.metrics, lambda m: m.name)
+            ] for g in groupby(
+                sorted(pod.metrics.all(), key=lambda m: m.name),
+                key=lambda m: m.name)
             }
 
         return Response(result, status=status.HTTP_200_OK)
@@ -82,9 +84,10 @@ class MPIJobView(ViewSet):
         v1 = client.CoreV1Api()
 
         release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
+        ns = os.environ.get('MLBENCH_NAMESPACE')
 
         ret = v1.list_namespaced_pod(
-            "default",
+            ns,
             label_selector="component=worker,app=mlbench,release={}"
             .format(release_name))
 
