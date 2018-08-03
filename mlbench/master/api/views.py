@@ -1,8 +1,8 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from api.models import KubePod, KubeMetric
-from api.serializers import KubePodSerializer
+from api.models import KubePod, KubeMetric, ModelRun
+from api.serializers import KubePodSerializer, ModelRunSerializer
 
 from kubernetes import client, config
 import kubernetes.stream as stream
@@ -116,6 +116,44 @@ class KubeMetricsView(ViewSet):
 
         return Response(
             metric, status=status.HTTP_201_CREATED
+        )
+
+
+class ModelRunView(ViewSet):
+    """Handles Model Runs
+    """
+    serializer_class = ModelRunSerializer
+
+    def create(self, request):
+        """ Create and start a new Model run
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Returns:
+            Json -- Returns posted values
+        """
+        # TODO: lock table, otherwise there might be concurrency conflicts
+        d = request.data
+
+        active_runs = ModelRun.objects.filter(state=ModelRun.STARTED)
+
+        if active_runs.count() > 0:
+            return Response({
+                'status': 'Conflict',
+                'message': 'There is already an active run'
+            }, status=status.HTTP_409_CONFLICT)
+
+        run = ModelRun(
+            name=d['name']
+        )
+
+        run.start()
+
+        serializer = ModelRunSerializer(run, many=False)
+
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED
         )
 
 
