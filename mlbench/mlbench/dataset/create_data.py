@@ -25,13 +25,13 @@ def partition_dataset(args, dataset_type='train'):
     if dataset_type == 'train':
         args.train_dataset_size = len(dataset)
         args.num_train_samples_per_device = len(data_to_load)
-        log('  We have {} samples for {}, \
+        log('We have {} samples for {}, \
             load {} data for process (rank {}), and partition it'.format(
             len(dataset), dataset_type, len(data_to_load), args.graph.rank))
     else:
         args.val_dataset_size = len(dataset)
         args.num_val_samples_per_device = len(data_to_load)
-        log('  We have {} samples for {}, \
+        log('We have {} samples for {}, \
             load {} val data for process (rank {}).'.format(
             len(dataset), dataset_type, len(data_to_load), args.graph.rank))
 

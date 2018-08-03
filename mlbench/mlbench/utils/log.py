@@ -5,6 +5,8 @@ import time
 import logging
 import logging.config
 
+import torch.distributed as dist
+
 import mlbench.utils.opfiles as opfile
 
 
@@ -30,6 +32,11 @@ def log(content):
     content = time.strftime("%Y:%m:%d %H:%M:%S") + "\t" + content
     print(content)
     opfile.write_txt(content + "\n", log_path, type="a")
+
+
+def log0(content):
+    if dist.get_rank() == 0:
+        log(content)
 
 
 def setup_logging(log_file='log.txt'):

@@ -8,7 +8,7 @@ import torch.distributed as dist
 from torch.autograd import Variable
 
 from mlbench.dataset.create_data import create_dataset
-from mlbench.utils.log import log, logging_computing, logging_sync, \
+from mlbench.utils.log import log, log0, logging_computing, logging_sync, \
     logging_display, logging_load
 from mlbench.utils.meter import AverageMeter, accuracy, save_checkpoint, \
     define_local_tracker
@@ -79,16 +79,19 @@ def train_and_validate(args, model, criterion, optimizer):
         1.0 * args.num_val_samples_per_device / args.batch_size)
 
     # define some parameters for training.
-    log('we have {} epochs, {} mini-batches per epoch (batch size:{}).'.format(
+    log0('we have {} epochs, {} mini-batches per epoch (batch size:{}).'.format(
         args.num_epochs, args.num_batches_train, args.batch_size))
 
     # init the model
     init_model(args, model)
-    log('start training and validation.')
+    log0('start training and validation.')
+    dist.barrier()
+    log0('*'*80)
 
     # only evaluate the model if required.
     if args.evaluate:
         validate(args, val_loader, model, criterion)
+        log0("distributed_running: train_and_validate: validate: pass")
         return
 
     # train the model and evaluate the model per args.eval_freq
@@ -97,6 +100,7 @@ def train_and_validate(args, model, criterion, optimizer):
 
         # train
         do_training(args, train_loader, model, optimizer, criterion)
+        log0("distributed_running: train_and_validate: do_training: pass")
 
         # evaluate on validation set.
         if epoch % args.eval_freq == 0:
@@ -113,8 +117,12 @@ def train_and_validate(args, model, criterion, optimizer):
 def do_training(args, train_loader, model, optimizer, criterion):
     # switch to train mode
     model.train()
+    log0("distributed_running: do_training: train: pass")
+
     tracker = define_local_tracker()
     tracker['start_load_time'] = time.time()
+
+    log0("distributed_running: do_training: tracker: pass")
 
     for iter, (input, target) in enumerate(train_loader):
         # update local step.
@@ -125,13 +133,17 @@ def do_training(args, train_loader, model, optimizer, criterion):
         if args.lr_decay is not None:
             adjust_learning_rate(args, optimizer)
 
+            log0("distributed_running: do_training: adjust_learning_rate: pass")
+
         # load data
         input, target, input_var, target_var = load_data(
             args, input, target, tracker)
+        log0("distributed_running: do_training: load_data: pass")
 
         # inference and get current performance.
         loss, prec1, prec5 = inference(
             model, criterion, input_var, target_var, target)
+        log0("distributed_running: do_training: inference: pass")
 
         # compute gradient and do local SGD step.
         optimizer.zero_grad()
@@ -142,10 +154,14 @@ def do_training(args, train_loader, model, optimizer, criterion):
 
         # sync and apply gradients.
         aggregate_gradients(args, model, optimizer)
+        log0("distributed_running: do_training: aggregate_gradients: pass")
 
         # logging display.
         logging_sync(args, tracker)
         logging_display(args, tracker)
+
+        if iter >= 5:
+            break
 
 
 def do_validate(args, val_loader, model, optimizer, criterion, save=True):
@@ -190,10 +206,10 @@ def validate(args, val_loader, model, criterion):
     # switch to evaluation mode
     model.eval()
 
-    log('Do validation.')
+    log0('Do validation.')
     for i, (input, target) in enumerate(val_loader):
         if args.graph.rank == 0:
-            print('Validation at batch {}/{}'.format(i, args.num_batches_val))
+            log0('Validation at batch {}/{}'.format(i, args.num_batches_val))
 
         # place data.
         if args.graph.on_gpu:
@@ -212,10 +228,10 @@ def validate(args, val_loader, model, criterion):
         top1.update(prec1[0], input.size(0))
         top5.update(prec5[0], input.size(0))
 
-    log('Aggregate val accuracy from different partitions.')
+    log0('Aggregate val accuracy from different partitions.')
     top1_avg, top5_avg = aggregate_accuracy(top1, top5)
 
-    log('Val at batch: {}. \
+    log0('Val at batch: {}. \
          Process: {}. Prec@1: {:.3f} Prec@5: {:.3f}'.format(
         args.local_index, args.graph.rank, top1_avg, top5_avg))
     return top1_avg, top5_avg

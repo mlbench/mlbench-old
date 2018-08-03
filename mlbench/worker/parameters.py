@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """define all global parameters here."""
-from os.path import join
+import os
+import sys
 import argparse
+import importlib.util
+import platform
+from os.path import join
 
 import mlbench.models as models
 from mlbench.utils.log import log
@@ -110,12 +114,34 @@ def get_args():
     parser.add_argument('--world', default=None, type=str,
                         help='number of distributed processes')
     parser.add_argument('--backend', default='mpi', type=str)
+    parser.add_argument('--udf', default=None, type=str,
+                        help='A path to .py file of user defined functions.')
 
     # parse args.
     args = parser.parse_args()
     if args.timestamp is None:
         args.timestamp = info2path(args)
+
+    handle_user_defined_files(args.udf)
     return args
+
+
+def handle_user_defined_files(file):
+    if file is None:
+        # log("No user defined files provided.")
+        pass
+    elif not os.path.exists(file):
+        raise OSError("UDF `{}` not found on {}".format(file, platform.node()))
+    else:
+
+        # For illustrative purposes.
+        module_name = 'udf'
+        spec = importlib.util.spec_from_file_location(module_name, file)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        # Optional; only necessary if you want to be able to import the module
+        # by name later.
+        sys.modules[module_name] = module
 
 
 def str2bool(v):
@@ -136,7 +162,7 @@ def print_args(args):
 def log_args(args):
     log('parameters: ')
     for arg in vars(args):
-        log(str(arg) + '\t' + str(getattr(args, arg)))
+        log(("\t{:40} {:100}").format(str(arg), str(getattr(args, arg))))
 
 
 if __name__ == '__main__':

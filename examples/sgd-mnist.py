@@ -99,23 +99,15 @@ def main():
         datasets.MNIST(args.datafolder, train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
+                           transforms.Normalize((0.1307,), (0.3081,)),
                        ])),
         batch_size=args.batch_size, shuffle=True, **kwargs)
-
-    # test_loader = torch.utils.data.DataLoader(
-    #     datasets.MNIST(args.datafolder, train=False, transform=transforms.Compose([
-    #         transforms.ToTensor(),
-    #         transforms.Normalize((0.1307,), (0.3081,))
-    #     ])),
-    #     batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
     model = Net().to(device)
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
     for epoch in range(1, args.epochs + 1):
         train(args, model, device, train_loader, optimizer, epoch)
-        # test(args, model, device, test_loader)
 
 
 if __name__ == '__main__':

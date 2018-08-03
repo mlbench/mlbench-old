@@ -8,21 +8,31 @@ import mlbench.models as models
 from mlbench.optim.sgd import SGD
 from mlbench.utils.opfiles import remove_folder
 
+from mlbench.utils.log import log, log0
+
 
 def init_model(args):
-    print("=> creating model '{}'".format(args.arch))
-    if 'wideresnet' in args.arch:
-        model = models.__dict__['wideresnet'](args)
-    elif 'resnet' in args.arch:
-        model = models.__dict__['resnet'](args)
-    elif 'densenet' in args.arch:
-        model = models.__dict__['densenet'](args)
-    else:
-        model = models.__dict__[args.arch](args)
+    # TODO: change the print to log
+    try:
+        import udf
+        model = udf.get_model(args)
+        print("=> creating model from user defined file.")
+    except:
+        print("=> creating model '{}'".format(args.arch))
+        if 'wideresnet' in args.arch:
+            model = models.__dict__['wideresnet'](args)
+        elif 'resnet' in args.arch:
+            model = models.__dict__['resnet'](args)
+        elif 'densenet' in args.arch:
+            model = models.__dict__['densenet'](args)
+        else:
+            model = models.__dict__[args.arch](args)
+
     return model
 
 
 def stat_model(args, model):
+    # TODO: change the print to log
     print('Total params for process {}: {}M'.format(
         args.graph.rank,
         sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6
@@ -53,13 +63,18 @@ def create_model(args):
     If args.graph.on_gpu is True, use ps_id as GPU_id.
     """
     model = init_model(args)
+    log0("create_model: create_model: init_model: pass")
+
     stat_model(args, model)
+    log0("create_model: create_model: stat_model: pass")
 
     # define the criterion.
     criterion = nn.CrossEntropyLoss()
 
     # define the optimizer.
     optimizer = define_optimizer(args, model)
+
+    log0("create_model: create_model: define_optimizer: pass")
 
     # place model and criterion.
     if args.graph.on_gpu:
@@ -68,10 +83,13 @@ def create_model(args):
 
     # (optional) reload checkpoint
     resume_previous_status(args, model, optimizer)
+
+    log0("create_model: create_model: resume_previous_status: pass")
     return model, criterion, optimizer
 
 
 def correct_previous_resume(args, old_args):
+    # TODO: change the print to log
     signal = (args.avg_model == old_args.avg_model) and \
         (args.data == old_args.data) and \
         (args.num_epochs >= old_args.num_epochs) and \
@@ -84,6 +102,7 @@ def correct_previous_resume(args, old_args):
 
 
 def resume_previous_status(args, model, optimizer):
+    # TODO: change the print to log
     if args.resume:
         if args.checkpoint_index is not None:
             # reload model from a specific checkpoint index.

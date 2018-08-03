@@ -65,22 +65,26 @@ class MPIJobView(ViewSet):
         #     '--host', ",".join(hosts),
         #     '/conda/bin/python', '/app/main.py', 'test_synchronize_sgd']
 
-        exec_command = [
-            '/.openmpi/bin/mpirun',
-            '--host', ",".join(hosts),
-            '/conda/bin/python', '/app/sgd-mnist.py', "--epochs", "1",
-            "--batch-size", "128"]
-
         # exec_command = [
         #     '/.openmpi/bin/mpirun',
-        #     "--mca", "btl_tcp_if_exclude", "docker0,lo",
         #     '--host', ",".join(hosts),
-        #     '/conda/bin/python', "/app/run.py",
-        #     "--arch", "resnet20",
-        #     "--batch_size", "128", "--num_epochs", "1",
-        #     "--lr", "0.1", "--momentum", "0.0",
-        #     "--data", "cifar10", "--blocks", "1,1",
-        # ]
+        #     '/conda/bin/python', '/app/sgd-mnist.py', "--epochs", "1",
+        #     "--batch-size", "128", "--datafolder", "/datasets/torch/mnist/"]
+
+        exec_command = [
+            '/.openmpi/bin/mpirun',
+            "--mca", "btl_tcp_if_exclude", "docker0,lo",
+            '--host', ",".join(hosts),
+            '/conda/bin/python', "/app/run.py",
+            "--arch", "densenet5",
+            "--batch_size", "128", "--num_epochs", "6",
+            "--lr", "0.1", "--momentum", "0.0",
+            "--data", "mnist",
+            "--data_dir", "/datasets/torch",
+            "--blocks", "1,1",
+            "--num_workers", "1",
+            "--udf", "/app/simple-net.py"
+        ]
 
         result['command'] = str(exec_command)
 
