@@ -48,6 +48,8 @@ jobs:
         # install kubectl
         - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.11.0/bin/linux/amd64/kubectl
         - chmod +x ./kubectl
+        # wait for cluster to be up
+        - sleep 60
         # setup credentials
         - ./kubectl create secret docker-registry regcred --docker-server=${docker_url} --docker-username=${DOCKER_USERNAME} --docker-password=${DOCKER_PASSWORD}
         - "./kubectl patch serviceaccount default -p '{\"imagePullSecrets\": [{\"name\": \"regcred\"}]}'"
