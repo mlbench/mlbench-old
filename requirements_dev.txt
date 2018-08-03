@@ -18,4 +18,5 @@ django-picklefield==1.0.0
 djangorestframework==3.8.2
 kubernetes==6.0.0
 rq-scheduler==0.8.3
+-e git+https://github.com/istrategylabs/django-rq-scheduler.git@fa76c6ac71068c304aa14ab9df7b13a4b972132e#egg=django-rq-scheduler
 
