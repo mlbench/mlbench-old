@@ -105,3 +105,8 @@ ENV/
 .vscode
 /docs/mlbench.rst
 /docs/modules.rst
+
+# helm
+**/charts/*.tgz
+
+setup_telepresence.sh

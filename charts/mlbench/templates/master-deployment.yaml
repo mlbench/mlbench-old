@@ -45,6 +45,8 @@ spec:
               value: {{ template "mlbench.master.fullname" . }}
             - name: MLBENCH_KUBE_RELEASENAME
               value: {{ .Release.Name }}
+            - name: MLBENCH_NAMESPACE
+              value: {{ .Release.Namespace }}
           resources:
           serviceAccountName: {{ template "mlbench.master.fullname" . }}
 {{ toYaml .Values.resources | indent 12 }}
