@@ -69,7 +69,6 @@ jobs:
         - ./kubectl --context=dind get services |grep 'mlbench-master'
         - ./kubectl --context=dind get pods |grep "mlbench-master.*Running"
         - ./kubectl --context=dind get pods |grep "mlbench-worker.*Running"
-        - curl --fail http://localhost:8080/api/v1/namespaces/default/services/$(./kubectl --context=dind get services |grep -Po "^(.*mlbench-master)"):http/proxy/
       after_failure: ./kubectl --context=dind get pods --namespace kube-system
 
     - stage: deploy develop
