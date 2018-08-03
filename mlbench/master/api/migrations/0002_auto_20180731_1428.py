@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='KubeMetric',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, primary_key=True,
+                                        serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=50)),
                 ('date', models.DateTimeField()),
                 ('value', models.CharField(max_length=100)),
@@ -30,6 +31,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='kubemetric',
             name='pod',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='metrics', to='api.KubePod'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='metrics',
+                to='api.KubePod'),
         ),
     ]

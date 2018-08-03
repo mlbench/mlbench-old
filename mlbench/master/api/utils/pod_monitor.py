@@ -11,6 +11,9 @@ from prometheus_client.parser import text_string_to_metric_families
 
 @job
 def check_new_pods():
+    """Background Task to look for new pods available in cluster
+    """
+
     from api.models.kubepod import KubePod
 
     config.load_incluster_config()
@@ -46,6 +49,9 @@ def check_new_pods():
 
 @job
 def check_pod_status():
+    """Background Task to update status/phase of known pods
+    """
+
     from api.models.kubepod import KubePod
 
     ns = os.environ.get('MLBENCH_NAMESPACE')
@@ -66,6 +72,9 @@ def check_pod_status():
 
 @job
 def check_pod_metrics():
+    """Background task to get metrics (cpu/memory etc.) of known pods
+    """
+
     from api.models.kubemetric import KubeMetric
     from api.models.kubepod import KubePod
 

@@ -14,6 +14,9 @@ import pytz
 
 
 class KubePodView(ViewSet):
+    """Handles the /api/pods endpoint
+    """
+
     serializer_class = KubePodSerializer
 
     def list(self, request, format=None):
@@ -24,7 +27,22 @@ class KubePodView(ViewSet):
 
 
 class KubeMetricsView(ViewSet):
+    """Handles the /api/metrics endpoint
+    """
+
     def list(self, request, format=None):
+        """Get all metrics
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Keyword Arguments:
+            format {string} -- Output format to use (default: {None})
+
+        Returns:
+            Json -- Object containing all metrics
+        """
+
         result = {pod.name: {
             g[0]: [
                 {'date': e.date, 'value': e.value}
@@ -37,6 +55,18 @@ class KubeMetricsView(ViewSet):
         return Response(result, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None, format=None):
+        """Get all metrics for a pod
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Keyword Arguments:
+            pk {string} -- Name of the pod
+            format {string} -- Output format to use (default: {None})
+
+        Returns:
+            Json -- Object containing all metrics for the pod
+        """
         since = self.request.query_params.get('since', None)
 
         if since is not None:
@@ -58,8 +88,17 @@ class KubeMetricsView(ViewSet):
         return Response(result, status=status.HTTP_200_OK)
 
     def create(self, request):
+        """Create a new metric
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Returns:
+            Json -- Returns posted values
+        """
+
         d = request.data
-        pod = KubePod.objects.filter(name=d.pod_name).first()
+        pod = KubePod.objects.filter(name=d['pod_name']).first()
 
         if pod is None:
             return Response({
@@ -68,10 +107,10 @@ class KubeMetricsView(ViewSet):
             }, status=status.HTTP_404_NOT_FOUND)
 
         metric = KubeMetric(
-            name=d.name,
-            date=d.date,
-            value=d.value,
-            metadata=d.metadata,
+            name=d['name'],
+            date=d['date'],
+            value=d['value'],
+            metadata=d['metadata'],
             pod=pod)
         metric.save()
 
@@ -81,6 +120,8 @@ class KubeMetricsView(ViewSet):
 
 
 class MPIJobView(ViewSet):
+    """Handles the /api/mpi_jobs endpoint
+    """
 
     def create(self, request):
         config.load_incluster_config()
@@ -95,13 +136,13 @@ class MPIJobView(ViewSet):
             label_selector="component=worker,app=mlbench,release={}"
             .format(release_name))
 
-        result = {'nodes': []}
+        result = {'pods': []}
         hosts = []
         for i in ret.items:
-            result['nodes'].append((i.status.pod_ip,
-                                    i.metadata.namespace,
-                                    i.metadata.name,
-                                    str(i.metadata.labels)))
+            result['pods'].append((i.status.pod_ip,
+                                   i.metadata.namespace,
+                                   i.metadata.name,
+                                   str(i.metadata.labels)))
             hosts.append("{}.{}".format(i.metadata.name, release_name))
 
         exec_command = [

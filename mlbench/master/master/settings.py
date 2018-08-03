@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'constance.backends.database',
     'rest_framework',
     'django_rq',
-	'scheduler',
+    'scheduler',
     'main',
     'api'
 ]

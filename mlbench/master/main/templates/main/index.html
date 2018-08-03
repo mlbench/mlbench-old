@@ -51,7 +51,7 @@
 
         this.updateNodes = function(){
             var nodes = this.nodes;
-            $.getJSON("api/nodes", function(data){
+            $.getJSON("api/pods", function(data){
                 $.each(data, function(index, value){
                     if(!(value['name'] in nodes)){
                         nodes[value['name']] = {};
