@@ -1,4 +1,4 @@
-FROM nvidia/cuda:8.0-cudnn6-devel-ubuntu14.04
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 # TODO: reduce size and complexity of image.
 
 RUN apt-get update && apt-get install -y \
@@ -30,6 +30,14 @@ RUN mkdir -p /.sshd/user_keys/$SSH_USER && \
   chown -R $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER && chmod 700 /.sshd/user_keys/$SSH_USER
 VOLUME /ssh-key/$SSH_USER
 
+# -----–––---------------------- Cuda Dependency --------------------
+RUN echo "deb http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list
+RUN apt-get update && apt-get install -y --no-install-recommends --allow-downgrades \
+        --allow-change-held-packages \
+         libnccl2=2.0.5-3+cuda9.0 \
+         libnccl-dev=2.0.5-3+cuda9.0 &&\
+     rm -rf /var/lib/apt/lists/*
+
 # -------------------- Conda environment --------------------
 RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh  && \
      sh ~/miniconda.sh -b -p /conda
@@ -39,7 +47,7 @@ ENV LD_LIBRARY_PATH /conda/lib:$LD_LIBRARY_PATH
 RUN conda install -y -c anaconda numpy pyyaml scipy mkl setuptools cmake cffi mkl-include typing
 RUN conda install -y -c mingfeima mkldnn
 # RUN conda install -y -c conda-forge openmpi
-RUN conda install -y -c soumith magma-cuda80
+RUN conda install -y -c soumith magma-cuda90
 
 # -------------------- Open MPI --------------------
 RUN mkdir /.openmpi/
@@ -76,7 +84,7 @@ ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 RUN git clone --recursive https://github.com/pytorch/pytorch && \
     cd pytorch && \
     git submodule update --init && \
-    TORCH_CUDA_ARCH_LIST="3.5 3.7 5.2 6.0 6.1+PTX" TORCH_NVCC_FLAGS="-Xfatbin -compress-all" \
+    TORCH_CUDA_ARCH_LIST="3.5 3.7 5.2 6.0 6.1 7.0+PTX" TORCH_NVCC_FLAGS="-Xfatbin -compress-all" \
     CMAKE_PREFIX_PATH="$(dirname $(which conda))/../" \
     pip install -v .
 
@@ -85,8 +93,6 @@ RUN git clone https://github.com/pytorch/vision.git && cd vision && pip install 
 
 RUN conda install -y -c conda-forge python-lmdb \
         opencv 
-
-RUN apt-get install -y libgl1-mesa-glx
 
 RUN conda install -y -c conda-forge numpy
 
@@ -100,8 +106,12 @@ RUN pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
 
 
 # -------------------- Debug --------------------
-RUN apt-get install -y vim net-tools
+RUN apt-get update && apt-get install -y vim net-tools
 
+# -------------------- patch --------------------
+# libGL.so.1 might be lost when nvidia driver is installed
+# sudo apt-get install freeglut3-dev build-essential libx11-dev libxmu-dev libxi-dev libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libglfw3-dev libgles2-mesa-dev
+RUN apt-get install -y libgl1-mesa-glx
 
 
 # -------------------- Others --------------------
