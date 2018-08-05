@@ -1,17 +1,13 @@
-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04 as mlbench-worker-dev
 # TODO: reduce size and complexity of image.
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     make \
     libc-dev \
     musl-dev \
-    openssh-server
-
-RUN apt-get update && apt-get install -y \
-    g++
-
-RUN apt-get update && apt-get install -y \
+    openssh-server \
+    g++ \
     git \
     curl \
     sudo
@@ -40,22 +36,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends --allow-downgra
 
 # -------------------- Conda environment --------------------
 RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh  && \
-     sh ~/miniconda.sh -b -p /conda
+     sh ~/miniconda.sh -b -p /conda && rm ~/miniconda.sh
 ENV PATH /conda/bin:$PATH
 ENV LD_LIBRARY_PATH /conda/lib:$LD_LIBRARY_PATH
 
-RUN conda install -y -c anaconda numpy pyyaml scipy mkl setuptools cmake cffi mkl-include typing
-RUN conda install -y -c mingfeima mkldnn
-# RUN conda install -y -c conda-forge openmpi
-RUN conda install -y -c soumith magma-cuda90
+RUN conda install -y -c anaconda numpy pyyaml scipy mkl setuptools cmake cffi mkl-include typing \
+    && conda install -y -c mingfeima mkldnn \
+    && conda install -y -c soumith magma-cuda90 \
+    && conda install -y -c conda-forge python-lmdb opencv numpy \
+    && conda clean --all -y
 
 # -------------------- Open MPI --------------------
 RUN mkdir /.openmpi/
-RUN wget https://www.open-mpi.org/software/ompi/v3.0/downloads/openmpi-3.0.0.tar.gz
-RUN gunzip -c openmpi-3.0.0.tar.gz | tar xf - \
+RUN apt-get update && apt-get install -y --no-install-recommends wget \
+    && wget https://www.open-mpi.org/software/ompi/v3.0/downloads/openmpi-3.0.0.tar.gz\
+    && gunzip -c openmpi-3.0.0.tar.gz | tar xf - \
     && cd openmpi-3.0.0 \
     && ./configure --prefix=/.openmpi/ --with-cuda\
-    && make all install
+    && make all install \
+    && rm /openmpi-3.0.0.tar.gz \
+    && rm -rf /openmpi-3.0.0 \
+    && apt-get remove -y wget
 
 ENV PATH /.openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH /.openmpi/lib
@@ -86,15 +87,11 @@ RUN git clone --recursive https://github.com/pytorch/pytorch && \
     git submodule update --init && \
     TORCH_CUDA_ARCH_LIST="3.5 3.7 5.2 6.0 6.1 7.0+PTX" TORCH_NVCC_FLAGS="-Xfatbin -compress-all" \
     CMAKE_PREFIX_PATH="$(dirname $(which conda))/../" \
-    pip install -v .
+    pip install -v . && \
+    rm -rf /pytorch
 
 
 RUN git clone https://github.com/pytorch/vision.git && cd vision && pip install -v .
-
-RUN conda install -y -c conda-forge python-lmdb \
-        opencv 
-
-RUN conda install -y -c conda-forge numpy
 
 RUN pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
 
@@ -103,10 +100,6 @@ RUN pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
 # RUN conda install -y -c conda-forge tqdm 
 # # RUN conda install -y -c pchrapka zmq
 # # RUN conda install -c omnia termcolor
-
-
-# -------------------- Debug --------------------
-RUN apt-get update && apt-get install -y vim net-tools
 
 # -------------------- patch --------------------
 # libGL.so.1 might be lost when nvidia driver is installed
@@ -129,3 +122,11 @@ ADD ./mlbench/worker/ /app/
 EXPOSE 22
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/sbin/sshd","-eD", "-f", "/.sshd/user_keys/root/sshd_config"]
+
+
+# ********************************** STAGE 2 **********************************************
+# later we will use the remote ones
+FROM liehe/mlbench:mlbench-worker-dev
+
+# -------------------- Debug --------------------
+RUN apt-get update && apt-get install -y vim net-tools
