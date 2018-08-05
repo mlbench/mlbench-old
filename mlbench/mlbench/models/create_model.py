@@ -16,9 +16,9 @@ def init_model(args):
     try:
         import udf
         model = udf.get_model(args)
-        print("=> creating model from user defined file.")
+        log0("=> creating model from user defined file.")
     except:
-        print("=> creating model '{}'".format(args.arch))
+        log0("=> creating model '{}'".format(args.arch))
         if 'wideresnet' in args.arch:
             model = models.__dict__['wideresnet'](args)
         elif 'resnet' in args.arch:
@@ -33,7 +33,7 @@ def init_model(args):
 
 def stat_model(args, model):
     # TODO: change the print to log
-    print('Total params for process {}: {}M'.format(
+    log('Total params for process {}: {}M'.format(
         args.graph.rank,
         sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6
     ))

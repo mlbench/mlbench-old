@@ -9,6 +9,8 @@ import torch.distributed as dist
 
 import mlbench.utils.opfiles as opfile
 
+logger = logging.getLogger('mlbench')
+
 
 def record(content, path):
     opfile.write_txt(content + "\n", path, type="a")
@@ -29,8 +31,7 @@ def configure_log(args=None):
 
 def log(content):
     """print the content while store the information to the path."""
-    content = time.strftime("%Y:%m:%d %H:%M:%S") + "\t" + content
-    print(content)
+    logger.info(content)
     opfile.write_txt(content + "\n", log_path, type="a")
 
 
@@ -76,7 +77,9 @@ def logging_load(args, tracker):
 
 
 def logging_display(args, tracker):
-    log_info = 'Local index: {local_index}. Load: {load:.3f}s | Data: {data:.3f}s | Batch: {batch:.3f}s | Sync: {sync:.3f}s | Loss: {loss:.4f} | top1: {top1: .4f} | top5: {top5: .4f}'.format(
+    log_info = ('Local index: {local_index}. Load: {load:.3f}s | Data: {data:.3f}s |'
+                ' Batch: {batch:.3f}s | Sync: {sync:.3f}s | Loss: {loss:.4f} | top1: {top1: .4f} |'
+                ' top5: {top5: .4f}').format(
         local_index=args.local_index,
         load=tracker['load_time'].avg,
         data=tracker['data_time'].avg,

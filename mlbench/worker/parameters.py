@@ -5,10 +5,12 @@ import sys
 import argparse
 import importlib.util
 import platform
+import logging
 from os.path import join
+import torch.distributed as dist
 
 import mlbench.models as models
-from mlbench.utils.log import log
+from mlbench.utils.log import log, log0
 from mlbench.utils.auxiliary import info2path
 
 
@@ -122,6 +124,7 @@ def get_args():
     if args.timestamp is None:
         args.timestamp = info2path(args)
 
+    config_logging()
     handle_user_defined_files(args.udf)
     return args
 
@@ -144,6 +147,25 @@ def handle_user_defined_files(file):
         sys.modules[module_name] = module
 
 
+class RankFilter(logging.Filter):
+    def filter(self, record):
+        record.rank = dist.get_rank()
+        return True
+
+
+def config_logging(level=logging.DEBUG):
+    # TODO : allow change of logging levels and format (say, %(module)s)
+    logger = logging.getLogger('mlbench')
+    logger.setLevel(level)
+    logger.addFilter(RankFilter())
+
+    formatter = logging.Formatter('%(asctime)s %(name)s %(rank)s %(levelname)s: %(message)s', "%Y-%m-%d %H:%M:%S")
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -160,9 +182,9 @@ def print_args(args):
 
 
 def log_args(args):
-    log('parameters: ')
+    log0('parameters: ')
     for arg in vars(args):
-        log(("\t{:40} {:100}").format(str(arg), str(getattr(args, arg))))
+        log0(("\t{:40} {:100}").format(str(arg), str(getattr(args, arg))))
 
 
 if __name__ == '__main__':
