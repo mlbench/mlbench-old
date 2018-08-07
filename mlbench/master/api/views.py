@@ -82,7 +82,7 @@ class MPIJobView(ViewSet):
             "--data", "mnist",
             "--data_dir", "/datasets/torch",
             "--blocks", "1,1",
-            "--num_workers", "1",
+            "--num_workers", "0",
             "--udf", "/app/simple-net.py"
         ]
 

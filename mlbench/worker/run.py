@@ -24,6 +24,8 @@ def main(args):
     # To solve an issue described in `https://github.com/pytorch/pytorch/issues/1355`
     cv2.setNumThreads(0)
 
+    torch.set_num_threads(0)
+
     # init process
     dist.init_process_group('mpi')
 
