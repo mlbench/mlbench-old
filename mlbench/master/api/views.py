@@ -75,7 +75,7 @@ class MPIJobView(ViewSet):
             '/.openmpi/bin/mpirun',
             "--mca", "btl_tcp_if_exclude", "docker0,lo",
             '--host', ",".join(hosts),
-            '/conda/bin/python', "/app/run.py",
+            '/conda/bin/python', "/codes/run.py",
             "--arch", "densenet5",
             "--batch_size", "128", "--num_epochs", "6",
             "--lr", "0.1", "--momentum", "0.0",
