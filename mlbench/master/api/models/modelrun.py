@@ -12,19 +12,17 @@ class ModelRun(models.Model):
         (FAILED, FAILED),
         (FINISHED, FINISHED)]
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     state = models.CharField(
         max_length=20,
         choices=STATE_CHOICES,
         default=INITIALIZED)
-    job_id = models.CharField(max_length=20, default="")
+    job_id = models.CharField(max_length=38, default="")
 
     def start(self):
         if self.job_id != "" or self.state != self.INITIALIZED:
             raise ValueError("Wrong State")
-
-        job = run_model_job.delay(self)
-
-        self.job_id = job.id
         self.save()
+
+        run_model_job.delay(self)

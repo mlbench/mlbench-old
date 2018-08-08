@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True,
                                         serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50)),
+                ('name', models.CharField(max_length=100)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('state', models.CharField(
                     choices=[
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                         ('finished', 'finished')],
                     default='initialized',
                     max_length=20)),
-                ('job_id', models.CharField(default='', max_length=20)),
+                ('job_id', models.CharField(default='', max_length=38)),
             ],
         ),
         migrations.AlterField(

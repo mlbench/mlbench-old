@@ -13,6 +13,10 @@ def run_model_job(model_run):
     try:
         job = get_current_job()
 
+        model_run.job_id = job.id
+        model_run.state = ModelRun.STARTED
+        model_run.save()
+
         config.load_incluster_config()
 
         v1 = client.CoreV1Api()

@@ -86,6 +86,10 @@
         }
 
         this.plotMetrics = function(element, metrics, value, title, transform){
+            if(!(metrics['node_metrics']) || metrics['node_metrics'][value].length == 0){
+                return;
+            }
+
             prev = metrics['node_metrics'][value][0]['value'];
             data = [];
 

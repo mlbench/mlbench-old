@@ -6,9 +6,9 @@
         Add Run <span data-feather="plus"></span>
     </button>
 </div>
-<ul class="row" id="runs">
+<ul class="list-group" id="runs">
     {% for run in runs %}
-    <li><a href="/runs/{{ run.id }}/">{{ run.name }}</a> {{ run.state }}</li>
+    <li class="list-group-item"><a href="/runs/{{ run.id }}/">{{ run.name }}</a> {{ run.state }}</li>
     {% endfor %}
 </ul>
 
