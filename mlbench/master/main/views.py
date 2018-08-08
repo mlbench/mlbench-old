@@ -21,6 +21,8 @@ def run(request, run_id):
     redis_conn = django_rq.get_connection()
     job = Job.fetch(run.job_id, redis_conn)
 
+    run.job_metadata = job.meta
+
     return render(request,
                   'main/run_detail.html',
-                  {'run': run, 'job_meta': job.meta})
+                  {'run': run})

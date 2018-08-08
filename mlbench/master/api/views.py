@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from api.models import KubePod, KubeMetric, ModelRun
 from api.serializers import KubePodSerializer, ModelRunSerializer
+import django_rq
+from rq.job import Job
 
 from kubernetes import client, config
 import kubernetes.stream as stream
@@ -123,6 +125,48 @@ class ModelRunView(ViewSet):
     """Handles Model Runs
     """
     serializer_class = ModelRunSerializer
+
+    def list(self, request, format=None):
+        """Get all runs
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Keyword Arguments:
+            format {string} -- Output format to use (default: {None})
+
+        Returns:
+            Json -- Object containing all runs
+        """
+
+        runs = ModelRun.objects.all()
+
+        serializer = ModelRunSerializer(runs, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, format=None):
+        """Get all details for a run
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Keyword Arguments:
+            pk {string} -- Id of the run
+            format {string} -- Output format to use (default: {None})
+
+        Returns:
+            Json -- Object containing all metrics for the pod
+        """
+        run = ModelRun.objects.get(pk=pk)
+
+        redis_conn = django_rq.get_connection()
+        job = Job.fetch(run.job_id, redis_conn)
+        run.job_metadata = job.meta
+
+        serializer = ModelRunSerializer(run, many=False)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
         """ Create and start a new Model run

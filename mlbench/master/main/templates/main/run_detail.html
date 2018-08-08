@@ -15,23 +15,23 @@
 </div>
 <div class="row">
     <div class="col-3">Command: </div>
-    <div class="col-9">{{ job_meta.command }}</div>
+    <div class="col-9">{{ run.job_metadata.command }}</div>
 </div>
 <div class="row">
     <div class="col-3">Master-Worker: </div>
-    <div class="col-9">{{ job_meta.master_name }}</div>
+    <div class="col-9">{{ run.job_metadata.master_name }}</div>
 </div>
 <div class="row">
     <div class="col-3">Workers </div>
-    <div class="col-9">{{ job_meta.pods }}</div>
+    <div class="col-9">{{ run.job_metadata.pods }}</div>
 </div>
 <div class="row">
     <div class="col-3">Stdout: </div>
-    <div class="col-9"><pre>{{ job_meta.stdout }}</pre></div>
+    <div class="col-9"><pre>{{ run.job_metadata.stdout }}</pre></div>
 </div>
 <div class="row">
     <div class="col-3">Stderr: </div>
-    <div class="col-9"><pre>{{ job_meta.stderr }}</pre></div>
+    <div class="col-9"><pre>{{ run.job_metadata.stderr }}</pre></div>
 </div>
 {% endblock %}
 

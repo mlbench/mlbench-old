@@ -11,4 +11,10 @@ class KubePodSerializer(serializers.HyperlinkedModelSerializer):
 class ModelRunSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ModelRun
-        fields = ['name', 'created_at', 'state', 'job_id']
+        fields = [
+            'id',
+            'name',
+            'created_at',
+            'state',
+            'job_id',
+            'job_metadata']

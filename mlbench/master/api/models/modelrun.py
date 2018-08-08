@@ -20,6 +20,8 @@ class ModelRun(models.Model):
         default=INITIALIZED)
     job_id = models.CharField(max_length=38, default="")
 
+    job_metadata = {}
+
     def start(self):
         if self.job_id != "" or self.state != self.INITIALIZED:
             raise ValueError("Wrong State")
