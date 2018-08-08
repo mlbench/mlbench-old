@@ -2,9 +2,7 @@
 
 
 def adjust_learning_rate(args, optimizer, init_lr=0.1):
-    """Sets the learning rate to the initial LR decayed by # of accessed sample
-        We should decay the learning rate based on the number of samples that
-        we have accessed.
+    """Sets the learning rate to the initial LR decayed by the number of accessed sample.
     """
     # functions.
     def define_lr_decay_by_epoch(args, epoch_index):
@@ -40,6 +38,13 @@ def adjust_learning_rate(args, optimizer, init_lr=0.1):
 
 def adjust_learning_rate_by_lars(args, global_lr, para):
     """Adjust the learning rate via Layer-Wise Adaptive Rate Scaling (LARS)
+
+    Layer-Wise Adaptive Rate Scaling (LARS) is proposed in
+    @article{ginsburg2018large,
+      title={Large Batch Training of Convolutional Networks with Layer-wise Adaptive Rate Scaling},
+      author={Ginsburg, Boris and Gitman, Igor and You, Yang},
+      year={2018}
+    }
     """
     lr = global_lr
 
