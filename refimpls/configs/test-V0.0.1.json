@@ -1,0 +1,14 @@
+{
+    "_metadata": {
+        "annotation": "MNIST"
+    },
+    "arch": "testnet",
+    "batch_size": 128,
+    "num_epochs": 6,
+    "lr": 0.1,
+    "momentum": 0.0,
+    "data": "mnist",
+    "data_dir": "/datasets/torch",
+    "blocks": "1,1",
+    "num_workers": 0
+}

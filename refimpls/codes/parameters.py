@@ -8,124 +8,108 @@ import platform
 import logging
 from os.path import join
 import torch.distributed as dist
+import json
 
 import mlbench.models as models
 from mlbench.utils.log import log, log0
 from mlbench.utils.auxiliary import info2path
 
 
-def get_args():
+class ArgDict(dict):
+    # TODO: type check ? here ?
+    def __init__(self, *args, **kwargs):
+        super(ArgDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
+def get_config(config_file=None):
+    """Parse config from file and supplement with default settings. """
     ROOT_DIRECTORY = './'
     RAW_DATA_DIRECTORY = join(ROOT_DIRECTORY, 'data/')
     TRAINING_DIRECTORY = join(RAW_DATA_DIRECTORY, 'checkpoint')
     LOG_DIRECTORY = './logging'
 
-    model_names = sorted(
-        name for name in models.__dict__
-        if name.islower() and not name.startswith("__"))
+    # TODO: Convert the configs to nested structure.
+    default_config = ArgDict()
+    default_config.update({
+        "_metadata": {
+            "annotation": "default annotation."
+        },
+        "data": 'cifar10',
+        "data_dir": RAW_DATA_DIRECTORY,
+        "use_lmdb_data": False,
+        "arch": "alexnet",
+        "start_epoch": 1,
+        "num_epochs": 90,
+        "avg_model": False,
+        "reshuffle_per_epoch": False,
+        "batch_size": 256,
+        "base_batch_size": 64,
+        "lr": 0.01,
+        "lr_decay": None,
+        "lr_decay_epochs": None,
+        "lr_scale": False,
+        "lr_warmup": False,
+        "lr_warmup_size": 5,
+        "lr_lars": False,
+        "lr_lars_eta": 0.002,
+        "lr_lars_mode": "clip",
+        "momentum": 0.9,
+        "use_nesterov": False,
+        "weight_decay": 5e-4,
+        "drop_rate": 0.0,
+        "densenet_growth_rate": 12,
+        "densenet_bc_mode": False,
+        "densenet_compression": 0.5,
+        "wideresnet_widen_factor": 4,
+        "manual_seed": 6,
+        "evaluate": False,
+        "eval_freq": 1,
+        "summary_freq": 200,
+        "timestamp": None,
+        "resume": None,
+        "checkpoint": TRAINING_DIRECTORY,
+        "checkpoint_index": None,
+        "save_all_models": False,
+        "save_some_models": '30,60,80',
+        "log_dir": LOG_DIRECTORY,
+        "plot_dir": None,
+        "pretrained": False,
+        "device": 'distributed',
+        "num_workers": 0,
+        "blocks": '2,2',
+        "cuda_blocks": None,
+        "world": None,
+        "backend": 'mpi',
+        "udf": None
+    })
 
-    # feed them to the parser.
+    if config_file is not None:
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+    else:
+        config = {}
+
+    default_config.update(config)
+
+    if default_config.timestamp is None:
+        default_config.timestamp = info2path(default_config)
+
+    config_logging()
+    handle_user_defined_files(default_config.udf)
+    return default_config
+
+
+def get_args():
     parser = argparse.ArgumentParser(
         description='PyTorch Training for ConvNet')
-
-    # add arguments.
-    # dataset.
-    parser.add_argument('--data', default='cifar10',
-                        help='a specific dataset name')
-    parser.add_argument('--data_dir', default=RAW_DATA_DIRECTORY,
-                        help='path to dataset')
-    parser.add_argument('--use_lmdb_data', default=False, type=str2bool,
-                        help='use sequential lmdb dataset for better loading.')
-
-    # model
-    parser.add_argument('--arch', '-a', default='alexnet',
-                        help='model architecture: ' +
-                             ' | '.join(model_names) +
-                             ' (default: alexnet)')
-
-    # fundamental training and learning scheme
-    parser.add_argument('--start_epoch', default=1, type=int)
-    parser.add_argument('--num_epochs', type=int, default=90)
-    parser.add_argument('--avg_model', type=str2bool, default=False)
-    parser.add_argument('--reshuffle_per_epoch', default=False, type=str2bool)
-    parser.add_argument('--batch_size', '-b', default=256, type=int,
-                        help='mini-batch size (default: 256)')
-    parser.add_argument('--base_batch_size', default=64, type=int)
-
-    parser.add_argument('--lr', default=0.01, type=float,
-                        help='initial learning rate')
-    parser.add_argument('--lr_decay', type=str2bool, default=None)
-    parser.add_argument('--lr_decay_epochs', type=str, default=None)
-    parser.add_argument('--lr_scale', type=str2bool, default=False)
-    parser.add_argument('--lr_warmup', type=str2bool, default=False)
-    parser.add_argument('--lr_warmup_size', type=int, default=5)
-    parser.add_argument('--lr_lars', type=str2bool, default=False)
-    parser.add_argument('--lr_lars_eta', type=float, default=0.002)
-    parser.add_argument('--lr_lars_mode', type=str, default='clip')
-
-    parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
-    parser.add_argument('--use_nesterov', default=False, type=str2bool)
-    parser.add_argument('--weight_decay', default=5e-4, type=float,
-                        help='weight decay (default: 1e-4)')
-    parser.add_argument('--drop_rate', default=0.0, type=float)
-
-    # models.
-    parser.add_argument('--densenet_growth_rate', default=12, type=int)
-    parser.add_argument('--densenet_bc_mode', default=False, type=str2bool)
-    parser.add_argument('--densenet_compression', default=0.5, type=float)
-
-    parser.add_argument('--wideresnet_widen_factor', default=4, type=int)
-
-    # miscs
-    parser.add_argument('--manual_seed', type=int,
-                        default=6, help='manual seed')
-    parser.add_argument('--evaluate', '-e', dest='evaluate',
-                        type=str2bool, default=False,
-                        help='evaluate model on validation set')
-    parser.add_argument('--eval_freq', default=1, type=int)
-    parser.add_argument('--summary_freq', default=200, type=int)
-    parser.add_argument('--timestamp', default=None, type=str)
-
-    # checkpoint
-    parser.add_argument('--resume', default=None, type=str)
-    parser.add_argument('--checkpoint', '-c', default=TRAINING_DIRECTORY,
-                        type=str,
-                        help='path to save checkpoint (default: checkpoint)')
-    parser.add_argument('--checkpoint_index', type=str, default=None)
-    parser.add_argument('--save_all_models', type=str2bool, default=False)
-    parser.add_argument('--save_some_models', type=str, default='30,60,80')
-    parser.add_argument('--log_dir', default=LOG_DIRECTORY)
-    parser.add_argument('--plot_dir', default=None,
-                        type=str, help='path to plot the result')
-    parser.add_argument('--pretrained', dest='pretrained', type=str2bool,
-                        default=False, help='use pre-trained model')
-
-    # device
-    parser.add_argument('--device', type=str, default='distributed')
-    parser.add_argument('--hostfile', type=str, default='hostfile')
-    parser.add_argument('--mpi_path', type=str, default='/mlodata1/.openmpi')
-    parser.add_argument('--on_k8s', type=str2bool, default=True)
-    parser.add_argument('--python_path', type=str, default='/home/lin/.conda/envs/dmlb-env/bin/python')
-    parser.add_argument('-j', '--num_workers', default=4, type=int,
-                        help='number of data loading workers (default: 4)')
-
-    parser.add_argument('--blocks', default='2,2', type=str,
-                        help='partition processes to blocks.')
-    parser.add_argument('--cuda_blocks', type=str, default=None,
-                        help='if we configure it, we can use GPU.')
-    parser.add_argument('--world', default=None, type=str,
-                        help='number of distributed processes')
-    parser.add_argument('--backend', default='mpi', type=str)
-    parser.add_argument('--udf', default=None, type=str,
-                        help='A path to .py file of user defined functions.')
+    parser.add_argument('--conf', default=None, type=str)
 
     # parse args.
     args = parser.parse_args()
-    if args.timestamp is None:
-        args.timestamp = info2path(args)
 
-    config_logging()
-    handle_user_defined_files(args.udf)
+    args = get_config(args.conf)
+
     return args
 
 
@@ -174,12 +158,6 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
-
-
-def print_args(args):
-    print('parameters: ')
-    for arg in vars(args):
-        print(arg, getattr(args, arg))
 
 
 def log_args(args):

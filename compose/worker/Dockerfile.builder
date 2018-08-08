@@ -40,6 +40,7 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
 ENV PATH /conda/bin:$PATH
 ENV LD_LIBRARY_PATH /conda/lib:$LD_LIBRARY_PATH
 
+# TODO: Source code in Channel Anaconda can be outdated, switch to conda-forge if posible.
 RUN conda install -y -c anaconda numpy pyyaml scipy mkl setuptools cmake cffi mkl-include typing \
     && conda install -y -c mingfeima mkldnn \
     && conda install -y -c soumith magma-cuda90 \
@@ -116,8 +117,6 @@ RUN chmod a+x /usr/local/bin/entrypoint.sh
 # Copy your application code to the container (make sure you create a .dockerignore file if any large files or directories should be excluded)
 RUN mkdir /app/
 WORKDIR /app/
-
-ADD ./mlbench/worker/ /app/
 
 EXPOSE 22
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
