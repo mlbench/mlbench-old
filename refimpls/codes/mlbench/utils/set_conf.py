@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from os.path import join
 import torch
+import platform
 import torch.distributed as dist
 
 from mlbench.utils.opfiles import build_dirs
 from mlbench.utils.topology import FCGraph
+from mlbench.utils.log import log, log0, config_logging
 
 
 def check_args(args):
@@ -45,7 +47,10 @@ def set_local_stat(args):
     args.val_accuracies = []
 
 
-def set_conf(args):
+def set_conf(args, verbose=True):
+    # init process
+    dist.init_process_group(args.backend)
+
     torch.cuda.manual_seed(args.manual_seed)
 
     # define the graph for the computation.
@@ -62,3 +67,34 @@ def set_conf(args):
 
     # define learning rate and learning rate decay scheme.
     set_lr(args)
+
+    # enable cudnn accelerator if we are using cuda.
+    if args.graph.on_gpu:
+        torch.backends.cudnn.enabled = True
+        torch.backends.cudnn.benchmark = True
+
+    # Configure the loggers.
+    config_logging(args)
+
+    if verbose:
+        log_deployment(args)
+        dist.barrier()
+        log_args(args)
+
+
+def log_args(args):
+    log0('parameters: ')
+    for arg in vars(args):
+        log0(("\t{:40} {:100}").format(str(arg), str(getattr(args, arg))))
+
+
+def log_deployment(args):
+    log(
+        'Rank {} with block {} on {} {}-{}'.format(
+            args.graph.rank,
+            args.graph.rank_2_block[args.graph.rank],
+            platform.node(),
+            'GPU' if args.graph.on_gpu else 'CPU',
+            args.graph.device
+        )
+    )

@@ -32,7 +32,7 @@ def init_model(args):
 
 def stat_model(args, model):
     # TODO: change the print to log
-    log('Total params for process {}: {}M'.format(
+    log0('Total params for process {}: {}M'.format(
         args.graph.rank,
         sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6
     ))
@@ -62,18 +62,14 @@ def create_model(args):
     If args.graph.on_gpu is True, use ps_id as GPU_id.
     """
     model = init_model(args)
-    log0("create_model: create_model: init_model: pass")
 
     stat_model(args, model)
-    log0("create_model: create_model: stat_model: pass")
 
     # define the criterion.
     criterion = nn.CrossEntropyLoss()
 
     # define the optimizer.
     optimizer = define_optimizer(args, model)
-
-    log0("create_model: create_model: define_optimizer: pass")
 
     # place model and criterion.
     if args.graph.on_gpu:
@@ -83,7 +79,6 @@ def create_model(args):
     # (optional) reload checkpoint
     resume_previous_status(args, model, optimizer)
 
-    log0("create_model: create_model: resume_previous_status: pass")
     return model, criterion, optimizer
 
 

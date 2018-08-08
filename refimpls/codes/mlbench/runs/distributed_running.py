@@ -84,14 +84,12 @@ def train_and_validate(args, model, criterion, optimizer):
 
     # init the model
     init_model(args, model)
-    log0('start training and validation.')
     dist.barrier()
     log0('*'*80)
 
     # only evaluate the model if required.
     if args.evaluate:
         validate(args, val_loader, model, criterion)
-        log0("distributed_running: train_and_validate: validate: pass")
         return
 
     # train the model and evaluate the model per args.eval_freq
@@ -100,7 +98,6 @@ def train_and_validate(args, model, criterion, optimizer):
 
         # train
         do_training(args, train_loader, model, optimizer, criterion)
-        log0("distributed_running: train_and_validate: do_training: pass")
 
         # evaluate on validation set.
         if epoch % args.eval_freq == 0:
@@ -117,12 +114,9 @@ def train_and_validate(args, model, criterion, optimizer):
 def do_training(args, train_loader, model, optimizer, criterion):
     # switch to train mode
     model.train()
-    log0("distributed_running: do_training: train: pass")
 
     tracker = define_local_tracker()
     tracker['start_load_time'] = time.time()
-
-    log0("distributed_running: do_training: tracker: pass")
 
     for iter, (input, target) in enumerate(train_loader):
         # update local step.
@@ -133,17 +127,13 @@ def do_training(args, train_loader, model, optimizer, criterion):
         if args.lr_decay is not None:
             adjust_learning_rate(args, optimizer)
 
-            log0("distributed_running: do_training: adjust_learning_rate: pass")
-
         # load data
         input, target, input_var, target_var = load_data(
             args, input, target, tracker)
-        log0("distributed_running: do_training: load_data: pass")
 
         # inference and get current performance.
         loss, prec1, prec5 = inference(
             model, criterion, input_var, target_var, target)
-        log0("distributed_running: do_training: inference: pass")
 
         # compute gradient and do local SGD step.
         optimizer.zero_grad()
@@ -154,7 +144,6 @@ def do_training(args, train_loader, model, optimizer, criterion):
 
         # sync and apply gradients.
         aggregate_gradients(args, model, optimizer)
-        log0("distributed_running: do_training: aggregate_gradients: pass")
 
         # logging display.
         logging_sync(args, tracker)
@@ -206,7 +195,6 @@ def validate(args, val_loader, model, criterion):
     # switch to evaluation mode
     model.eval()
 
-    log0('Do validation.')
     for i, (input, target) in enumerate(val_loader):
         if args.graph.rank == 0:
             log0('Validation at batch {}/{}'.format(i, args.num_batches_val))

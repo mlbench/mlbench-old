@@ -5,18 +5,16 @@ import sys
 import argparse
 import importlib.util
 import platform
-import logging
 from os.path import join
 import torch.distributed as dist
 import json
 
 import mlbench.models as models
-from mlbench.utils.log import log, log0
 from mlbench.utils.auxiliary import info2path
 
 
 class ArgDict(dict):
-    # TODO: type check ? here ?
+    # TODO: type check
     def __init__(self, *args, **kwargs):
         super(ArgDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
@@ -95,8 +93,10 @@ def get_config(config_file=None):
     if default_config.timestamp is None:
         default_config.timestamp = info2path(default_config)
 
-    config_logging()
     handle_user_defined_files(default_config.udf)
+
+    # TODO: Add the following check to `ArgDict`
+    assert default_config.backend == 'mpi'
     return default_config
 
 
@@ -107,21 +107,17 @@ def get_args():
 
     # parse args.
     args = parser.parse_args()
-
     args = get_config(args.conf)
-
     return args
 
 
 def handle_user_defined_files(file):
     # TODO: Revert this functionality in the future?
     if file is None:
-        # log("No user defined files provided.")
         pass
     elif not os.path.exists(file):
         raise OSError("UDF `{}` not found on {}".format(file, platform.node()))
     else:
-
         # For illustrative purposes.
         module_name = 'udf'
         spec = importlib.util.spec_from_file_location(module_name, file)
@@ -132,25 +128,6 @@ def handle_user_defined_files(file):
         sys.modules[module_name] = module
 
 
-class RankFilter(logging.Filter):
-    def filter(self, record):
-        record.rank = dist.get_rank()
-        return True
-
-
-def config_logging(level=logging.DEBUG):
-    # TODO : allow change of logging levels and format (say, %(module)s)
-    logger = logging.getLogger('mlbench')
-    logger.setLevel(level)
-    logger.addFilter(RankFilter())
-
-    formatter = logging.Formatter('%(asctime)s %(name)s %(rank)s %(levelname)s: %(message)s', "%Y-%m-%d %H:%M:%S")
-    ch = logging.StreamHandler()
-    ch.setLevel(level)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-
-
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -158,12 +135,6 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
-
-
-def log_args(args):
-    log0('parameters: ')
-    for arg in vars(args):
-        log0(("\t{:40} {:100}").format(str(arg), str(getattr(args, arg))))
 
 
 if __name__ == '__main__':

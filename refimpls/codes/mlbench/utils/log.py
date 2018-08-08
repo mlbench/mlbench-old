@@ -19,16 +19,6 @@ def record(content, path):
 log_path = None
 
 
-def configure_log(args=None):
-    global log_path
-
-    if args is not None:
-        log_path = os.path.join(
-            args.checkpoint_dir, 'record' + str(args.graph.rank))
-    else:
-        log_path = os.path.join(os.getcwd(), "record")
-
-
 def log(content):
     """print the content while store the information to the path."""
     logger.info(content)
@@ -90,3 +80,33 @@ def logging_display(args, tracker):
         top5=tracker['top5'].avg)
     log('Process {}: '.format(args.graph.rank) + log_info)
     tracker['start_load_time'] = time.time()
+
+
+class RankFilter(logging.Filter):
+    def filter(self, record):
+        record.rank = dist.get_rank()
+        return True
+
+
+def config_logging(args=None):
+    level = logging.DEBUG
+
+    # TODO : allow change of logging levels and format (say, %(module)s)
+    logger = logging.getLogger('mlbench')
+    logger.setLevel(level)
+    logger.addFilter(RankFilter())
+
+    formatter = logging.Formatter('%(asctime)s %(name)s %(rank)s %(levelname)s: %(message)s', "%Y-%m-%d %H:%M:%S")
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    # TODO: What is log_path?
+    global log_path
+
+    if args is not None:
+        log_path = os.path.join(
+            args.checkpoint_dir, 'record' + str(args.graph.rank))
+    else:
+        log_path = os.path.join(os.getcwd(), "record")
