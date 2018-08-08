@@ -8,8 +8,7 @@ import torch.distributed as dist
 from torch.autograd import Variable
 
 from mlbench.dataset.create_data import create_dataset
-from mlbench.utils.log import log, log0, logging_computing, logging_sync, \
-    logging_display, logging_load
+from mlbench.utils.log import log, log0
 from mlbench.utils.meter import AverageMeter, accuracy, save_checkpoint, \
     define_local_tracker
 from mlbench.utils.lr import adjust_learning_rate
@@ -120,7 +119,7 @@ def do_training(args, train_loader, model, optimizer, criterion):
 
     for iter, (input, target) in enumerate(train_loader):
         # update local step.
-        logging_load(args, tracker)
+        tracker.logging_load(args)
         args.local_index += 1
 
         # adjust learning rate (based on the # of accessed samples)
@@ -140,14 +139,14 @@ def do_training(args, train_loader, model, optimizer, criterion):
         loss.backward()
 
         # logging locally.
-        logging_computing(args, tracker, loss, prec1, prec5, input)
+        tracker.logging_computing(args, loss, prec1, prec5, input)
 
         # sync and apply gradients.
         aggregate_gradients(args, model, optimizer)
 
         # logging display.
-        logging_sync(args, tracker)
-        logging_display(args, tracker)
+        tracker.logging_sync(args)
+        tracker.logging_display(args)
 
         if iter >= 5:
             break

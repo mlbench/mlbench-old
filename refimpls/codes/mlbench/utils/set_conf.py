@@ -9,15 +9,8 @@ from mlbench.utils.topology import FCGraph
 from mlbench.utils.log import log, log0, config_logging
 
 
-def check_args(args):
-    # check the value of args.
-    if 'imagenet' == args.data:
-        if 'ILSVRC' not in args.data_dir:
-            raise 'your should provide a correct data dir \
-                that can point to imagenet'
-
-
 def set_checkpoint(args):
+    # TODO: check
     args.checkpoint_root = join(
         args.checkpoint, args.data, args.arch,
         args.device if args.device is not None else '', args.timestamp)
@@ -29,6 +22,7 @@ def set_checkpoint(args):
 
 
 def set_lr(args):
+    # TODO: check
     args.lr_change_epochs = [
         int(l) for l in args.lr_decay_epochs.split(',')] \
         if args.lr_decay_epochs is not None \
@@ -41,6 +35,7 @@ def set_lr(args):
 
 
 def set_local_stat(args):
+    # TODO: check
     args.local_index = 0
     args.best_prec1 = 0
     args.best_epoch = []
@@ -51,6 +46,7 @@ def set_conf(args, verbose=True):
     # init process
     dist.init_process_group(args.backend)
 
+    # TODO: do we need manual seed for cpu?
     torch.cuda.manual_seed(args.manual_seed)
 
     # define the graph for the computation.

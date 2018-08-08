@@ -102,6 +102,7 @@ class FCGraph(UndirectedGraph):
 
     @property
     def device(self):
+        # TODO: check if the type is `torch.device`
         return self.world[self.rank]
 
     @property
@@ -118,8 +119,8 @@ class FCGraph(UndirectedGraph):
         If there is no specified information, then we will use GPU by default.
         Otherwise, we will first assign the GPU location, and then CPU.
         """
-        return False
         # TODO: confusing, consult Tao
+        return False
         if len(self.cuda_blocks) == 0:
             return True
 

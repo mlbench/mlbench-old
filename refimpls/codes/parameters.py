@@ -25,7 +25,7 @@ def get_config(config_file=None):
     ROOT_DIRECTORY = './'
     RAW_DATA_DIRECTORY = join(ROOT_DIRECTORY, 'data/')
     TRAINING_DIRECTORY = join(RAW_DATA_DIRECTORY, 'checkpoint')
-    LOG_DIRECTORY = './logging'
+    LOG_DIRECTORY = './log'
 
     # TODO: Convert the configs to nested structure.
     default_config = ArgDict()
