@@ -1,17 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-__all__ = ['get_model']
-
-
-def get_model(args):
-    return Net(args)
+__all__ = ['testnet']
 
 
-class Net(nn.Module):
+class TestNet(nn.Module):
     def __init__(self, args):
-        super(Net, self).__init__()
+        super(TestNet, self).__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
         self.conv2_drop = nn.Dropout2d()
@@ -26,3 +21,8 @@ class Net(nn.Module):
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
+
+
+def testnet(args):
+    model = TestNet(args)
+    return model

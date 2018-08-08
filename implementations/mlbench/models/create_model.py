@@ -12,7 +12,6 @@ from mlbench.utils.log import log, log0
 
 
 def init_model(args):
-    # TODO: change the print to log
     try:
         import udf
         model = udf.get_model(args)

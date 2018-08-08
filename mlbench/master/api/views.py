@@ -76,14 +76,14 @@ class MPIJobView(ViewSet):
             "--mca", "btl_tcp_if_exclude", "docker0,lo",
             '--host', ",".join(hosts),
             '/conda/bin/python', "/codes/run.py",
-            "--arch", "densenet5",
+            "--arch", "testnet",
             "--batch_size", "128", "--num_epochs", "6",
             "--lr", "0.1", "--momentum", "0.0",
             "--data", "mnist",
             "--data_dir", "/datasets/torch",
             "--blocks", "1,1",
             "--num_workers", "0",
-            "--udf", "/app/simple-net.py"
+            # "--udf", "/app/simple-net.py"
         ]
 
         result['command'] = str(exec_command)

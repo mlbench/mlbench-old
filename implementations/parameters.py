@@ -130,6 +130,7 @@ def get_args():
 
 
 def handle_user_defined_files(file):
+    # TODO: Revert this functionality in the future?
     if file is None:
         # log("No user defined files provided.")
         pass
