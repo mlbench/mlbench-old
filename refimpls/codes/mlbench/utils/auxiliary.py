@@ -15,6 +15,8 @@ def str2time(string, pattern):
 
 
 def determine_model_info(args):
+    # PUT the model wise information.
+    # TODO: maybe we can move it to their own modules.
     if 'resnet' in args.arch:
         return args.arch
     elif 'densenet' in args.arch:
@@ -27,11 +29,14 @@ def determine_model_info(args):
         return '{}-{}'.format(
             args.arch, args.wideresnet_widen_factor
         )
+    else:
+        return args.arch
 
 
 def info2path(args):
     info = '{}_{}_'.format(int(time.time()), determine_model_info(args))
-    info += 'lr-{}_momentum-{}_epochs-{}_basebatchsize-{}_batchsize-{}_blocksize-{}_droprate-{}_'.format(
+    info += ('lr-{}_momentum-{}_epochs-{}_basebatchsize-'
+             '{}_batchsize-{}_blocksize-{}_droprate-{}_').format(
         args.lr,
         args.momentum,
         args.num_epochs,
@@ -39,7 +44,7 @@ def info2path(args):
         args.batch_size,
         args.blocks,
         args.drop_rate
-        )
+    )
     info += 'lars-{}-{}_'.format(args.lr_lars_mode, args.lr_lars_eta) \
         if args.lr_lars else ''
 
