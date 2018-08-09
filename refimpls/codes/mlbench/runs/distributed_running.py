@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import gc
 import time
-import math
 
 import torch
 import torch.distributed as dist
@@ -28,19 +27,6 @@ def load_data(args, input, target, tracker):
     tracker['data_time'].update(end_data_time - start_data_time)
     tracker['end_data_time'] = end_data_time
     return input, target, input_var, target_var
-
-
-def init_model(args, model):
-    """it might because of MPI, the model for each process is not the same.
-
-    This function is proposed to fix this issue,
-    i.e., use the  model (rank=0) as the global model.
-    """
-    log('init model for process (rank {})'.format(args.graph.rank))
-    for param in model.parameters():
-        param.data = param.data \
-            if args.graph.rank == 0 else param.data - param.data
-        dist.all_reduce(param.data, op=dist.reduce_op.SUM)
 
 
 def aggregate_gradients(args, model, optimizer):
@@ -70,19 +56,11 @@ def train_and_validate(args, model, criterion, optimizer):
     """The training scheme of Hierarchical Local SGD."""
     # get data loader.
     train_loader, val_loader = create_dataset(args)
-    args.num_batches_train = math.ceil(
-        1.0 * args.num_train_samples_per_device / args.batch_size)
-    args.num_batches_total_train = args.num_batches_train * args.num_epochs
-    args.num_warmup_samples = args.num_batches_train * args.lr_warmup_size
-    args.num_batches_val = math.ceil(
-        1.0 * args.num_val_samples_per_device / args.batch_size)
 
     # define some parameters for training.
     log0('we have {} epochs, {} mini-batches per epoch (batch size:{}).'.format(
         args.num_epochs, args.num_batches_train, args.batch_size))
 
-    # init the model
-    init_model(args, model)
     dist.barrier()
     log0('*'*80)
 
@@ -104,6 +82,8 @@ def train_and_validate(args, model, criterion, optimizer):
 
         # reshuffle the data.
         if args.reshuffle_per_epoch:
+            # TODO: A little bit too specific, should be hide beneth
+            # Is it really useful to delete train loader and val loader?
             del train_loader, val_loader
             gc.collect()
             log('reshuffle the dataset.')
@@ -115,11 +95,13 @@ def do_training(args, train_loader, model, optimizer, criterion):
     model.train()
 
     tracker = define_local_tracker()
+
     tracker['start_load_time'] = time.time()
 
     for iter, (input, target) in enumerate(train_loader):
         # update local step.
         tracker.logging_load(args)
+        # TODO: what doe sthe local index do?
         args.local_index += 1
 
         # adjust learning rate (based on the # of accessed samples)
@@ -191,6 +173,7 @@ def validate(args, val_loader, model, criterion):
     top1 = AverageMeter()
     top5 = AverageMeter()
 
+    # TODO: miss a barrier here?
     # switch to evaluation mode
     model.eval()
 

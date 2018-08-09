@@ -8,6 +8,7 @@ import platform
 from os.path import join
 import torch.distributed as dist
 import json
+import math
 
 import mlbench.models as models
 from mlbench.utils.auxiliary import info2path
@@ -97,6 +98,15 @@ def get_config(config_file=None):
 
     # TODO: Add the following check to `ArgDict`
     assert default_config.backend == 'mpi'
+
+    # TODO: re-organize code
+    default_config.num_batches_train = math.ceil(
+        1.0 * default_config.num_train_samples_per_device / default_config.batch_size)
+    default_config.num_batches_total_train = default_config.num_batches_train * default_config.num_epochs
+    default_config.num_warmup_samples = default_config.num_batches_train * default_config.lr_warmup_size
+    default_config.num_batches_val = math.ceil(
+        1.0 * default_config.num_val_samples_per_device / default_config.batch_size)
+
     return default_config
 
 
