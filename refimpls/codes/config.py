@@ -4,6 +4,7 @@ import torch
 import torch.distributed as dist
 
 from mlbench.utils.topology import FCGraph
+from mlbench.utils import log
 logger = logging.getLogger('mlbench')
 
 
@@ -34,6 +35,7 @@ def _init_context(args):
         'use_cuda': False,
         'backend': 'mpi',
         'manual_seed': 42,
+        'mode': 'develop',
     }
 
     default_optimizer = {
@@ -46,11 +48,14 @@ def _init_context(args):
     }
 
     default_dataset = {
-        'name': 'mnist'
+        'name': 'mnist',
+        'root_folder': '/datasets/torch',
+        'batch_size': 256,
+        'num_workers': 0
     }
 
     default_model = {
-        'name': 'twolayer'
+        'name': 'testnet'
     }
 
     if config_file is not None:
@@ -114,15 +119,15 @@ def config_pytorch(meta):
     if meta.use_cuda:
         torch.backends.cudnn.enabled = True
         torch.backends.cudnn.benchmark = True
-    logger.warning("Add graph into meta and determine device.")
+    log.todo("TODO: Add graph into meta and determine device.")
 
     # local conf.
     # set_local_stat(args)
-    logger.warning("Add set_local_stat.")
+    log.todo("TODO: Add set_local_stat.")
 
 
 def config_path(context):
-    """After initialization, update some information."""
+    """Config the path used during the experiments."""
 
     # Checkpoint for the current run
     context.meta.checkpoint_run_root = os.path.join(

@@ -26,20 +26,20 @@ def main():
     # Initialize environements like
     context = config.init_context(args)
 
-    # The arugment passed from command line has higher priority than config files.
-    model = get_model(context.model)
-
-    # Get optimizer
-    optimizer = get_optimizer(context.optimizer)
-
-    # Get control flow
-    controlflow = get_controlflow(context.controlflow)
-
     # Get dataset
-    dataset = get_dataset(context.dataset)
+    get_dataset(context)
 
-    # Real execution
-    controlflow(model, optimizer, dataset, context)
+    # The arugment passed from command line has higher priority than config files.
+    # model = get_model(context)
+
+    # # Get optimizer
+    # optimizer = get_optimizer(context.optimizer)
+
+    # # Get control flow
+    # controlflow = get_controlflow(context.controlflow)
+
+    # # Real execution
+    # controlflow(model, optimizer, dataset, context)
 
 
 if __name__ == '__main__':
