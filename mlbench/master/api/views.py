@@ -234,3 +234,23 @@ class ModelRunView(ViewSet):
         return Response(
             serializer.data, status=status.HTTP_201_CREATED
         )
+
+    def destroy(self, request, pk=None):
+        """Delete a run from the db
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Keyword Arguments:
+            pk {int} -- [the id of the run] (default: {None})
+        """
+        run = ModelRun.objects.get(pk=pk)
+
+        if run is not None:
+            run.delete()
+
+        return Response({
+                'status': 'Deleted',
+                'message': 'The run was deleted'
+            }, status=status.HTTP_204_NO_CONTENT)
+

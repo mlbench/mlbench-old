@@ -6,7 +6,7 @@ from rq import get_current_job
 import os
 
 
-@django_rq.job
+@django_rq.job('default', result_ttl=-1)
 def run_model_job(model_run):
     from api.models import ModelRun
 
@@ -44,8 +44,12 @@ def run_model_job(model_run):
         exec_command = [
             'sh',
             '/usr/bin/mpirun',
-            '--host', ",".join(hosts),
-            '/usr/local/bin/python', '/app/main.py']
+            '--host',
+            ",".join(hosts),
+            '/usr/local/bin/python',
+            '/app/main.py',
+            '--run_id',
+            model_run.id]
         job.meta['command'] = str(exec_command)
 
         name = ret.items[0].metadata.name

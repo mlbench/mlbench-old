@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-3">Name: </div>
+    <div class="col-3">Name <button type="button" class="btn btn-outline-danger" id="delete-button"><span data-feather="x"></span></button>: </div>
     <div class="col-9">{{ run.name }}</div>
 </div>
 <div class="row">
@@ -11,7 +11,7 @@
 </div>
 <div class="row">
     <div class="col-3">State: </div>
-    <div class="col-9">{{ run.state }}</div>
+    <div class="col-9" id="run-state">{{ run.state }}</div>
 </div>
 <div class="row">
     <div class="col-3">Command: </div>
@@ -27,14 +27,38 @@
 </div>
 <div class="row">
     <div class="col-3">Stdout: </div>
-    <div class="col-9"><pre>{{ run.job_metadata.stdout }}</pre></div>
+    <div class="col-9" id="run-stdout"><pre>{{ run.job_metadata.stdout }}</pre></div>
 </div>
 <div class="row">
     <div class="col-3">Stderr: </div>
-    <div class="col-9"><pre>{{ run.job_metadata.stderr }}</pre></div>
+    <div class="col-9" id="run-stderr"><pre>{{ run.job_metadata.stderr }}</pre></div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript">
+    $(document).ready(function(){
+        $("#delete-button").click(function(){
+            $.ajax({
+                url: "/api/runs/{{ run.id }}/",
+                type: 'DELETE',
+                success: function(){
+                    window.location.replace("/runs");
+                }
+            });
+        });
 
+        var updateRunData = function(){
+            $.getJSON("/api/runs/{{ run.id }}/",
+                function(data){
+                    $("#run-state").text(data['state']);
+                    $("#run-stdout").text(data['job_metadata']["stdout"].join("\n"));
+                    $("#run-stderr").text(data['job_metadata']["stderr"].join("\n"));
+                    setTimeout(updateRunData, 1000)
+                });
+        };
+
+        updateRunData();
+    });
+</script>
 {% endblock %}

@@ -28,7 +28,7 @@ class KubePodTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-class MPIJobTests(APITestCase):
+class OdelRunTests(APITestCase):
     def test_post_job(self):
         """
         Ensure we can return a pod list
@@ -54,5 +54,5 @@ class MPIJobTests(APITestCase):
 
             stream.stream.return_value = "Run Successful"
 
-            response = self.client.post('/api/mpi_jobs/', format='json')
+            response = self.client.post('/api/runs/', format='json')
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)

@@ -1,5 +1,10 @@
-from django.db import models
 from api.utils.run_utils import run_model_job
+
+from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+import django_rq
+from rq.job import Job
 
 
 class ModelRun(models.Model):
@@ -28,3 +33,11 @@ class ModelRun(models.Model):
         self.save()
 
         run_model_job.delay(self)
+
+
+@receiver(pre_delete, sender=ModelRun, dispatch_uid='run_delete_job')
+def remove_run_job(sender, instance, using, **kwargs):
+    redis_conn = django_rq.get_connection()
+    job = Job.fetch(instance.job_id, redis_conn)
+    job.delete()
+
