@@ -15,8 +15,13 @@ RUN set -ex \
             musl-dev \
             linux-headers \
             pcre-dev \
+            git \
     && python -m venv /venv \
     && /venv/bin/pip install -U pip \
+    #&& git clone https://github.com/istrategylabs/django-rq-scheduler.git \
+    #&& cd django-rq-scheduler \
+    #&& LIBRARY_PATH=/lib:/usr/lib /bin/sh -c '/venv/bin/pip install --no-cache-dir . ' \
+    #&& cd .. \
     && LIBRARY_PATH=/lib:/usr/lib /bin/sh -c "/venv/bin/pip install --no-cache-dir -r /requirements.txt" \
     && runDeps="$( \
             scanelf --needed --nobanner --recursive /venv \
@@ -29,7 +34,11 @@ RUN set -ex \
     && apk add --no-cache \
             nginx \
             sqlite \
-	        supervisor \
+            supervisor \
+            redis \
+    && mkdir /data \
+    && chown -R redis:redis /data\
+    && echo -e "include /etc/redis-local.conf\n" >> /etc/redis.conf \
     && mkdir /run/nginx/ \
     && apk del .build-deps
 
@@ -55,4 +64,7 @@ ADD ./mlbench/master/ /app/code/
 RUN /venv/bin/python -m pip install djangorestframework
 #Setup django
 RUN /venv/bin/python code/manage.py collectstatic
+RUN /venv/bin/python code/manage.py migrate --noinput
+RUN /venv/bin/python code/manage.py flush --noinput
+RUN /venv/bin/python code/manage.py loaddata scheduled_tasks
 CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

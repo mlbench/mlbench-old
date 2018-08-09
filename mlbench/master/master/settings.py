@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'constance',
     'constance.backends.database',
     'rest_framework',
+    'django_rq',
+    'scheduler',
     'main',
     'api'
 ]
@@ -136,3 +138,16 @@ CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 CONSTANCE_CONFIG = {
     'FIRST_TIME': (True, 'Whether to execute first time setup wizard')
 }
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+        'DEFAULT_TIMEOUT': 360,
+    }
+}
+
+FIXTURE_DIRS = (
+   'api/fixtures/',
+)

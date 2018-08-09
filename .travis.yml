@@ -72,7 +72,7 @@ jobs:
         - ./kubectl --context=dind get services |grep 'mlbench-master'
         - ./kubectl --context=dind get pods |grep "mlbench-master.*Running"
         - ./kubectl --context=dind get pods |grep "mlbench-worker.*Running"
-      after_failure: ./kubectl  --context=dind get pods --namespace kube-system
+      after_failure: ./kubectl --context=dind get pods --namespace kube-system
 
     - stage: deploy develop
       if: branch = develop
