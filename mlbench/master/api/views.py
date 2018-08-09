@@ -6,10 +6,6 @@ from api.serializers import KubePodSerializer, ModelRunSerializer
 import django_rq
 from rq.job import Job
 
-from kubernetes import client, config
-import kubernetes.stream as stream
-
-import os
 from itertools import groupby
 from datetime import datetime
 import pytz
@@ -45,7 +41,7 @@ class KubeMetricsView(ViewSet):
             Json -- Object containing all metrics
         """
 
-        result = {pod.name: {
+        pod_metrics = {pod.name: {
             g[0]: [
                 {'date': e.date, 'value': e.value}
                 for e in sorted(g[1], key=lambda x: x.date)
@@ -54,7 +50,19 @@ class KubeMetricsView(ViewSet):
                 key=lambda m: m.name)
             } for pod in KubePod.objects.all()}
 
-        return Response(result, status=status.HTTP_200_OK)
+        run_metrics = {run.name: {
+            g[0]: [
+                {'date': e.date, 'value': e.value}
+                for e in sorted(g[1], key=lambda x: x.date)
+            ] for g in groupby(
+                sorted(run.metrics.all(), key=lambda m: m.name),
+                key=lambda m: m.name)
+            } for run in ModelRun.objects.all()}
+
+        return Response({
+            'pod_metrics': pod_metrics,
+            'run_metrics': run_metrics},
+            status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None, format=None):
         """Get all metrics for a pod
