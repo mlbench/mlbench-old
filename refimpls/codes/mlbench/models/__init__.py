@@ -1,5 +1,2 @@
-from .alexnet import *
-from .wideresnet import *
-from .resnet import *
-from .densenet import *
-from .testnet import *
+def get_model(params):
+    print("Get models.", params)
