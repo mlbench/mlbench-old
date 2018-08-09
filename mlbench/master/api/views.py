@@ -100,21 +100,48 @@ class KubeMetricsView(ViewSet):
         """
 
         d = request.data
-        pod = KubePod.objects.filter(name=d['pod_name']).first()
 
-        if pod is None:
+        metric = None
+
+        if 'pod_name' in d:
+            pod = KubePod.objects.filter(name=d['pod_name']).first()
+
+            if pod is None:
+                return Response({
+                    'status': 'Not Found',
+                    'message': 'Pod not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            metric = KubeMetric(
+                name=d['name'],
+                date=d['date'],
+                value=d['value'],
+                metadata=d['metadata'],
+                pod=pod)
+            metric.save()
+
+        elif 'run_id' in d:
+            run = ModelRun.objects.get(pk=d['run_id'])
+
+            if run is None:
+                return Response({
+                    'status': 'Not Found',
+                    'message': 'Run not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            metric = KubeMetric(
+                name=d['name'],
+                date=d['date'],
+                value=d['value'],
+                metadata=d['metadata'],
+                model_run=run)
+            metric.save()
+
+        else:
             return Response({
-                'status': 'Not Found',
-                'message': 'Pod not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        metric = KubeMetric(
-            name=d['name'],
-            date=d['date'],
-            value=d['value'],
-            metadata=d['metadata'],
-            pod=pod)
-        metric.save()
+                'status': 'Bad Request',
+                'message': 'Pod Name or run id have to be supplied'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(
             metric, status=status.HTTP_201_CREATED
