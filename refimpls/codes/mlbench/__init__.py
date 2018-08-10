@@ -2,13 +2,14 @@ from mlbench.utils import log
 import torch.nn as nn
 
 
-def distributed_running(controlflow, model, optimizer, criterion, context):
+def distributed_running(controlflow, model, optimizer, criterion, metrics, context):
     log.centering("LAUNCH distributed_running")
 
     controlflow(
         model=model,
         optimizer=optimizer,
         criterion=criterion,
+        metrics=metrics,
         data_loader=context.dataset.train_.loader,
         num_epochs=context.controlflow.num_epochs,
         num_batches=context.dataset.train_.num_batches,

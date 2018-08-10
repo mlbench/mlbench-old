@@ -6,7 +6,7 @@ from mlbench.optim import get_optimizer, get_criterion
 from mlbench.controlflow import get_controlflow
 from mlbench.models import get_model
 from mlbench.datasets import get_dataset
-from mlbench.utils import log
+from mlbench.utils import log, get_metrics
 
 from mlbench import distributed_running
 
@@ -41,12 +41,13 @@ def main():
     optimizer = get_optimizer(context, model)
 
     criterion = get_criterion(context)
+    metrics = get_metrics(context)
 
     # Get control flow
     controlflow = get_controlflow(context)
 
     # Real execution
-    distributed_running(controlflow, model, optimizer, criterion, context)
+    distributed_running(controlflow, model, optimizer, criterion, metrics, context)
 
 
 if __name__ == '__main__':

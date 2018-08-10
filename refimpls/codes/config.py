@@ -42,7 +42,9 @@ def _init_context(args):
         'backend': 'mpi',
         'manual_seed': 42,
         'mode': 'develop',
-        'debug': args.debug
+        'debug': args.debug,
+        'topk': (1, 5),
+        'metrics': 'accuracy'
     }
 
     default_optimizer = {
