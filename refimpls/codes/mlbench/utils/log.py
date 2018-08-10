@@ -7,21 +7,38 @@ import torch.distributed as dist
 logger = logging.getLogger('mlbench')
 
 
-def info(content):
-    logger.info(content)
+def _warp(string, symbol='*', length=80):
+    one_side_length = (length - len(string) - 2) // 2
+    if one_side_length > 0:
+        return symbol * one_side_length + ' ' + string + ' ' + symbol * one_side_length
+    else:
+        return string
 
 
-def debug(content):
-    logger.debug(content)
+def centering(content, who='all', symbol='*', length=80):
+    info(_warp(content, symbol, length), who=who)
 
 
-def warning(content):
-    logger.warning("\033[0;31m{}\033[0m".format(content))
+def info(content, who='all'):
+    if who == 'all' or who == dist.get_rank():
+        logger.info(content)
 
 
-def critical(content):
-    logger.critical("\033[0;104m{}\033[0m".format(content))
+def debug(content, who='all'):
+    if who == 'all' or who == dist.get_rank():
+        logger.debug(content)
 
 
-def todo(content):
-    logger.warning("\033[0;33m{}\033[0m".format(content))
+def warning(content, who='all'):
+    if who == 'all' or who == dist.get_rank():
+        logger.warning("\033[0;31m{}\033[0m".format(content))
+
+
+def critical(content, who='all'):
+    if who == 'all' or who == dist.get_rank():
+        logger.critical("\033[0;104m{}\033[0m".format(content))
+
+
+def todo(content, who='all'):
+    if who == 'all' or who == dist.get_rank():
+        logger.warning("\033[0;33m{}\033[0m".format(content))

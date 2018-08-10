@@ -22,30 +22,28 @@ class Partition(object):
 
 
 class Partitioner(object):
-    def consistent_indices(self, indices):
-        if self.args.graph.rank == 0 and self.args.reshuffle_per_epoch:
+    def consistent_indices(self, rank, indices, reshuffle_per_epoch):
+        if rank == 0 and reshuffle_per_epoch:
             random.shuffle(indices)
 
         # broadcast.
         indices = torch.IntTensor(indices)
-        group = dist.new_group(self.args.graph.ranks)
-        dist.broadcast(indices, src=0, group=group)
+        dist.broadcast(indices, src=0)
         return list(indices)
 
 
 class DataPartitioner(Partitioner):
     """ Partitions a dataset into different chuncks. """
 
-    def __init__(self, args, data, sizes=[0.7, 0.2, 0.1]):
+    def __init__(self, data, rank, reshuffle_per_epoch, sizes=[0.7, 0.2, 0.1]):
         # prepare info.
-        self.args = args
         self.data = data
         self.data_size = len(self.data)
         self.partitions = []
 
         # get shuffled/unshuffled data.
         indices = [x for x in range(0, self.data_size)]
-        indices = self.consistent_indices(indices)
+        indices = self.consistent_indices(rank, indices, reshuffle_per_epoch)
 
         # partition indices.
         sizes = np.cumsum(sizes)

@@ -22,6 +22,14 @@ class Context(object):
         self.controlflow = controlflow
         self.meta = meta
 
+    def log(self, context_type='dataset'):
+        if context_type == 'dataset':
+            key_len = max(map(len, self.dataset.keys()))
+            for k, v in self.dataset.items():
+                log.info("{:{x}} {}".format(k, v, x=key_len), 0)
+        else:
+            raise NotImplementedError
+
 
 def _init_context(args):
     config_file = args.config_file
@@ -36,6 +44,7 @@ def _init_context(args):
         'backend': 'mpi',
         'manual_seed': 42,
         'mode': 'develop',
+        'debug': args.debug
     }
 
     default_optimizer = {
@@ -51,7 +60,10 @@ def _init_context(args):
         'name': 'mnist',
         'root_folder': '/datasets/torch',
         'batch_size': 256,
-        'num_workers': 0
+        'num_workers': 0,
+        'train': True,
+        'val': True,
+        'reshuffle_per_epoch': False,
     }
 
     default_model = {
@@ -99,8 +111,6 @@ def config_logging(context):
 
 
 def config_pytorch(meta):
-    dist.init_process_group(meta.backend)
-
     # Set manual seed for both cpu and cuda
     torch.manual_seed(meta.manual_seed)
 
@@ -145,6 +155,8 @@ def config_path(context):
 def init_context(args):
     # Context build from args, file and defaults
     context = _init_context(args)
+
+    dist.init_process_group(context.meta.backend)
 
     config_logging(context)
 

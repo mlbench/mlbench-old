@@ -1,16 +1,38 @@
+import copy
 from mlbench.utils import log
 
 from .load_dataset import create_dataset
 
 
-def get_dataset(context):
-    log.debug("Loading dataset...")
-    train_loader, val_loader = create_dataset(
-        context.dataset.name, context.dataset.root_folder,
-        context.dataset.batch_size, context.dataset.num_workers,
-        context.meta.rank)
+def display_one_batch(data_loader):
+    log.debug("Display one batch of data:")
+    for i, (input, target) in enumerate(copy.deepcopy(data_loader)):
+        log.debug("\tBatch {}: input.shape={}, target.shape={}".format(
+            i, input.shape, target.shape))
+        log.debug(input)
+        log.debug(target)
+        break
 
-    log.todo('TODO: Avoid using train_loader/val_loader directly.')
-    context.dataset.train_loader = train_loader
-    context.dataset.val_loader = val_loader
+
+def get_dataset(context):
+    log.centering("LOADING DATASET")
+
+    dataset = context.dataset
+    if dataset.train:
+        dataset.train_loader, dataset.num_train_samples_per_device = create_dataset(
+            dataset.name, dataset.root_folder, dataset.batch_size,
+            dataset.num_workers, context.meta.rank, context.meta.world_size,
+            dataset.reshuffle_per_epoch, dataset_type='train')
+
+        if context.meta.debug:
+            display_one_batch(dataset.train_loader)
+
+    if dataset.val:
+        dataset.val_loader, dataset.num_val_samples_per_device = create_dataset(
+            dataset.name, dataset.root_folder, dataset.batch_size,
+            dataset.num_workers, context.meta.rank, context.meta.world_size,
+            dataset.reshuffle_per_epoch, dataset_type='test')
+
+    context.log('dataset')
+
     log.debug("Dataset loaded...")
