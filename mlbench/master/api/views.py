@@ -1,13 +1,11 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from api.models import KubePod, KubeMetric
-from api.serializers import KubePodSerializer
+from api.models import KubePod, KubeMetric, ModelRun
+from api.serializers import KubePodSerializer, ModelRunSerializer
+import django_rq
+from rq.job import Job
 
-from kubernetes import client, config
-import kubernetes.stream as stream
-
-import os
 from itertools import groupby
 from datetime import datetime
 import pytz
@@ -43,7 +41,7 @@ class KubeMetricsView(ViewSet):
             Json -- Object containing all metrics
         """
 
-        result = {pod.name: {
+        pod_metrics = {pod.name: {
             g[0]: [
                 {'date': e.date, 'value': e.value}
                 for e in sorted(g[1], key=lambda x: x.date)
@@ -52,7 +50,19 @@ class KubeMetricsView(ViewSet):
                 key=lambda m: m.name)
             } for pod in KubePod.objects.all()}
 
-        return Response(result, status=status.HTTP_200_OK)
+        run_metrics = {run.name: {
+            g[0]: [
+                {'date': e.date, 'value': e.value}
+                for e in sorted(g[1], key=lambda x: x.date)
+            ] for g in groupby(
+                sorted(run.metrics.all(), key=lambda m: m.name),
+                key=lambda m: m.name)
+            } for run in ModelRun.objects.all()}
+
+        return Response({
+            'pod_metrics': pod_metrics,
+            'run_metrics': run_metrics},
+            status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None, format=None):
         """Get all metrics for a pod
@@ -98,69 +108,149 @@ class KubeMetricsView(ViewSet):
         """
 
         d = request.data
-        pod = KubePod.objects.filter(name=d['pod_name']).first()
 
-        if pod is None:
+        metric = None
+
+        if 'pod_name' in d:
+            pod = KubePod.objects.filter(name=d['pod_name']).first()
+
+            if pod is None:
+                return Response({
+                    'status': 'Not Found',
+                    'message': 'Pod not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            metric = KubeMetric(
+                name=d['name'],
+                date=d['date'],
+                value=d['value'],
+                metadata=d['metadata'],
+                pod=pod)
+            metric.save()
+
+        elif 'run_id' in d:
+            run = ModelRun.objects.get(pk=d['run_id'])
+
+            if run is None:
+                return Response({
+                    'status': 'Not Found',
+                    'message': 'Run not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            metric = KubeMetric(
+                name=d['name'],
+                date=d['date'],
+                value=d['value'],
+                metadata=d['metadata'],
+                model_run=run)
+            metric.save()
+
+        else:
             return Response({
-                'status': 'Not Found',
-                'message': 'Pod not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-
-        metric = KubeMetric(
-            name=d['name'],
-            date=d['date'],
-            value=d['value'],
-            metadata=d['metadata'],
-            pod=pod)
-        metric.save()
+                'status': 'Bad Request',
+                'message': 'Pod Name or run id have to be supplied'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(
             metric, status=status.HTTP_201_CREATED
         )
 
 
-class MPIJobView(ViewSet):
-    """Handles the /api/mpi_jobs endpoint
+class ModelRunView(ViewSet):
+    """Handles Model Runs
     """
+    serializer_class = ModelRunSerializer
+
+    def list(self, request, format=None):
+        """Get all runs
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Keyword Arguments:
+            format {string} -- Output format to use (default: {None})
+
+        Returns:
+            Json -- Object containing all runs
+        """
+
+        runs = ModelRun.objects.all()
+
+        serializer = ModelRunSerializer(runs, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, format=None):
+        """Get all details for a run
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Keyword Arguments:
+            pk {string} -- Id of the run
+            format {string} -- Output format to use (default: {None})
+
+        Returns:
+            Json -- Object containing all metrics for the pod
+        """
+        run = ModelRun.objects.get(pk=pk)
+
+        redis_conn = django_rq.get_connection()
+        job = Job.fetch(run.job_id, redis_conn)
+        run.job_metadata = job.meta
+
+        serializer = ModelRunSerializer(run, many=False)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
-        config.load_incluster_config()
+        """ Create and start a new Model run
 
-        v1 = client.CoreV1Api()
+        Arguments:
+            request {[Django request]} -- The request object
 
-        release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
-        ns = os.environ.get('MLBENCH_NAMESPACE')
+        Returns:
+            Json -- Returns posted values
+        """
+        # TODO: lock table, otherwise there might be concurrency conflicts
+        d = request.data
 
-        ret = v1.list_namespaced_pod(
-            ns,
-            label_selector="component=worker,app=mlbench,release={}"
-            .format(release_name))
+        active_runs = ModelRun.objects.filter(state=ModelRun.STARTED)
 
-        result = {'pods': []}
-        hosts = []
-        for i in ret.items:
-            result['pods'].append((i.status.pod_ip,
-                                   i.metadata.namespace,
-                                   i.metadata.name,
-                                   str(i.metadata.labels)))
-            hosts.append("{}.{}".format(i.metadata.name, release_name))
+        if active_runs.count() > 0:
+            return Response({
+                'status': 'Conflict',
+                'message': 'There is already an active run'
+            }, status=status.HTTP_409_CONFLICT)
 
-        exec_command = [
-            'sh',
-            '/usr/bin/mpirun',
-            '--host', ",".join(hosts),
-            '/usr/local/bin/python', '/app/main.py']
-        result['command'] = str(exec_command)
+        run = ModelRun(
+            name=d['name']
+        )
 
-        name = ret.items[0].metadata.name
+        run.start()
 
-        result['master_name'] = name
+        serializer = ModelRunSerializer(run, many=False)
 
-        resp = stream.stream(v1.connect_get_namespaced_pod_exec, name,
-                             'default',
-                             command=exec_command,
-                             stderr=True, stdin=False,
-                             stdout=True, tty=False)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED
+        )
 
-        result["response"] = resp
-        return Response(result, status=status.HTTP_201_CREATED)
+    def destroy(self, request, pk=None):
+        """Delete a run from the db
+
+        Arguments:
+            request {[Django request]} -- The request object
+
+        Keyword Arguments:
+            pk {int} -- [the id of the run] (default: {None})
+        """
+        run = ModelRun.objects.get(pk=pk)
+
+        if run is not None:
+            run.delete()
+
+        return Response({
+                'status': 'Deleted',
+                'message': 'The run was deleted'
+            }, status=status.HTTP_204_NO_CONTENT)
+
