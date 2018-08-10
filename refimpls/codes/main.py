@@ -2,10 +2,13 @@ import argparse
 import json
 import config
 
-from mlbench.optim import get_optimizer
+from mlbench.optim import get_optimizer, get_criterion
 from mlbench.controlflow import get_controlflow
 from mlbench.models import get_model
 from mlbench.datasets import get_dataset
+from mlbench.utils import log
+
+from mlbench import distributed_running
 
 
 def main():
@@ -32,16 +35,18 @@ def main():
     get_dataset(context)
 
     # The arugment passed from command line has higher priority than config files.
-    # model = get_model(context)
+    model = get_model(context)
 
-    # # Get optimizer
-    # optimizer = get_optimizer(context.optimizer)
+    # Get optimizer
+    optimizer = get_optimizer(context, model)
 
-    # # Get control flow
-    # controlflow = get_controlflow(context.controlflow)
+    criterion = get_criterion(context)
 
-    # # Real execution
-    # controlflow(model, optimizer, dataset, context)
+    # Get control flow
+    controlflow = get_controlflow(context)
+
+    # Real execution
+    distributed_running(controlflow, model, optimizer, criterion, context)
 
 
 if __name__ == '__main__':

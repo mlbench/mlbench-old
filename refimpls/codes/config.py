@@ -23,12 +23,10 @@ class Context(object):
         self.meta = meta
 
     def log(self, context_type='dataset'):
-        if context_type == 'dataset':
-            key_len = max(map(len, self.dataset.keys()))
-            for k, v in self.dataset.items():
-                log.info("{:{x}} {}".format(k, v, x=key_len), 0)
-        else:
-            raise NotImplementedError
+        obj = eval("self.{}".format(context_type))
+        key_len = max(map(len, obj.keys()))
+        for k, v in obj.items():
+            log.info("{:{x}} {}".format(k, v, x=key_len), 0)
 
 
 def _init_context(args):
@@ -49,11 +47,16 @@ def _init_context(args):
 
     default_optimizer = {
         "name": "sgd",
-        "lr": 0.01
+        "lr": 0.01,
+        "momentum": 0.9,
+        'criterion': 'CrossEntropyLoss'
     }
 
     default_controlflow = {
-        'name': 'train'
+        'name': 'train',
+        'avg_model': True,
+        'start_epoch': 0,
+        'num_epochs': 1,
     }
 
     default_dataset = {
@@ -67,7 +70,7 @@ def _init_context(args):
     }
 
     default_model = {
-        'name': 'testnet'
+        'name': 'testnet',
     }
 
     if config_file is not None:

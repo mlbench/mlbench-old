@@ -1,5 +1,5 @@
 import os
-
+import math
 import torch
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
@@ -7,6 +7,12 @@ import torchvision.transforms as transforms
 from mlbench.utils import log
 
 from .partition_data import DataPartitioner
+
+
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
 
 
 def maybe_download(name, datasets_path, split='train', transform=None,
@@ -49,7 +55,11 @@ def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_si
         dataset, batch_size=batch_size, shuffle=data_type_label,
         num_workers=num_workers, pin_memory=True, drop_last=False)
 
-    return data_loader, num_samples_per_device
+    return AttrDict({
+        'loader': data_loader,
+        'num_samples_per_device': num_samples_per_device,
+        'num_batches': math.ceil(1.0 * num_samples_per_device / batch_size)
+    })
 
 
 def create_dataset(name, root_folder, batch_size, num_workers, rank, world_size,

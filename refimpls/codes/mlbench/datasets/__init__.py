@@ -19,16 +19,16 @@ def get_dataset(context):
 
     dataset = context.dataset
     if dataset.train:
-        dataset.train_loader, dataset.num_train_samples_per_device = create_dataset(
+        dataset.train_ = create_dataset(
             dataset.name, dataset.root_folder, dataset.batch_size,
             dataset.num_workers, context.meta.rank, context.meta.world_size,
             dataset.reshuffle_per_epoch, dataset_type='train')
 
         if context.meta.debug:
-            display_one_batch(dataset.train_loader)
+            display_one_batch(dataset.train_.loader)
 
     if dataset.val:
-        dataset.val_loader, dataset.num_val_samples_per_device = create_dataset(
+        dataset.val_ = create_dataset(
             dataset.name, dataset.root_folder, dataset.batch_size,
             dataset.num_workers, context.meta.rank, context.meta.world_size,
             dataset.reshuffle_per_epoch, dataset_type='test')
