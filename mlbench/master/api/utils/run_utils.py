@@ -8,6 +8,12 @@ import os
 
 @django_rq.job('default', result_ttl=-1)
 def run_model_job(model_run):
+    """RQ Job to execute OpenMPI
+
+    Arguments:
+        model_run {models.ModelRun} -- the database entry this job is associated with
+    """
+
     from api.models import ModelRun
 
     try:
@@ -67,6 +73,7 @@ def run_model_job(model_run):
                              stdout=True, tty=False,
                              _preload_content=False)
 
+        #keep writing openmpi output to job metadata
         while resp.is_open():
             resp.update(timeout=1)
             if resp.peek_stdout():

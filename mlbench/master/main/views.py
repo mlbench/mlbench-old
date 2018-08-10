@@ -11,11 +11,13 @@ def index(request):
 
 
 def runs(request):
+    """List all runs page"""
     runs = ModelRun.objects.all()
     return render(request, 'main/runs.html', {'runs': runs})
 
 
 def run(request, run_id):
+    """Details of single run page"""
     run = ModelRun.objects.get(pk=run_id)
 
     redis_conn = django_rq.get_connection()

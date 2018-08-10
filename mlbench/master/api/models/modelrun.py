@@ -28,6 +28,12 @@ class ModelRun(models.Model):
     job_metadata = {}
 
     def start(self):
+        """Saves the model run and starts the RQ job
+
+        Raises:
+            ValueError -- Raised if state is not initialized
+        """
+
         if self.job_id != "" or self.state != self.INITIALIZED:
             raise ValueError("Wrong State")
         self.save()
@@ -37,6 +43,7 @@ class ModelRun(models.Model):
 
 @receiver(pre_delete, sender=ModelRun, dispatch_uid='run_delete_job')
 def remove_run_job(sender, instance, using, **kwargs):
+    """Signal to delete job when ModelRun is deleted"""
     redis_conn = django_rq.get_connection()
     job = Job.fetch(instance.job_id, redis_conn)
     job.delete()
