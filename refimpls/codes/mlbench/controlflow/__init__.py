@@ -1,13 +1,10 @@
 from mlbench.utils import log
-from .base import Train
+from mlbench.controlflow.base import TrainValidation
 
 
 def get_controlflow(context):
-    log.centering("GET CONTROLFLOW")
-    context.log('controlflow')
-
     if context.controlflow.name == 'train':
-        cf = Train()
+        cf = TrainValidation()
     else:
         raise NotImplementedError
 

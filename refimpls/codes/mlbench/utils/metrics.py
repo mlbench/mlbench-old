@@ -17,7 +17,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-class Accuracy(object):
+class TopKAccuracy(object):
     def __init__(self, topk=(1,)):
         self.topk = topk
 

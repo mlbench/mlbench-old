@@ -1,10 +1,15 @@
 import os
 import logging
 import torch
+import random
+import shutil
+import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 
 from mlbench.utils.topology import FCGraph
 from mlbench.utils import log
+from mlbench.utils import checkpoint
+
 logger = logging.getLogger('mlbench')
 
 
@@ -15,12 +20,13 @@ class AttrDict(dict):
 
 
 class Context(object):
-    def __init__(self, optimizer, dataset, model, controlflow, meta):
+    def __init__(self, optimizer, dataset, model, controlflow, meta, runtime):
         self.optimizer = optimizer
         self.dataset = dataset
         self.model = model
         self.controlflow = controlflow
         self.meta = meta
+        self.runtime = runtime
 
     def log(self, context_type='dataset'):
         obj = eval("self.{}".format(context_type))
@@ -35,16 +41,18 @@ def _init_context(args):
     meta = {
         'logging_level': eval('logging.' + args.logging_level.upper()),
         'logging_file': 'mlbench.log',
-        'checkpoint_root': 'checkpoint',
-        'checkpoint_overwrite': True,
-        'config_id': 'default',
+        'checkpoint_root': '/checkpoint',
+        # For debug mode, overwrite checkpoint
         'use_cuda': False,
         'backend': 'mpi',
         'manual_seed': 42,
         'mode': 'develop',
         'debug': args.debug,
         'topk': (1, 5),
-        'metrics': 'accuracy'
+        'metrics': 'accuracy',
+        'run_id': args.run_id,
+        'resume': args.resume,
+        'save': True
     }
 
     default_optimizer = {
@@ -75,6 +83,12 @@ def _init_context(args):
         'name': 'testnet',
     }
 
+    default_runtime = {
+        'current_epoch': 0,
+        'best_prec1': -1,
+        'best_epoch': [],
+    }
+
     if config_file is not None:
         with open(config_file, 'r') as f:
             config = json.load(f)
@@ -85,7 +99,7 @@ def _init_context(args):
         default_model.update(config.get('model', {}))
 
     return Context(AttrDict(default_optimizer), AttrDict(default_dataset), AttrDict(default_model),
-                   AttrDict(default_controlflow), AttrDict(meta))
+                   AttrDict(default_controlflow), AttrDict(meta), AttrDict(default_runtime))
 
 
 def config_logging(context):
@@ -117,7 +131,15 @@ def config_logging(context):
 
 def config_pytorch(meta):
     # Set manual seed for both cpu and cuda
-    torch.manual_seed(meta.manual_seed)
+    if meta.manual_seed is not None:
+        random.seed(meta.manual_seed)
+        torch.manual_seed(meta.manual_seed)
+        cudnn.deterministic = True
+        log.warning('You have chosen to seed training. '
+                    'This will turn on the CUDNN deterministic setting, '
+                    'which can slow down your training considerably! '
+                    'You may see unexpected behavior when restarting '
+                    'from checkpoints.', 0)
 
     # define the graph for the computation.
     if meta.use_cuda:
@@ -134,27 +156,24 @@ def config_pytorch(meta):
     if meta.use_cuda:
         torch.backends.cudnn.enabled = True
         torch.backends.cudnn.benchmark = True
-    log.todo("TODO: Add graph into meta and determine device.")
 
-    # local conf.
+    log.todo("TODO: Add graph into meta and determine device.", 0)
+
     # set_local_stat(args)
-    log.todo("TODO: Add set_local_stat.")
+    log.todo("TODO: Add set_local_stat.", 0)
 
 
 def config_path(context):
     """Config the path used during the experiments."""
 
     # Checkpoint for the current run
-    context.meta.checkpoint_run_root = os.path.join(
-        context.meta.checkpoint_root, context.dataset.name,
-        context.model.name, context.meta.config_id)
+    context.meta.ckpt_run_dir = checkpoint.get_ckpt_run_dir(
+        context.meta.checkpoint_root, context.meta.run_id,
+        context.dataset.name, context.model.name, context.optimizer.name)
 
-    context.meta.checkpoint_run_rank = os.path.join(
-        context.meta.checkpoint_run_root, str(context.meta.graph.rank))
-
-    os.makedirs(context.meta.checkpoint_run_rank, exist_ok=context.meta.checkpoint_overwrite)
-
-    # maybe create directories for logging file in the future.
+    if not context.meta.resume:
+        shutil.rmtree(context.meta.ckpt_run_dir, ignore_errors=True)
+    os.makedirs(context.meta.ckpt_run_dir, exist_ok=True)
 
 
 def init_context(args):

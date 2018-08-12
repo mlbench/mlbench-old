@@ -3,10 +3,11 @@ import torch
 import torch.distributed as dist
 
 from mlbench.utils import log
+from mlbench.utils import checkpoint
 from mlbench.utils.metrics import AverageMeter
 
 
-def average_model_weights(model, world_size):
+def aggregate_gradients(model, world_size):
     # all_reduce the gradients.
     for ind, param in enumerate(model.parameters()):
         # all reduce.
@@ -14,28 +15,24 @@ def average_model_weights(model, world_size):
         param.grad.data /= world_size
 
 
-def train_epoch(data_loader, model, optimizer, criterion, use_cuda, avg_model,
-                world_size, debug):
-    log.warning("Check how the gradient step will influence the backprop.", 0)
-
+def train_epoch(model, optimizer, criterion, context):
     # switch to train mode
     model.train()
-    for batch_idx, (data, target) in enumerate(data_loader):
-        if use_cuda:
+
+    for batch_idx, (data, target) in enumerate(context.dataset.train_.loader):
+        if context.meta.use_cuda:
             data, target = data.cuda(), target.cuda()
 
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
         loss.backward()
-        average_model_weights(model, world_size)
+        aggregate_gradients(model, context.meta.world_size)
         optimizer.step()
 
-        log.debug("Training Batch {}: loss={:.3f}".format(batch_idx, loss.item()))
-        if debug and batch_idx >= 10:
+        log.debug("Training Batch {:5}: loss={:.3f}".format(batch_idx, loss.item()))
+        if context.meta.debug and batch_idx >= 10:
             break
-
-        # TODO: fine grained logging.
 
 
 def aggregate_accuracy(top1, top5):
@@ -48,56 +45,81 @@ def aggregate_accuracy(top1, top5):
     return top1_avg, top5_avg
 
 
-def validate(data_loader, model, optimizer, criterion, metrics, use_cuda, world_size, debug):
+def validate(model, optimizer, criterion, metrics, context):
     model.eval()
 
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
-    for batch_idx, (data, target) in enumerate(data_loader):
-        if use_cuda:
+    for batch_idx, (data, target) in enumerate(context.dataset.val_.loader):
+        if context.meta.use_cuda:
             data, target = data.cuda(), target.cuda()
 
         with torch.no_grad():
             output = model(data)
+
             loss = criterion(output, target)
+            losses.update(loss.item(), data.size(0))
+
             prec1, prec5 = metrics(output, target)
 
-            log.debug("Validation Batch {}: Prec@1={:.3f} Prec@5={:.3f}"
-                      .format(batch_idx, prec1.item(), prec5.item()))
+            log.debug("Validate Batch {:5}: Prec@1={:.3f} Prec@5={:.3f}"
+                      .format(batch_idx, prec1.item(), prec5.item()), 0)
 
-            losses.update(loss.item(), data.size(0))
             top1.update(prec1[0], data.size(0))
             top5.update(prec5[0], data.size(0))
 
-        if debug and batch_idx >= 10:
+        if context.meta.debug and batch_idx >= 10:
             break
 
     top1_avg, top5_avg = aggregate_accuracy(top1, top5)
+    log.info('Prec@1: {:.3f} Prec@5: {:.3f}'.format(top1_avg, top5_avg), 0)
     return top1_avg, top5_avg
 
 
-class TrainValidation(object):
-    def __call__(self, model, optimizer, criterion, metrics, data_loader, num_epochs, num_batches, batch_size,
-                 start_epoch, use_cuda, avg_model, world_size, debug):
-        log.centering("Begin training.", 0)
+def do_validate(model, optimizer, criterion, metrics, context):
+    """Evaluate the model on the test dataset and save to the checkpoint."""
+    # evaluate the model.
+    val_prec1, val_prec5 = validate(model, optimizer, criterion, metrics, context)
 
+    # remember best prec@1 and save checkpoint.
+    if hasattr(context.runtime, 'best_prec1'):
+        is_best = val_prec1 > context.runtime.best_prec1
+    else:
+        is_best = True
+
+    if is_best:
+        context.runtime.best_prec1 = val_prec1
+        context.runtime.best_epoch += [context.runtime.current_epoch]
+
+    log.info('best accuracy for rank {}:(best epoch {}, current epoch {}): {:.3f} %'.format(
+        context.meta.rank,
+        context.runtime.best_epoch[-1] if len(context.runtime.best_epoch) != 0 else '',
+        context.runtime.current_epoch, context.runtime.best_prec1), 0)
+
+    if context.meta.save:
+        checkpoint.save({
+            'context': context,
+            'current_epoch': context.runtime.current_epoch,
+            'state_dict': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'best_prec1': context.runtime.best_prec1,
+        }, is_best, context)
+
+
+class TrainValidation(object):
+    def __call__(self, model, optimizer, criterion, metrics, context):
         # define some parameters for training.
         log.info('There are {} epochs, {} mini-batches per epoch (batch size:{}).'
-                 .format(num_epochs, num_batches, batch_size), 0)
-
-        log.todo("TODO: the inference we used here implicitly assumes classification problem.", 0)
-
+                 .format(context.controlflow.num_epochs,
+                         context.dataset.train_.num_batches,
+                         context.dataset.batch_size), 0)
         dist.barrier()
 
         # train the model and evaluate the model per args.eval_freq
-        log.todo("TODO: Save the current epoch id to context.", 0)
-        for epoch in range(start_epoch, num_epochs + 1):
-            log.debug("Begin epoch {}".format(epoch), 0)
-            train_epoch(data_loader, model, optimizer, criterion, use_cuda, avg_model, world_size, debug)
-
-            top1_avg, top5_avg = validate(data_loader, model, optimizer, criterion,
-                                          metrics, use_cuda, world_size, debug)
-            log.info('Prec@1: {:.3f} Prec@5: {:.3f}'.format(top1_avg, top5_avg), 0)
-
-        log.centering("End training.", 0)
+        for epoch in range(context.controlflow.start_epoch,
+                           context.controlflow.num_epochs):
+            log.info("Current epoch : {}".format(epoch), 0)
+            context.runtime.current_epoch = epoch
+            train_epoch(model, optimizer, criterion, context)
+            do_validate(model, optimizer, criterion, metrics, context)

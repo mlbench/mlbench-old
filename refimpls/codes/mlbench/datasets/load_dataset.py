@@ -37,9 +37,10 @@ def maybe_download(name, datasets_path, split='train', transform=None,
 
 
 def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_size,
-                      reshuffle_per_epoch, dataset_type='train'):
+                      reshuffle_per_epoch, debug, dataset_type='train'):
     """ Given a dataset, partition it. """
     dataset = maybe_download(name, root_folder, split=dataset_type)
+
     data_type_label = (dataset_type == 'train')
 
     partition_sizes = [1.0 / world_size for _ in range(world_size)]
@@ -47,23 +48,19 @@ def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_si
     data_to_load = partition.use(rank)
 
     num_samples_per_device = len(data_to_load)
-    log.info('There are {} samples for {}, \
-        load {} data for process (rank {}), and partition it'.format(
-        len(dataset), dataset_type, num_samples_per_device, rank))
+    # log.info('There are {} samples for {}, load {} data for process (rank {}), and partition it'.format(
+    #     len(dataset), dataset_type, num_samples_per_device, rank))
 
     data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=data_type_label,
+        data_to_load, batch_size=batch_size, shuffle=data_type_label,
         num_workers=num_workers, pin_memory=True, drop_last=False)
 
-    return AttrDict({
-        'loader': data_loader,
-        'num_samples_per_device': num_samples_per_device,
-        'num_batches': math.ceil(1.0 * num_samples_per_device / batch_size)
-    })
+    return AttrDict({'loader': data_loader,
+                     'num_samples_per_device': num_samples_per_device,
+                     'num_batches': math.ceil(1.0 * num_samples_per_device / batch_size)})
 
 
 def create_dataset(name, root_folder, batch_size, num_workers, rank, world_size,
-                   reshuffle_per_epoch, dataset_type='train'):
-    log.debug('create {} dataset ({}) for rank {}'.format(name, dataset_type, rank))
+                   reshuffle_per_epoch, debug, dataset_type='train'):
     return partition_dataset(name, root_folder, batch_size, num_workers, rank, world_size,
-                             reshuffle_per_epoch, dataset_type=dataset_type)
+                             reshuffle_per_epoch, debug, dataset_type=dataset_type)

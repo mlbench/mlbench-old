@@ -42,3 +42,21 @@ def critical(content, who='all'):
 def todo(content, who='all'):
     if who == 'all' or who == dist.get_rank():
         logger.warning("\033[0;33m{}\033[0m".format(content))
+
+
+def configuration_information(context):
+    centering("Configuration Information", 0)
+
+    centering('Opimizer', 0, symbol='=', length=40)
+    context.log('optimizer')
+
+    centering('Model', 0, symbol='=', length=40)
+    context.log('model')
+
+    centering('Dataset', 0, symbol='=', length=40)
+    context.log('dataset')
+
+    centering('Controlflow', 0, symbol='=', length=40)
+    context.log('controlflow')
+
+    centering("START TRAINING", 0)
