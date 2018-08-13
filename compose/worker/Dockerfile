@@ -13,3 +13,5 @@ ADD ./refimpls/codes /codes
 
 RUN mkdir /configs
 ADD ./refimpls/configs /configs
+
+ENV PYTHONPATH /codes

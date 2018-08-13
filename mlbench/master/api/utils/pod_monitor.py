@@ -59,7 +59,7 @@ def check_pod_status():
     config.load_incluster_config()
     v1 = client.CoreV1Api()
 
-    pods = pods = KubePod.objects.all()
+    pods = KubePod.objects.all()
 
     for pod in pods:
         ret = v1.read_namespaced_pod(pod.name, ns)

@@ -50,7 +50,7 @@ class KubeMetricsView(ViewSet):
             ] for g in groupby(
                 sorted(pod.metrics.all(), key=lambda m: m.name),
                 key=lambda m: m.name)
-            } for pod in KubePod.objects.all()}
+        } for pod in KubePod.objects.all()}
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -83,7 +83,7 @@ class KubeMetricsView(ViewSet):
             ] for g in groupby(
                 sorted(pod.metrics.all(), key=lambda m: m.name),
                 key=lambda m: m.name)
-            }
+        }
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -160,8 +160,7 @@ class MPIJobView(ViewSet):
             '/.openmpi/bin/mpirun',
             "--mca", "btl_tcp_if_exclude", "docker0,lo",
             '--host', ",".join(hosts),
-            '/conda/bin/python', "/codes/run.py",
-            "--conf", "/configs/test-V0.0.1.json"
+            '/conda/bin/python', "/codes/main.py",
         ]
 
         result['command'] = str(exec_command)
