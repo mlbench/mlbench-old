@@ -8,6 +8,7 @@ Welcome to mlbench's documentation!
    readme
    installation
    usage
+   divisions
    overview
    dashboard
    api

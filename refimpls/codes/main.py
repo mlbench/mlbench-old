@@ -39,8 +39,6 @@ def main():
                         help='A json file specifying detailed information about the configuration.')
     args = parser.parse_args()
 
-    log.critical("{} {}".format(args.debug, type(args.debug)))
-
     # Initialize environements and load default settings to `context`
     context = config.init_context(args)
 

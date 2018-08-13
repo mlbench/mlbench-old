@@ -1,5 +1,5 @@
 from django.db import models
-from api.models import KubePod
+from api.models import KubePod, ModelRun
 
 
 class KubeMetric(models.Model):
@@ -12,4 +12,12 @@ class KubeMetric(models.Model):
         KubePod,
         related_name='metrics',
         blank=True,
+        null=True,
+        on_delete=models.CASCADE)
+
+    model_run = models.ForeignKey(
+        ModelRun,
+        related_name='metrics',
+        blank=True,
+        null=True,
         on_delete=models.CASCADE)
