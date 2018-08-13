@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 
 
-from mlbench.utils import log
+from utils import log
 
 
 def set_lr(context):

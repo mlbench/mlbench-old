@@ -198,7 +198,6 @@ class ModelRunView(ViewSet):
         redis_conn = django_rq.get_connection()
         job = Job.fetch(run.job_id, redis_conn)
         run.job_metadata = job.meta
-        run.job_metadata.stderr = "\n".join(run.job_metadata.stderr)
 
         serializer = ModelRunSerializer(run, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,6 +1,6 @@
 from .testnet import TestNet
 
-from mlbench.utils import log
+from utils import log
 
 
 def get_model(context):

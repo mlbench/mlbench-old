@@ -2,8 +2,9 @@ import os
 import torch
 import shutil
 import torch.distributed as dist
-from mlbench.utils import log
-from mlbench.utils import communication as comm
+
+from utils import log
+from utils import communication as comm
 
 
 def get_ckpt_run_dir(checkpoint_root, run_id, dataset_name, model_name, optimizer_name):

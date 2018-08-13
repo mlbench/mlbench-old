@@ -1,5 +1,5 @@
 import copy
-from mlbench.utils import log
+from utils import log
 
 from .load_dataset import create_dataset
 

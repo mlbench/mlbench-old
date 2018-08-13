@@ -6,9 +6,9 @@ import shutil
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 
-from mlbench.utils.topology import FCGraph
-from mlbench.utils import log
-from mlbench.utils import checkpoint
+from utils.topology import FCGraph
+from utils import log
+from utils import checkpoint
 
 logger = logging.getLogger('mlbench')
 

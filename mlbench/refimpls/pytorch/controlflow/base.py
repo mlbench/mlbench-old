@@ -2,9 +2,9 @@ import time
 import torch
 import torch.distributed as dist
 
-from mlbench.utils import log
-from mlbench.utils import checkpoint
-from mlbench.utils.metrics import AverageMeter
+from utils import log
+from utils import checkpoint
+from utils.metrics import AverageMeter
 
 
 def aggregate_gradients(model, world_size):

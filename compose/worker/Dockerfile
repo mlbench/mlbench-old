@@ -9,9 +9,6 @@ ADD ./mlbench/worker/ /app/
 
 # The reference implementation and user defined implementations are placed here.
 RUN mkdir /codes
-ADD ./refimpls/codes /codes
-
-RUN mkdir /configs
-ADD ./refimpls/configs /configs
+ADD ./mlbench/refimpls/pytorch /codes
 
 ENV PYTHONPATH /codes

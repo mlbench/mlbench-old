@@ -1,5 +1,5 @@
-from mlbench.utils import log
-from mlbench.controlflow.base import TrainValidation
+from utils import log
+from .base import TrainValidation
 
 
 def get_controlflow(context):

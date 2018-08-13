@@ -4,7 +4,7 @@ import torch
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
-from mlbench.utils import log
+from utils import log
 
 from .partition_data import DataPartitioner
 

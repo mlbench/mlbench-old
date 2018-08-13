@@ -2,11 +2,11 @@ import argparse
 import json
 import config
 
-from mlbench.optim import get_optimizer, get_criterion
-from mlbench.controlflow import get_controlflow
-from mlbench.models import get_model
-from mlbench.datasets import get_dataset
-from mlbench.utils import log, get_metrics, checkpoint
+from optim import get_optimizer, get_criterion
+from controlflow import get_controlflow
+from models import get_model
+from datasets import get_dataset
+from utils import log, get_metrics, checkpoint
 
 
 def str2bool(v):
@@ -20,7 +20,7 @@ def str2bool(v):
 
 def main():
     # Training settings
-    parser = argparse.ArgumentParser(description='mlbench.')
+    parser = argparse.ArgumentParser(description='Entrypoint to client (pytorch) side of mlbench.')
     parser.add_argument('--no-cuda', action='store_true', default=True,
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
