@@ -25,6 +25,9 @@ def run(request, run_id):
 
     run.job_metadata = job.meta
 
+    run.job_metadata['stdout'] = "\n".join(run.job_metadata['stdout'])
+    run.job_metadata['stderr'] = "\n".join(run.job_metadata['stderr'])
+
     return render(request,
                   'main/run_detail.html',
                   {'run': run})

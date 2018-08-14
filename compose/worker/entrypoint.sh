@@ -11,9 +11,11 @@ create_ssh_key() {
   mkdir -p /.sshd/user_keys/$user
   chmod 700 /.sshd/user_keys/$user
   chown $user:$user /.sshd/user_keys/$user
-  cp /ssh-key/root/* /.sshd/user_keys/$user/
-  chmod 600 /.sshd/user_keys/$user/*
-  chown $user:$user /.sshd/user_keys/$user/*
+  if ! [ -z "$(ls -A /ssh-key/root)" ]; then
+      cp /ssh-key/root/* /.sshd/user_keys/$user/
+      chmod 600 /.sshd/user_keys/$user/*
+      chown $user:$user /.sshd/user_keys/$user/*
+  fi
 }
 
 create_ssh_key $MY_NAME
@@ -97,5 +99,5 @@ EOT
 if [ ! -d "/var/run/sshd" ]; then
   mkdir -p /var/run/sshd
 fi
-EOT
+# EOT
 exec "$@"

@@ -48,7 +48,7 @@ class KubeMetricsView(ViewSet):
             ] for g in groupby(
                 sorted(pod.metrics.all(), key=lambda m: m.name),
                 key=lambda m: m.name)
-            } for pod in KubePod.objects.all()}
+        } for pod in KubePod.objects.all()}
 
         run_metrics = {run.name: {
             g[0]: [
@@ -57,7 +57,7 @@ class KubeMetricsView(ViewSet):
             ] for g in groupby(
                 sorted(run.metrics.all(), key=lambda m: m.name),
                 key=lambda m: m.name)
-            } for run in ModelRun.objects.all()}
+        } for run in ModelRun.objects.all()}
 
         return Response({
             'pod_metrics': pod_metrics,
@@ -93,7 +93,7 @@ class KubeMetricsView(ViewSet):
             ] for g in groupby(
                 sorted(pod.metrics.all(), key=lambda m: m.name),
                 key=lambda m: m.name)
-            }
+        }
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -200,7 +200,6 @@ class ModelRunView(ViewSet):
         run.job_metadata = job.meta
 
         serializer = ModelRunSerializer(run, many=False)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
@@ -250,7 +249,6 @@ class ModelRunView(ViewSet):
             run.delete()
 
         return Response({
-                'status': 'Deleted',
-                'message': 'The run was deleted'
-            }, status=status.HTTP_204_NO_CONTENT)
-
+            'status': 'Deleted',
+            'message': 'The run was deleted'
+        }, status=status.HTTP_204_NO_CONTENT)
