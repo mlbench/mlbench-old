@@ -9,12 +9,14 @@ and the open divisions, which allows users to run their own models and code whil
 Closed Division
 ---------------
 
-The Closed Division encompasses several subcategories to compare different dimensions of distributed machine learning.
+The Closed Division encompasses several subcategories to compare different dimensions of distributed machine learning algorithms. We provide precise reference implementations of each algorithm, including the precise communication patterns, such that they can be implemented strictly comparable between different hardware and software frameworks.
 
-The two basic metrics for comparison are `Accuracy after Time` and `Time to Accuracy`
+The two basic metrics for comparison are `Accuracy after Time` and `Time to Accuracy` (where accuracy will be test and/or training accuracy)
 
 Variable dimensions in this category include:
 
+- Algorithm
+  - limited number of prescribed standard algorithms, according to strict reference implementations provided
 - Hardware
   - GPU
   - CPU(s)
@@ -22,7 +24,7 @@ Variable dimensions in this category include:
 - Scalability
   - Number of workers
 - Network
-  -Bandwidth
+  - Impact of bandwidth and latency
 
 Accuracy after Time
 ~~~~~~~~~~~~~~~~~~~
@@ -39,8 +41,6 @@ The shorter the better
 
 Open Division
 -------------
-The Open Division allows you to implement your own algorithms and compare them to other implementations. There's little limit to what
-can be changed by you and as such, it is up to you to make sure that comparisons are fair.
+The Open Division allows you to implement your own algorithms and training tricks and compare them to other implementations. There's little limit to what can be changed by you and as such, it is up to you to make sure that comparisons are fair.
 
-In this division, mlbench merely provides a platform to easily perform and measure distributed machine learning experiments in a
-standardized way.
+In this division, mlbench merely provides a platform to easily perform and measure distributed machine learning experiments in a standardized way.
