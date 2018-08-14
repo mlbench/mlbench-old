@@ -1,4 +1,4 @@
-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04 as mlbench-worker-dev
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04 as mlbench-worker-base
 # TODO: reduce size and complexity of image.
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

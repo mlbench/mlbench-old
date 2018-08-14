@@ -1,12 +1,11 @@
 import argparse
 import torch
-import os
 import torch.distributed as dist
+import socket
 
 
 def get_hostname():
-    with open('/etc/hostname', 'r') as f:
-        return f.read().strip()
+    return socket.gethostname()
 
 
 def test_MPI():

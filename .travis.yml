@@ -32,7 +32,7 @@ jobs:
       before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
       script:
         - docker build -f compose/master/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_master:travis-ci-test .
-        - docker pull liehe/mlbench:mlbench-worker-dev && docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_worker:travis-ci-test .
+        - docker pull mlbench/mlbench_worker:mlbench-worker-base && docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_worker:travis-ci-test .
       after_success:
         - docker push ${docker_url}/${docker_repository}//mlbench_master:travis-ci-test
         - docker push ${docker_url}/${docker_repository}//mlbench_worker:travis-ci-test
@@ -40,12 +40,11 @@ jobs:
       language: bash
       sudo: required
       env:
-        - CNI_PLUGIN=flannel
+        - CNI_PLUGIN=weave
 
       before_install:
         # install kubeadm-dind
         - curl https://raw.githubusercontent.com/kubernetes-sigs/kubeadm-dind-cluster/master/fixed/dind-cluster-v1.11.sh > dind-cluster.sh
-        - patch dind-cluster.sh dind-flannel.patch
         - chmod 700 dind-cluster.sh
         - ./dind-cluster.sh up
         # install kubectl
