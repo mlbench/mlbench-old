@@ -43,6 +43,8 @@ About us: See `Authors`_
 
 Mailing list: https://groups.google.com/d/forum/mlbench
 
+Contact Email: mlbench-contact@googlegroups.com
+
 Credits
 -------
 
