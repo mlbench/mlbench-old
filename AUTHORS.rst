@@ -5,10 +5,14 @@ Credits
 Core Contributors
 ----------------
 
-* Ralf Grubenmann <ralf.grubenmann@epfl.ch>
-* Lie He <lie.he@epfl.ch>
-* Tao Lin <itamtao@gmail.com>
-* Martin Jaggi <martin.jaggi@epfl.ch>
+* `Lie He
+   <https://github.com/LiamHe>`_
+* `Martin Jaggi
+   <https://github.com/martinjaggi>`_
+* `Ralf Grubenmann
+   <https://github.com/Panaetius>`_
+* `Tao Lin
+   <https://github.com/IamTao>`_
 
 Contributors
 ------------
