@@ -39,21 +39,19 @@ def run_model_job(model_run):
         hosts = []
         for i in ret.items:
             pods.append((i.status.pod_ip,
-                        i.metadata.namespace,
-                        i.metadata.name,
-                        str(i.metadata.labels)))
+                         i.metadata.namespace,
+                         i.metadata.name,
+                         str(i.metadata.labels)))
             hosts.append("{}.{}".format(i.metadata.name, release_name))
 
         job.meta['pods'] = pods
         job.save()
 
         exec_command = [
-            'sh',
-            '/usr/bin/mpirun',
-            '--host',
-            ",".join(hosts),
-            '/usr/local/bin/python',
-            '/app/main.py',
+            '/.openmpi/bin/mpirun',
+            "--mca", "btl_tcp_if_exclude", "docker0,lo",
+            '--host', ",".join(hosts),
+            '/conda/bin/python', "/codes/main.py",
             '--run_id',
             model_run.id]
         job.meta['command'] = str(exec_command)
@@ -73,7 +71,7 @@ def run_model_job(model_run):
                              stdout=True, tty=False,
                              _preload_content=False)
 
-        #keep writing openmpi output to job metadata
+        # keep writing openmpi output to job metadata
         while resp.is_open():
             resp.update(timeout=1)
             if resp.peek_stdout():

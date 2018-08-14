@@ -33,16 +33,16 @@ spec:
               containerPort: 22
               hostPort: 22
               protocol: TCP
-          livenessProbe:
-            tcpSocket:
-              port: ssh
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            tcpSocket:
-              port: ssh
-            initialDelaySeconds: 15
-            periodSeconds: 20
+          # livenessProbe:
+          #   tcpSocket:
+          #     port: ssh
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
+          # readinessProbe:
+          #   tcpSocket:
+          #     port: ssh
+          #   initialDelaySeconds: 15
+          #   periodSeconds: 20
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           volumeMounts:
