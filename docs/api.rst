@@ -207,17 +207,62 @@ Metrics
                             header of request
    :statuscode 201: no error
 
-MPI Jobs
---------
-.. http:post:: /api/mpi_jobs/
+Runs
+----
+.. http:get:: /api/runs/
 
-   Starts an MPI Job
+   Gets all active/failed/finished runs
 
    **Example request**:
 
    .. sourcecode:: http
 
-      POST /api/mpi_jobs HTTP/1.1
+      GET /api/runs/ HTTP/1.1
+      Host: example.com
+      Accept: application/json, text/javascript
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: text/javascript
+
+      [
+        {
+          "id": 1,
+          "name": "Name of the run",
+          "created_at": "2018-08-03T09:21:29.347960Z",
+          "state": "STARTED",
+          "job_id": "5ec9f286-e12d-41bc-886e-0174ef2bddae",
+          "job_metadata": {...}
+        },
+        {
+          "id": 2,
+          "name": "Another run",
+          "created_at": "2018-08-02T08:11:22.123456Z",
+          "state": "FINISHED",
+          "job_id": "add4de0f-9705-4618-93a1-00bbc8d9498e",
+          "job_metadata": {...}
+        },
+      ]
+
+   :reqheader Accept: the response content type depends on
+                      :mailheader:`Accept` header
+   :resheader Content-Type: this depends on :mailheader:`Accept`
+                            header of request
+   :statuscode 200: no error
+   
+.. http:get:: /api/runs/(int:run_id)/
+
+   Gets a run by id
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/runs/1/ HTTP/1.1
       Host: example.com
       Accept: application/json, text/javascript
 
@@ -230,13 +275,52 @@ MPI Jobs
       Content-Type: text/javascript
 
       {
-        "pods":[
-          ["10.244.2.58","default","worn-mouse-mlbench-worker-55bbdd4d8c-4mxh5","{'app': 'mlbench', 'component': 'worker', 'pod-template-hash': '1166880847', 'release': 'worn-mouse'}"],
-          ["10.244.3.57","default","worn-mouse-mlbench-worker-55bbdd4d8c-bwwsp","{'app': 'mlbench', 'component': 'worker', 'pod-template-hash': '1166880847', 'release': 'worn-mouse'}"]
-        ],
-        "command":"['sh', '/usr/bin/mpirun', '--host', '10.244.2.58,10.244.3.57', '/usr/local/bin/python', '/app/main.py']",
-        "master_name":"worn-mouse-mlbench-worker-55bbdd4d8c-4mxh5",
-        "response":"Warning: Permanently added '10.244.3.57' (RSA) to the list of known hosts.\r\nFinished\nFinished\n"
+        "id": 1,
+        "name": "Name of the run",
+        "created_at": "2018-08-03T09:21:29.347960Z",
+        "state": "STARTED",
+        "job_id": "5ec9f286-e12d-41bc-886e-0174ef2bddae",
+        "job_metadata": {...}
+      }
+
+   :run_id The id of the run
+
+   :reqheader Accept: the response content type depends on
+                      :mailheader:`Accept` header
+   :resheader Content-Type: this depends on :mailheader:`Accept`
+                            header of request
+   :statuscode 200: no error
+
+.. http:post:: /api/runs/
+
+   Starts a new Run
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/runs/ HTTP/1.1
+      Host: example.com
+      Accept: application/json, text/javascript
+      {
+        "name": "Name of the run"
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: text/javascript
+
+      {
+        "id": 1,
+        "name": "Name of the run",
+        "created_at": "2018-08-03T09:21:29.347960Z",
+        "state": "STARTED",
+        "job_id": "5ec9f286-e12d-41bc-886e-0174ef2bddae",
+        "job_metadata": {...}
       }
 
    :reqheader Accept: the response content type depends on
@@ -244,3 +328,5 @@ MPI Jobs
    :resheader Content-Type: this depends on :mailheader:`Accept`
                             header of request
    :statuscode 200: no error
+   :statuscode 409: a run is already active
+                
