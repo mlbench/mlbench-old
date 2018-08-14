@@ -37,6 +37,8 @@ def main():
                         help='Restore the experiment specified by run_id.')
     parser.add_argument('--config-file', type=str, default=None, metavar='N',
                         help='A json file specifying detailed information about the configuration.')
+    parser.add_argument('--experiment', type=str, default=None, metavar='N',
+                        help='The name of the experiment to run (added for compatibility.')
     args = parser.parse_args()
 
     # Initialize environements and load default settings to `context`

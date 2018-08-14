@@ -7,7 +7,7 @@ import os
 
 
 @django_rq.job('default', result_ttl=-1)
-def run_model_job(model_run):
+def run_model_job(model_run, experiment="test_MPI"):
     """RQ Job to execute OpenMPI
 
     Arguments:
@@ -52,6 +52,7 @@ def run_model_job(model_run):
             "--mca", "btl_tcp_if_exclude", "docker0,lo",
             '--host', ",".join(hosts),
             '/conda/bin/python', "/codes/main.py",
+            '--experiment', experiment,
             '--run_id',
             model_run.id]
         job.meta['command'] = str(exec_command)
