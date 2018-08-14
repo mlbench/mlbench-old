@@ -20,6 +20,9 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
+** mlbench (please complete the following information):**
+ - Version [e.g. 0.1.0]
+
 **Kubernetes (please complete the following information):**
  - Version [e.g. 1.11]
  - Other relevant information
