@@ -19,7 +19,7 @@
 <script id="card-template" type="text/x-jsrender">
     <div class="card w-25 node-card" style="max-width:40rem" id="card-<%>name%>">
         <h4 class="card-header <%if phase === 'Running'%>bg-success<%else phase === 'Pending'%>bg-warning<%else%>bg-danger<%/if%>">
-            <span data-feather="server"></span><%>name%>
+            <span data-feather="server"></span><a href="/worker/<%>name%>/"><%>name%></a>
         </h4>
         <div class="card-body list-group">
             <!--<div class="d-flex w-100 justify-content-between">

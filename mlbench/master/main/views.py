@@ -2,12 +2,19 @@ from django.shortcuts import render
 import django_rq
 from rq.job import Job
 
-from api.models import ModelRun
+from api.models import ModelRun, KubePod
 
 
 # Create your views here.
 def index(request):
     return render(request, 'main/index.html')
+
+
+def worker(request, pod_name):
+    worker = KubePod.objects.get(name=pod_name)
+    metrics = worker.metrics.values('name').distinct()
+    return render(request, 'main/worker_detail.html',
+                  {'worker': worker, 'metrics': metrics})
 
 
 def runs(request):

@@ -43,7 +43,7 @@ class KubeMetricsView(ViewSet):
 
         pod_metrics = {pod.name: {
             g[0]: [
-                {'date': e.date, 'value': e.value}
+                {'date': e.date, 'value': e.value, 'cumulative': e.cumulative}
                 for e in sorted(g[1], key=lambda x: x.date)
             ] for g in groupby(
                 sorted(pod.metrics.all(), key=lambda m: m.name),
@@ -87,7 +87,7 @@ class KubeMetricsView(ViewSet):
 
         result = {
             g[0]: [
-                {'date': e.date, 'value': e.value}
+                {'date': e.date, 'value': e.value, 'cumulative': e.cumulative}
                 for e in sorted(g[1], key=lambda x: x.date)
                 if since is None or e.date > since
             ] for g in groupby(
@@ -125,6 +125,7 @@ class KubeMetricsView(ViewSet):
                 date=d['date'],
                 value=d['value'],
                 metadata=d['metadata'],
+                cumulative=d['cumulative'],
                 pod=pod)
             metric.save()
 
@@ -142,6 +143,7 @@ class KubeMetricsView(ViewSet):
                 date=d['date'],
                 value=d['value'],
                 metadata=d['metadata'],
+                cumulative=d['cumulative'],
                 model_run=run)
             metric.save()
 
