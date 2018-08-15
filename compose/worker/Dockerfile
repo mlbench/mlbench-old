@@ -12,3 +12,5 @@ RUN mkdir /codes
 ADD ./mlbench/refimpls/pytorch /codes
 
 ENV PYTHONPATH /codes
+
+RUN pip install kubernetes
