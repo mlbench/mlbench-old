@@ -1,37 +1,53 @@
 {% extends 'main/base.html' %}
 
 {% block content %}
-<div class="row">
-    <div class="col-3">Name <button type="button" class="btn btn-outline-danger" id="delete-button"><span data-feather="x"></span></button>: </div>
-    <div class="col-9">{{ run.name }}</div>
-</div>
-<div class="row">
-    <div class="col-3">Created: </div>
-    <div class="col-9">{{ run.created_at }}</div>
-</div>
-<div class="row">
-    <div class="col-3">State: </div>
-    <div class="col-9" id="run-state">{{ run.state }}</div>
-</div>
-<div class="row">
-    <div class="col-3">Command: </div>
-    <div class="col-9">{{ run.job_metadata.command }}</div>
-</div>
-<div class="row">
-    <div class="col-3">Master-Worker: </div>
-    <div class="col-9">{{ run.job_metadata.master_name }}</div>
-</div>
-<div class="row">
-    <div class="col-3">Workers </div>
-    <div class="col-9">{{ run.job_metadata.pods }}</div>
-</div>
-<div class="row">
-    <div class="col-3">Stdout: </div>
-    <div class="col-9" id="run-stdout"><pre>{{ run.job_metadata.stdout }}</pre></div>
-</div>
-<div class="row">
-    <div class="col-3">Stderr: </div>
-    <div class="col-9" id="run-stderr"><pre>{{ run.job_metadata.stderr }}</pre></div>
+<div class="row d-flex flex-column h-100">
+    <div class="col-12 flex-grow-1 d-flex flex-column">
+        <div class="row">
+            <div class="col-3">Name <button type="button" class="btn btn-outline-danger" id="delete-button"><span data-feather="x"></span></button>: </div>
+            <div class="col-9">{{ run.name }}</div>
+        </div>
+        <div class="row">
+            <div class="col-3">Created: </div>
+            <div class="col-9">{{ run.created_at }}</div>
+        </div>
+        <div class="row">
+            <div class="col-3">State: </div>
+            <div class="col-9" id="run-state">{{ run.state }}</div>
+        </div>
+        <div class="row">
+            <div class="col-3">Command: </div>
+            <div class="col-9">{{ run.job_metadata.command }}</div>
+        </div>
+        <div class="row">
+            <div class="col-3">Master-Worker: </div>
+            <div class="col-9">{{ run.job_metadata.master_name }}</div>
+        </div>
+        <div class="row">
+            <div class="col-3">Workers </div>
+            <div class="col-9">{{ run.job_metadata.pods }}</div>
+        </div>
+        <div class="row flex-grow-1 d-flex flex-column">
+            <ul class="nav nav-tabs flex-grow-0" id="myTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="graph-tab" data-toggle="tab" href="#graph" role="tab" aria-controls="graph" aria-selected="true">Graphs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="stdout-tab" data-toggle="tab" href="#stdout" role="tab" aria-controls="stdout" aria-selected="false">Stdout</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="stderr-tab" data-toggle="tab" href="#stderr" role="tab" aria-controls="stderr" aria-selected="false">Stderr</a>
+                </li>
+            </ul>
+            <div class="tab-content flex-grow-1 d-flex flex-column" id="myTabContent">
+                <div class="tab-pane fade show active scrollbar flex-grow-1" id="graph" role="tabpanel" aria-labelledby="graph-tab">
+                    <svg class="d-flex w-100" style="height:50rem;" id="metric-svg"></svg>
+                </div>
+                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stdout" role="tabpanel" aria-labelledby="stdout-tab"><pre>{{ run.job_metadata.stdout }}</pre></div>
+                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stderr" role="tabpanel" aria-labelledby="stderr-tab"><pre>{{ run.job_metadata.stderr }}</pre></div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -52,8 +68,8 @@
             $.getJSON("/api/runs/{{ run.id }}/",
                 function(data){
                     $("#run-state").text(data['state']);
-                    $("#run-stdout").text(data['job_metadata']["stdout"].join("\n"));
-                    $("#run-stderr").text(data['job_metadata']["stderr"].join("\n"));
+                    $("#stdout pre").text(data['job_metadata']["stdout"].join("\n"));
+                    $("#stderr pre").text(data['job_metadata']["stderr"].join("\n"));
                     setTimeout(updateRunData, 1000)
                 });
         };
