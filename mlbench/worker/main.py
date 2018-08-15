@@ -2,6 +2,7 @@ import argparse
 import torch
 import torch.distributed as dist
 import socket
+import sys
 
 
 def get_hostname():
@@ -140,8 +141,13 @@ def test_synchronize_sgd():
 
 if __name__ == '__main__':
     import argparse
+
+    methods = {test_MPI, test_asynchronize_sgd, test_synchronize_sgd}
+    methods = {method.__name__: method for method in methods}
+
     parser = argparse.ArgumentParser(description="""Test functionalities.""")
-    parser.add_argument('experiment', type=str, help='')
+    parser.add_argument('experiment', type=str, help='', default="test_MPI",
+                        choices=list(methods.keys()))
     args = parser.parse_args()
 
-    eval(args.experiment + "()")
+    methods[args.experiment]()
