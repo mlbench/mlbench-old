@@ -1,4 +1,5 @@
 {% extends 'main/base.html' %}
+{% load static %}
 
 {% block content %}
 <div class="row d-flex flex-column h-100">
@@ -29,9 +30,11 @@
         </div>
         <div class="row flex-grow-1 d-flex flex-column">
             <ul class="nav nav-tabs flex-grow-0" id="myTab" role="tablist">
+                {% if metrics.count > 0 %}
                 <li class="nav-item">
                     <a class="nav-link active" id="graph-tab" data-toggle="tab" href="#graph" role="tab" aria-controls="graph" aria-selected="true">Graphs</a>
                 </li>
+                {% endif %}
                 <li class="nav-item">
                     <a class="nav-link" id="stdout-tab" data-toggle="tab" href="#stdout" role="tab" aria-controls="stdout" aria-selected="false">Stdout</a>
                 </li>
@@ -40,9 +43,21 @@
                 </li>
             </ul>
             <div class="tab-content flex-grow-1 d-flex flex-column" id="myTabContent">
-                <div class="tab-pane fade show active scrollbar flex-grow-1" id="graph" role="tabpanel" aria-labelledby="graph-tab">
+                {% if metrics.count > 0 %}
+                <div class="tab-pane fade show active flex-grow-1" style="height:0" id="graph" role="tabpanel" aria-labelledby="graph-tab">
+                    <div class="dropdown" id="metric-dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Metric
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            {% for metric in metrics %}
+                                <a class="dropdown-item {% if forloop.first %}active {% endif %}" href="#">{{metric.name}}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
                     <svg class="d-flex w-100" style="height:50rem;" id="metric-svg"></svg>
                 </div>
+                {% endif %}
                 <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stdout" role="tabpanel" aria-labelledby="stdout-tab"><pre>{{ run.job_metadata.stdout }}</pre></div>
                 <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stderr" role="tabpanel" aria-labelledby="stderr-tab"><pre>{{ run.job_metadata.stderr }}</pre></div>
             </div>
@@ -52,6 +67,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'js/podmonitor.js' %}"></script>
 <script type="text/javascript">
     $(document).ready(function(){
         $("#delete-button").click(function(){
@@ -75,6 +91,13 @@
         };
 
         updateRunData();
+
+        var monitor = PodMonitor('{{run.id}}', function(){return $("#metric-dropdown a.active").text()}, "#metric-svg", 'run');
+
+        $("#metric-dropdown a").click(function(){
+            $("#metric-dropdown a").removeClass("active");
+            $(this).addClass("active");
+        });
     });
 </script>
 {% endblock %}

@@ -56,7 +56,8 @@
 
             $.each(nodes, function(node, value){
                 $.getJSON("api/metrics/" + node + "/",
-                    {since: value['last_metrics_update'].toJSON()},
+                    {since: value['last_metrics_update'].toJSON(),
+                    metric_type:'pod'},
                     function(data){
                         if(!('node_metrics' in value)){
                             value['node_metrics'] = [];

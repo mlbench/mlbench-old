@@ -114,7 +114,7 @@ Metrics
                             header of request
    :statuscode 200: no error
 
-.. http:get:: /api/metrics/(str:pod_name)/
+.. http:get:: /api/metrics/(str:pod_name_or_run_id)/
 
    Get metrics (Cpu, Memory etc.) for all Worker Pods
 
@@ -157,7 +157,8 @@ Metrics
         ]
       }
 
-   :query since: only get metrics newer than this date, default 1970-01-01T00:00:00.000000Z
+   :query since: only get metrics newer than this date, (Default `1970-01-01T00:00:00.000000Z`)
+   :query metric_type: one of `pod` or `run` to determine what kind of metric to get (Default: `pod`)
 
    :reqheader Accept: the response content type depends on
                       :mailheader:`Accept` header
@@ -167,7 +168,7 @@ Metrics
 
 .. http:post:: /api/metrics
 
-   Save metrics
+   Save metrics. "pod_name" and "run_id" are mutually exclusive
 
    **Example request**:
 
@@ -179,6 +180,7 @@ Metrics
 
       {
         "pod_name": "quiet-mink-mlbench-worker-1",
+        "run_id": 2,
         "name": "accuracy",
         "date": "2018-08-03T09:21:44.331823Z",
         "value": "0.7845",
@@ -253,7 +255,7 @@ Runs
    :resheader Content-Type: this depends on :mailheader:`Accept`
                             header of request
    :statuscode 200: no error
-   
+
 .. http:get:: /api/runs/(int:run_id)/
 
    Gets a run by id
@@ -329,4 +331,4 @@ Runs
                             header of request
    :statuscode 200: no error
    :statuscode 409: a run is already active
-                
+

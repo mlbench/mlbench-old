@@ -1,8 +1,9 @@
 from django.shortcuts import render
+from django.utils import timezone
 import django_rq
 from rq.job import Job
 
-from api.models import ModelRun, KubePod
+from api.models import ModelRun, KubePod, KubeMetric
 
 
 # Create your views here.
@@ -31,6 +32,23 @@ def run(request, run_id):
     job = Job.fetch(run.job_id, redis_conn)
 
     run.job_metadata = job.meta
+
+    metric = KubeMetric(name="test",
+                        date=timezone.now(),
+                        value="0.0",
+                        metadata="",
+                        cumulative=False,
+                        model_run=run)
+
+    metric2 = KubeMetric(name="test",
+                         date=timezone.now() + timezone.timedelta(minutes=1),
+                         value="1.0",
+                         metadata="",
+                         cumulative=False,
+                         model_run=run)
+
+    metric.save()
+    metric2.save()
 
     metrics = run.metrics.order_by('name').values('name').distinct()
 

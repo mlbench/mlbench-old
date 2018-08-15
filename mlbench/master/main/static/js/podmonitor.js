@@ -1,11 +1,12 @@
-var PodMonitor = function(pod_name, metric_selector, target_element){
+var PodMonitor = function(parent_id, metric_selector, target_element, metric_type){
     this.node_data = {'last_metrics_update': new Date(0)};
     this.nodeRefreshInterval = 1 * 1000;
     this.metricsRefreshInterval = 20 * 1000;
     this.renderInterval = 1 * 1000;
-    this.pod_name = pod_name;
+    this.parent_id = parent_id;
     this.target_element = target_element;
     this.metric_selector = metric_selector;
+    this.metric_type = metric_type;
 
     // this.updateNodes = function(){
     //     var nodes = this.nodes;
@@ -22,11 +23,13 @@ var PodMonitor = function(pod_name, metric_selector, target_element){
     // }
 
     this.updateMetrics = function(){
-        var pod_name = this.pod_name;
+        var parent_id = this.parent_id;
         var value = this.node_data;
+        var metric_type = this.metric_type;
 
-        $.getJSON("/api/metrics/" + pod_name + "/",
-            {since: value['last_metrics_update'].toJSON()},
+        $.getJSON("/api/metrics/" + parent_id + "/",
+            {since: value['last_metrics_update'].toJSON(),
+            metric_type: metric_type},
             function(data){
                 if(!('node_metrics' in value)){
                     value['node_metrics'] = [];
@@ -55,9 +58,9 @@ var PodMonitor = function(pod_name, metric_selector, target_element){
         var cumulative = metrics['node_metrics'][value][0]['cumulative'];
 
         if(cumulative){
-            var transform = function(cur, prev){return 100 * 1000 * (cur - prev) / self.metricsRefreshInterval}
+            var transform = function(cur, prev){return 1000 * (cur - prev) / self.metricsRefreshInterval;};
         }else{
-            var transform = function(cur, prev){return cur / 1024 / 1024};
+            var transform = function(cur, prev){return cur;};
         }
 
         prev = metrics['node_metrics'][value][0]['value'];

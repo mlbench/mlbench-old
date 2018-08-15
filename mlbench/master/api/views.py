@@ -83,17 +83,28 @@ class KubeMetricsView(ViewSet):
             since = datetime.strptime(since, "%Y-%m-%dT%H:%M:%S.%fZ")
             since = pytz.utc.localize(since)
 
-        pod = KubePod.objects.filter(name=pk).first()
+        metric_type = self.request.query_params.get('metric_type', 'pod')
+
+        if metric_type == 'pod':
+            pod = KubePod.objects.filter(name=pk).first()
+            metrics = pod.metrics.all()
+        else:
+            run = ModelRun.objects.get(pk=pk)
+            metrics = run.metrics.all()
 
         result = {
-            g[0]: [
-                {'date': e.date, 'value': e.value, 'cumulative': e.cumulative}
-                for e in sorted(g[1], key=lambda x: x.date)
-                if since is None or e.date > since
-            ] for g in groupby(
-                sorted(pod.metrics.all(), key=lambda m: m.name),
-                key=lambda m: m.name)
-        }
+                g[0]: [
+                    {
+                        'date': e.date,
+                        'value': e.value,
+                        'cumulative': e.cumulative
+                    }
+                    for e in sorted(g[1], key=lambda x: x.date)
+                    if since is None or e.date > since
+                ] for g in groupby(
+                    sorted(metrics, key=lambda m: m.name),
+                    key=lambda m: m.name)
+            }
 
         return Response(result, status=status.HTTP_200_OK)
 
