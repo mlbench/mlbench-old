@@ -2,7 +2,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
 from api.models import KubePod, KubeMetric, ModelRun
-from api.serializers import KubePodSerializer, ModelRunSerializer
+from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
 import django_rq
 from rq.job import Job
 
@@ -128,6 +128,10 @@ class KubeMetricsView(ViewSet):
                 pod=pod)
             metric.save()
 
+            return Response(
+                metric, status=status.HTTP_201_CREATED
+            )
+
         elif 'run_id' in d:
             run = ModelRun.objects.get(pk=d['run_id'])
 
@@ -145,15 +149,18 @@ class KubeMetricsView(ViewSet):
                 model_run=run)
             metric.save()
 
+            serializer = KubeMetricsSerializer(metric, many=False)
+
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED
+            )
+
         else:
             return Response({
                 'status': 'Bad Request',
-                'message': 'Pod Name or run id have to be supplied'
+                'message': 'Pod Name or run id have to be supplied',
+                'data': d,
             }, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(
-            metric, status=status.HTTP_201_CREATED
-        )
 
 
 class ModelRunView(ViewSet):
