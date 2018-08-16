@@ -93,18 +93,18 @@ class KubeMetricsView(ViewSet):
             metrics = run.metrics.all()
 
         result = {
-                g[0]: [
-                    {
-                        'date': e.date,
-                        'value': e.value,
-                        'cumulative': e.cumulative
-                    }
-                    for e in sorted(g[1], key=lambda x: x.date)
-                    if since is None or e.date > since
-                ] for g in groupby(
-                    sorted(metrics, key=lambda m: m.name),
-                    key=lambda m: m.name)
-            }
+            g[0]: [
+                {
+                    'date': e.date,
+                    'value': e.value,
+                    'cumulative': e.cumulative
+                }
+                for e in sorted(g[1], key=lambda x: x.date)
+                if since is None or e.date > since
+            ] for g in groupby(
+                sorted(metrics, key=lambda m: m.name),
+                key=lambda m: m.name)
+        }
 
         return Response(result, status=status.HTTP_200_OK)
 

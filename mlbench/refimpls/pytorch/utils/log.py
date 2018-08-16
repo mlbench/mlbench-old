@@ -31,12 +31,12 @@ def debug(content, who='all'):
 
 def warning(content, who='all'):
     if who == 'all' or who == dist.get_rank():
-        logger.warning("\033[0;31m{}\033[0m".format(content))
+        logger.warning("{}".format(content))
 
 
 def critical(content, who='all'):
     if who == 'all' or who == dist.get_rank():
-        logger.critical("\033[0;104m{}\033[0m".format(content))
+        logger.critical("{}".format(content))
 
 
 def post_metrics(payload):
@@ -47,6 +47,7 @@ def post_metrics(payload):
         payload = {
             "run_id": "1",
             "name": "accuracy",
+            "cumulative": False,
             "date": "2018-08-14T09:21:44.331823Z",
             "value": "1.0",
             "metadata": "some additional data"
@@ -63,6 +64,7 @@ def post_metrics(payload):
     configuration = client.Configuration()
     api_instance = client.CoreV1Api(client.ApiClient(configuration))
 
+    # For the moment, the namespace and label_selectors are hard-coded.
     namespace = 'default'
     label_selector = 'component=master,app=mlbench'
     try:
@@ -75,12 +77,13 @@ def post_metrics(payload):
     ip = api_response.items[0].status.pod_ip
 
     response = requests.post("http://{ip}/api/metrics/".format(ip=ip), data=payload)
-    debug('Post metrics to master - OK={} '.format(response.ok))
+    if not response.ok:
+        warning('Post metrics to master - OK={} '.format(response.ok))
 
 
 def todo(content, who='all'):
     if who == 'all' or who == dist.get_rank():
-        logger.warning("\033[0;33m{}\033[0m".format(content))
+        logger.warning("{}".format(content))
 
 
 def configuration_information(context):

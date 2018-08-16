@@ -36,9 +36,10 @@ def train_epoch(model, optimizer, criterion, context):
         if context.meta.rank == 0:
             log.post_metrics({
                 "run_id": context.meta.run_id,
-                "name": "loss",
+                "name": "train loss @ rank{}".format(context.meta.rank),
                 "value": loss.item(),
                 "date": str(datetime.datetime.now()),
+                "cumulative": False,
                 "metadata":
                 "Training loss at rank {}, epoch {} and batch {}".format(
                     context.meta.rank, context.runtime.current_epoch,
@@ -123,9 +124,10 @@ def do_validate(model, optimizer, criterion, metrics, context):
     if context.meta.rank == 0:
         log.post_metrics({
             "run_id": context.meta.run_id,
-            "name": "prec1",
-            "value": "{}".format(val_prec1),
+            "name": "Prec@1",
+            "value": "{:.3f}".format(val_prec1),
             "date": str(datetime.datetime.now()),
+            "cumulative": False,
             "metadata":
             "Validation Prec1 at epoch {}".format(
                 context.runtime.current_epoch

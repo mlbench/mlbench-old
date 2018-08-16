@@ -168,7 +168,7 @@ Metrics
 
 .. http:post:: /api/metrics
 
-   Save metrics. "pod_name" and "run_id" are mutually exclusive
+   Save metrics. "pod_name" and "run_id" are mutually exclusive. The fields of metrics and their types are defined in `mlbench/api/models/kubemetrics.py`.
 
    **Example request**:
 
@@ -184,6 +184,7 @@ Metrics
         "name": "accuracy",
         "date": "2018-08-03T09:21:44.331823Z",
         "value": "0.7845",
+        "cumulative": False,
         "metadata": "some additional data"
       }
 
@@ -200,6 +201,7 @@ Metrics
         "name": "accuracy",
         "date": "2018-08-03T09:21:44.331823Z",
         "value": "0.7845",
+        "cumulative": False,
         "metadata": "some additional data"
       }
 
