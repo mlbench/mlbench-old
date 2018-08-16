@@ -1,6 +1,7 @@
 {% extends 'main/base.html' %}
 
 {% block content %}
+
 <div id="nodes-list" class="card-deck"></div>
 {% endblock %}
 {% block scripts %}
@@ -39,7 +40,7 @@
 
         this.updateNodes = function(){
             var nodes = this.nodes;
-            $.getJSON("api/pods", function(data){
+            $.getJSON("{% url 'api:pod-list' %}", function(data){
                 $.each(data, function(index, value){
                     if(!(value['name'] in nodes)){
                         nodes[value['name']] = {};
@@ -55,7 +56,7 @@
             var nodes = this.nodes;
 
             $.each(nodes, function(node, value){
-                $.getJSON("api/metrics/" + node + "/",
+                $.getJSON("{% url 'api:metrics-list' %}" + node + "/",
                     {since: value['last_metrics_update'].toJSON(),
                     metric_type:'pod'},
                     function(data){

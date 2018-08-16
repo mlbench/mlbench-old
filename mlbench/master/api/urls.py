@@ -3,6 +3,8 @@ from django.urls import path, include
 
 from api import views
 
+app_name = 'api'
+
 router = routers.DefaultRouter()
 
 router.register(r'pods', views.KubePodView, base_name='pod')
