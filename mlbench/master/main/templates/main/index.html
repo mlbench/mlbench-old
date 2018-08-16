@@ -1,25 +1,13 @@
 {% extends 'main/base.html' %}
 
 {% block content %}
-<style> /* set the CSS */
-
-    .line {
-        fill: none;
-        stroke: steelblue;
-        stroke-width: 2px;
-
-        stroke-linejoin: round;
-        stroke-linecap: round;
-    }
-
-</style>
 <div id="nodes-list" class="card-deck"></div>
 {% endblock %}
 {% block scripts %}
 <script id="card-template" type="text/x-jsrender">
     <div class="card w-25 node-card" style="max-width:40rem" id="card-<%>name%>">
         <h4 class="card-header <%if phase === 'Running'%>bg-success<%else phase === 'Pending'%>bg-warning<%else%>bg-danger<%/if%>">
-            <span data-feather="server"></span><%>name%>
+            <span data-feather="server"></span><a href="/worker/<%>name%>/"><%>name%></a>
         </h4>
         <div class="card-body list-group">
             <!--<div class="d-flex w-100 justify-content-between">
@@ -68,7 +56,8 @@
 
             $.each(nodes, function(node, value){
                 $.getJSON("api/metrics/" + node + "/",
-                    {since: value['last_metrics_update'].toJSON()},
+                    {since: value['last_metrics_update'].toJSON(),
+                    metric_type:'pod'},
                     function(data){
                         if(!('node_metrics' in value)){
                             value['node_metrics'] = [];

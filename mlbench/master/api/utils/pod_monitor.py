@@ -92,6 +92,31 @@ def check_pod_metrics():
     from api.models.kubemetric import KubeMetric
     from api.models.kubepod import KubePod
 
+    include_metrics = [
+        "container_fs_read_seconds_total",
+        "container_last_seen",
+        "container_fs_io_time_seconds_total",
+        "container_fs_writes_bytes_total",
+        "container_cpu_usage_seconds_total",
+        "container_cpu_user_seconds_total",
+        "container_fs_inodes_total",
+        "container_fs_writes_total",
+        "container_memory_working_set_bytes",
+        "container_spec_cpu_period",
+        "container_fs_reads_bytes_total",
+        "container_memory_failures_total",
+        "container_memory_rss",
+        "container_start_time_seconds",
+        "container_fs_reads_total",
+        "container_memory_max_usage_bytes",
+        "container_fs_limit_bytes",
+        "container_fs_usage_bytes",
+        "container_memory_usage_bytes",
+        "container_fs_write_seconds_total",
+        "container_spec_cpu_shares",
+        "container_cpu_system_seconds_total",
+        "container_memory_cache"]
+
     try:
         with PidFile('pod_metrics') as p:
             print(p.pidname)
@@ -114,8 +139,9 @@ def check_pod_metrics():
 
             for family in text_string_to_metric_families(metrics):
                 for sample in family.samples:
-                    if ('container_name' in sample[1]
-                            and sample[1]['container_name'] != "mlbench-worker"):
+                    if (('container_name' in sample[1]
+                            and sample[1]['container_name'] != "mlbench-worker")
+                            or sample[0] not in include_metrics):
                         continue
 
                     if ('pod_name' in sample[1]
@@ -125,6 +151,7 @@ def check_pod_metrics():
                             date=timezone.now(),
                             value=sample[2],
                             metadata=json.dumps(sample[1]),
+                            cumulative="total" in sample[0],
                             pod=pods[sample[1]['pod_name']]
                         )
                         metric.save()

@@ -1,13 +1,21 @@
 from django.shortcuts import render
+from django.utils import timezone
 import django_rq
 from rq.job import Job
 
-from api.models import ModelRun
+from api.models import ModelRun, KubePod, KubeMetric
 
 
 # Create your views here.
 def index(request):
     return render(request, 'main/index.html')
+
+
+def worker(request, pod_name):
+    worker = KubePod.objects.get(name=pod_name)
+    metrics = worker.metrics.order_by('name').values('name').distinct()
+    return render(request, 'main/worker_detail.html',
+                  {'worker': worker, 'metrics': metrics})
 
 
 def runs(request):
@@ -25,9 +33,25 @@ def run(request, run_id):
 
     run.job_metadata = job.meta
 
-    run.job_metadata['stdout'] = "\n".join(run.job_metadata['stdout'])
-    run.job_metadata['stderr'] = "\n".join(run.job_metadata['stderr'])
+    metric = KubeMetric(name="test",
+                        date=timezone.now(),
+                        value="0.0",
+                        metadata="",
+                        cumulative=False,
+                        model_run=run)
+
+    metric2 = KubeMetric(name="test",
+                         date=timezone.now() + timezone.timedelta(minutes=1),
+                         value="1.0",
+                         metadata="",
+                         cumulative=False,
+                         model_run=run)
+
+    metric.save()
+    metric2.save()
+
+    metrics = run.metrics.order_by('name').values('name').distinct()
 
     return render(request,
                   'main/run_detail.html',
-                  {'run': run})
+                  {'run': run, 'metrics': metrics})

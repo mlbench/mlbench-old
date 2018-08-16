@@ -34,4 +34,7 @@ echo "Running django migrations"
 /venv/bin/python code/manage.py flush --noinput
 /venv/bin/python code/manage.py loaddata scheduled_tasks
 
+echo "Add Django superuser"
+echo "from django.contrib.auth.models import User; User.objects.create_superuser('mlbench_admin', 'admin@example.com', 'mlbench_password')" | /venv/bin/python code/manage.py shell
+
 gosu postgres pg_ctl -D "$PGDATA" -m fast -w stop
