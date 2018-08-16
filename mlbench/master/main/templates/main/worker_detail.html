@@ -22,7 +22,7 @@
     $(document).ready(function () {
         $.views.settings.delimiters("<%", "%>");
 
-        var monitor = PodMonitor('{{worker.name}}', function(){return $("#metric-dropdown a.active").text()}, "#metric-svg", 'pod');
+        var monitor = PodMonitor('{{worker.name}}', function(){return $("#metric-dropdown a.active").text()}, "#metric-svg", 'pod', '{% url 'api:metrics-list' %}');
 
         $("#metric-dropdown a").click(function(){
             $("#metric-dropdown a").removeClass("active");
