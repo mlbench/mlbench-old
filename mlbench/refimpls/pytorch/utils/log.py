@@ -3,6 +3,9 @@ colors: https://stackoverflow.com/questions/5947742/how-to-change-the-output-col
 """
 import logging
 import torch.distributed as dist
+import json
+import time
+import subprocess
 
 logger = logging.getLogger('mlbench')
 
@@ -39,46 +42,81 @@ def critical(content, who='all'):
         logger.critical("{}".format(content))
 
 
-def post_metrics(payload):
-    """Post information via kubernetes client.
+class AsyncMetricsPost(object):
+    """Post metrics payload to endpoint in an asynchronized way."""
 
-    Example:
+    def __init__(self):
+        self._initialized = False
 
-        payload = {
-            "run_id": "1",
-            "name": "accuracy",
-            "cumulative": False,
-            "date": "2018-08-14T09:21:44.331823Z",
-            "value": "1.0",
-            "metadata": "some additional data"
-        }
+    def init(self):
+        from kubernetes import config, client
+        config.load_incluster_config()
+        configuration = client.Configuration()
 
-    See `KubeMetric` in kubemetric.py for the fields and types.
+        class MyApiClient(client.ApiClient):
+            """
+            A bug introduced by a fix.
 
-    """
-    from kubernetes import config, client
-    import requests
-    import json
+            https://github.com/kubernetes-client/python/issues/411
+            https://github.com/swagger-api/swagger-codegen/issues/6392
+            """
 
-    config.load_incluster_config()
-    configuration = client.Configuration()
-    api_instance = client.CoreV1Api(client.ApiClient(configuration))
+            def __del__(self):
+                pass
 
-    # For the moment, the namespace and label_selectors are hard-coded.
-    namespace = 'default'
-    label_selector = 'component=master,app=mlbench'
-    try:
-        api_response = api_instance.list_namespaced_pod(
-            namespace, label_selector=label_selector)
-    except ApiException as e:
-        print("Exception when calling CoreV1Api->list_namespaced_pod: %s\n" % e)
+        self.api_instance = client.CoreV1Api(MyApiClient(configuration))
 
-    assert len(api_response.items) == 1
-    ip = api_response.items[0].status.pod_ip
+        # TODO: remove hardcoded part in the future.
+        self.namespace = 'default'
+        label_selector = 'component=master,app=mlbench'
 
-    response = requests.post("http://{ip}/api/metrics/".format(ip=ip), data=payload)
-    if not response.ok:
-        warning('Post metrics to master - OK={} '.format(response.ok))
+        try:
+            api_response = self.api_instance.list_namespaced_pod(
+                self.namespace, label_selector=label_selector)
+        except Exception as e:
+            print("Exception when calling CoreV1Api->list_namespaced_pod: %s\n" % e)
+
+        assert len(api_response.items) == 1
+        master_pod = api_response.items[0]
+        ip = master_pod.status.pod_ip
+        self.endpoint = "http://{ip}/api/metrics/".format(ip=ip)
+        self._initialized = True
+
+    def post(self, payload):
+        """Post information via kubernetes client.
+
+        Example:
+
+            payload = {
+                "run_id": "1",
+                "name": "accuracy",
+                "cumulative": False,
+                "date": "2018-08-14T09:21:44.331823Z",
+                "value": "1.0",
+                "metadata": "some additional data"
+            }
+
+        See `KubeMetric` in kubemetric.py for the fields and types.
+
+        """
+        if not self._initialized:
+            self.init()
+
+        command = [
+            "/usr/bin/curl",
+            "-d", json.dumps(payload),
+            "-H", "Content-Type: application/json",
+            "-X", "POST", self.endpoint
+        ]
+        subprocess.Popen(command)
+
+
+async_post = AsyncMetricsPost()
+
+
+def post_metrics(payload, rank):
+    if rank == 0:
+        async_post.post(payload)
 
 
 def todo(content, who='all'):
