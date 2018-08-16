@@ -86,6 +86,9 @@ EXPOSE 80
 
 ADD ./mlbench/master/ /app/code/
 
+RUN rm /app/code/master/settings.py \
+    && mv /app/code/master/settings_production.py /app/code/master/settings.py
+
 #Setup django
 RUN /venv/bin/python code/manage.py collectstatic
 RUN sh /setup-postgres.sh

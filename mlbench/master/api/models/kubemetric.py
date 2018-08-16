@@ -7,6 +7,7 @@ class KubeMetric(models.Model):
     date = models.DateTimeField()
     value = models.CharField(max_length=100)
     metadata = models.TextField()
+    cumulative = models.BooleanField(default=False)
 
     pod = models.ForeignKey(
         KubePod,
