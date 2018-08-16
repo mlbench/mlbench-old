@@ -1,4 +1,4 @@
-var PodMonitor = function(parent_id, metric_selector, target_element, metric_type){
+var PodMonitor = function(parent_id, metric_selector, target_element, metric_type, api_url){
     this.node_data = {'last_metrics_update': new Date(0)};
     this.nodeRefreshInterval = 1 * 1000;
     this.metricsRefreshInterval = 20 * 1000;
@@ -7,27 +7,15 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
     this.target_element = target_element;
     this.metric_selector = metric_selector;
     this.metric_type = metric_type;
-
-    // this.updateNodes = function(){
-    //     var nodes = this.nodes;
-    //     $.getJSON("/api/pods", function(data){
-    //         $.each(data, function(index, value){
-    //             if(!(value['name'] in nodes)){
-    //                 nodes[value['name']] = {};
-    //                 nodes[value['name']]['last_metrics_update'] = new Date(0);
-    //             }
-
-    //             nodes[value['name']]['node_info'] = value;
-    //         });
-    //     });
-    // }
+    this.api_url = api_url;
 
     this.updateMetrics = function(){
         var parent_id = this.parent_id;
         var value = this.node_data;
         var metric_type = this.metric_type;
+        var api_url = this.api_url;
 
-        $.getJSON("/api/metrics/" + parent_id + "/",
+        $.getJSON(api_url + parent_id + "/",
             {since: value['last_metrics_update'].toJSON(),
             metric_type: metric_type},
             function(data){
