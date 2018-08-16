@@ -21,7 +21,12 @@ def worker(request, pod_name):
 def runs(request):
     """List all runs page"""
     runs = ModelRun.objects.all()
-    return render(request, 'main/runs.html', {'runs': runs})
+    return render(request, 'main/runs.html', {
+        'runs': runs,
+        'max_nodes': 2,
+        'max_cpus': 12,
+        'max_memory': 30000,
+        'max_bandwidth': 1000})
 
 
 def run(request, run_id):

@@ -148,3 +148,15 @@ body {
   stroke-linejoin: round;
   stroke-linecap: round;
 }
+
+/*
+ * Slider
+ */
+
+.tooltip.tooltip-main {
+  margin-top: -40px;
+}
+
+.in {
+  opacity: .9;
+}

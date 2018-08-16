@@ -1,0 +1,19 @@
+
+
+master:
+  imagePullSecret: regcred
+
+  image:
+    repository: localhost:5000/mlbench_master
+    tag: latest
+    pullPolicy: Always
+
+
+worker:
+
+  imagePullSecret: regcred
+
+  image:
+    repository: localhost:5000/mlbench_worker
+    tag: latest
+    pullPolicy: Always
