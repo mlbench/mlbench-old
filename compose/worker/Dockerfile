@@ -13,4 +13,5 @@ ADD ./mlbench/refimpls/pytorch /codes
 
 ENV PYTHONPATH /codes
 
-RUN pip install kubernetes
+ADD ./compose/worker/requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
