@@ -58,8 +58,20 @@
                     <svg class="d-flex w-100" style="height:50rem;" id="metric-svg"></svg>
                 </div>
                 {% endif %}
-                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stdout" role="tabpanel" aria-labelledby="stdout-tab"><pre>{{ run.job_metadata.stdout }}</pre></div>
-                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stderr" role="tabpanel" aria-labelledby="stderr-tab"><pre>{{ run.job_metadata.stderr }}</pre></div>
+                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stdout" role="tabpanel" aria-labelledby="stdout-tab">
+                    <pre>
+                        {% for line in run.job_metadata.stdout %}
+                        {{line}}\n
+                        {% endfor %}
+                    </pre>
+                </div>
+                <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stderr" role="tabpanel" aria-labelledby="stderr-tab">
+                    <pre>
+                            {% for line in run.job_metadata.stderr %}
+                            {{line}}
+                            {% endfor %}
+                    </pre>
+                </div>
             </div>
         </div>
     </div>
@@ -72,7 +84,7 @@
     $(document).ready(function(){
         $("#delete-button").click(function(){
             $.ajax({
-                url: "/api/runs/{{ run.id }}/",
+                url: "{% url 'api:run-detail' pk=run.id %}",
                 type: 'DELETE',
                 success: function(){
                     window.location.replace("/runs");
@@ -81,7 +93,7 @@
         });
 
         var updateRunData = function(){
-            $.getJSON("/api/runs/{{ run.id }}/",
+            $.getJSON("{% url 'api:run-detail' pk=run.id %}",
                 function(data){
                     $("#run-state").text(data['state']);
                     $("#stdout pre").text(data['job_metadata']["stdout"].join("\n"));
@@ -92,7 +104,7 @@
 
         updateRunData();
 
-        var monitor = PodMonitor('{{run.id}}', function(){return $("#metric-dropdown a.active").text()}, "#metric-svg", 'run');
+        var monitor = PodMonitor('{{run.id}}', function(){return $("#metric-dropdown a.active").text()}, "#metric-svg", 'run', '{% url 'api:metrics-list' %}');
 
         $("#metric-dropdown a").click(function(){
             $("#metric-dropdown a").removeClass("active");
