@@ -5,10 +5,8 @@ master:
 
   name: master
 
-  imagePullSecret: regcred
-
   image:
-    repository: localhost:5000/mlbench_master
+    repository: mlbench/mlbench_master
     tag: latest
     pullPolicy: Always
 
@@ -23,7 +21,7 @@ worker:
   name: worker
 
   image:
-    repository: localhost:5000/mlbench_worker
+    repository: mlbench/mlbench_worker
     tag: latest
     pullPolicy: Always
 

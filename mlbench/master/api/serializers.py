@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import KubePod, ModelRun
+from api.models import KubePod, ModelRun, KubeMetric
 
 
 class KubePodSerializer(serializers.HyperlinkedModelSerializer):
@@ -18,3 +18,10 @@ class ModelRunSerializer(serializers.HyperlinkedModelSerializer):
             'state',
             'job_id',
             'job_metadata']
+
+
+class KubeMetricsSerializer(serializers.HyperlinkedModelSerializer):
+    # TODO:
+    class Meta:
+        model = KubeMetric
+        fields = ['name', 'value']

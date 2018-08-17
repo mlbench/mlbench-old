@@ -1,6 +1,7 @@
 import time
 import torch
 import torch.distributed as dist
+import datetime
 
 from utils import log
 from utils import checkpoint
@@ -31,6 +32,19 @@ def train_epoch(model, optimizer, criterion, context):
         optimizer.step()
 
         log.debug("Training Batch {:5}: loss={:.3f}".format(batch_idx, loss.item()))
+
+        log.post_metrics({
+            "run_id": context.meta.run_id,
+            "name": "train loss @ rank{}".format(context.meta.rank),
+            "value": loss.item(),
+            "date": str(datetime.datetime.now()),
+            "cumulative": False,
+            "metadata":
+            "Training loss at rank {}, epoch {} and batch {}".format(
+                context.meta.rank, context.runtime.current_epoch,
+                batch_idx
+            )
+        }, context.meta.rank)
         if context.meta.debug and batch_idx >= 10:
             break
 
@@ -105,6 +119,18 @@ def do_validate(model, optimizer, criterion, metrics, context):
             'optimizer': optimizer.state_dict(),
             'best_prec1': context.runtime.best_prec1,
         }, is_best, context)
+
+    log.post_metrics({
+        "run_id": context.meta.run_id,
+        "name": "Prec@1",
+        "value": "{:.3f}".format(val_prec1),
+        "date": str(datetime.datetime.now()),
+        "cumulative": False,
+        "metadata":
+        "Validation Prec1 at epoch {}".format(
+            context.runtime.current_epoch
+        )
+    }, context.meta.rank)
 
 
 class TrainValidation(object):

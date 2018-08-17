@@ -24,6 +24,7 @@ spec:
         release: {{ .Release.Name }}
         role: worker
     spec:
+      serviceAccountName: {{ template "mlbench.worker.fullname" . }}-sa
       containers:
         - name: {{ template "mlbench.name" . }}-{{ .Values.worker.name }}
           image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"

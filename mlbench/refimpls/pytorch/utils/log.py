@@ -3,6 +3,9 @@ colors: https://stackoverflow.com/questions/5947742/how-to-change-the-output-col
 """
 import logging
 import torch.distributed as dist
+import json
+import time
+import subprocess
 
 logger = logging.getLogger('mlbench')
 
@@ -31,17 +34,94 @@ def debug(content, who='all'):
 
 def warning(content, who='all'):
     if who == 'all' or who == dist.get_rank():
-        logger.warning("\033[0;31m{}\033[0m".format(content))
+        logger.warning("{}".format(content))
 
 
 def critical(content, who='all'):
     if who == 'all' or who == dist.get_rank():
-        logger.critical("\033[0;104m{}\033[0m".format(content))
+        logger.critical("{}".format(content))
+
+
+class AsyncMetricsPost(object):
+    """Post metrics payload to endpoint in an asynchronized way."""
+
+    def __init__(self):
+        self._initialized = False
+
+    def init(self):
+        from kubernetes import config, client
+        config.load_incluster_config()
+        configuration = client.Configuration()
+
+        class MyApiClient(client.ApiClient):
+            """
+            A bug introduced by a fix.
+
+            https://github.com/kubernetes-client/python/issues/411
+            https://github.com/swagger-api/swagger-codegen/issues/6392
+            """
+
+            def __del__(self):
+                pass
+
+        self.api_instance = client.CoreV1Api(MyApiClient(configuration))
+
+        # TODO: remove hardcoded part in the future.
+        self.namespace = 'default'
+        label_selector = 'component=master,app=mlbench'
+
+        try:
+            api_response = self.api_instance.list_namespaced_pod(
+                self.namespace, label_selector=label_selector)
+        except Exception as e:
+            print("Exception when calling CoreV1Api->list_namespaced_pod: %s\n" % e)
+
+        assert len(api_response.items) == 1
+        master_pod = api_response.items[0]
+        ip = master_pod.status.pod_ip
+        self.endpoint = "http://{ip}/api/metrics/".format(ip=ip)
+        self._initialized = True
+
+    def post(self, payload):
+        """Post information via kubernetes client.
+
+        Example:
+
+            payload = {
+                "run_id": "1",
+                "name": "accuracy",
+                "cumulative": False,
+                "date": "2018-08-14T09:21:44.331823Z",
+                "value": "1.0",
+                "metadata": "some additional data"
+            }
+
+        See `KubeMetric` in kubemetric.py for the fields and types.
+
+        """
+        if not self._initialized:
+            self.init()
+
+        command = [
+            "/usr/bin/curl",
+            "-d", json.dumps(payload),
+            "-H", "Content-Type: application/json",
+            "-X", "POST", self.endpoint
+        ]
+        subprocess.Popen(command)
+
+
+async_post = AsyncMetricsPost()
+
+
+def post_metrics(payload, rank):
+    if rank == 0:
+        async_post.post(payload)
 
 
 def todo(content, who='all'):
     if who == 'all' or who == dist.get_rank():
-        logger.warning("\033[0;33m{}\033[0m".format(content))
+        logger.warning("{}".format(content))
 
 
 def configuration_information(context):

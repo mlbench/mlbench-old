@@ -12,3 +12,6 @@ RUN mkdir /codes
 ADD ./mlbench/refimpls/pytorch /codes
 
 ENV PYTHONPATH /codes
+
+ADD ./compose/worker/requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt

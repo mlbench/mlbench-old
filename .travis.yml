@@ -66,6 +66,8 @@ jobs:
           --set master.image.tag=travis-ci-test \
           --set worker.image.repository=${docker_url}/${docker_repository}/mlbench_worker \
           --set worker.image.tag=travis-ci-test \
+          --set worker.imagePullSecret=regcred \
+          --set master.imagePullSecret=regcred \
           --wait \
           charts/mlbench/
         - ./kubectl --context=dind get services |grep 'mlbench-master'
