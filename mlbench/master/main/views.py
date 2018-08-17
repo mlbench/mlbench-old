@@ -27,7 +27,7 @@ def runs(request):
     max_workers = os.environ.get('MLBENCH_MAX_WORKERS')
     max_cpu = os.environ.get('MLBENCH_WORKERS_MAX_CPU')
     if "m" in max_cpu:
-        max_cpu = int(max_cpu.replace("m")) / 1000
+        max_cpu = int(max_cpu.replace("m", "")) / 1000
     else:
         max_cpu = int(max_cpu)
 

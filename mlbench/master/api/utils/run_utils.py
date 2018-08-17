@@ -7,14 +7,16 @@ import os
 from time import sleep
 
 
-def limit_resources(model_run, kube_api, name, namespace):
+def limit_resources(model_run, name, namespace, job):
+    kube_api = client.AppsV1beta1Api()
+
     name = "{}-mlbench-worker".format(name)
 
     body = [
         {
             'op': 'replace',
             'path': '/spec/replicas',
-            'value': model_run.num_workers
+            'value': int(model_run.num_workers)
         },
         {
             'op': 'replace',
@@ -23,17 +25,28 @@ def limit_resources(model_run, kube_api, name, namespace):
         }
         ]
 
-    kube_api.api_instance.patch_namespaced_stateful_set(name, namespace, body)
+    kube_api.patch_namespaced_stateful_set(name, namespace, body)
 
     while True:
         response = kube_api.read_namespaced_stateful_set_status(name,
                                                                 namespace)
         s = response.status
-        if (s.updated_replicas == response.spec.replicas and
-            s.replicas == response.spec.replicas and
-            s.available_replicas == response.spec.replicas and
-            s.observed_generation >= response.metadata.generation):
+        if (s.current_replicas == response.spec.replicas and
+                s.replicas == response.spec.replicas and
+                s.observed_generation >= response.metadata.generation):
             return
+
+        job.meta['stdout'].append(
+            "Waiting for workers: Current: {}/{}, Replicas: {}/{}, "
+            "Observed Gen: {}/{}".format(
+                s.current_replicas,
+                response.spec.replicas,
+                s.replicas,
+                response.spec.replicas,
+                s.observed_generation,
+                response.metadata.generation
+            ))
+        job.save()
 
         sleep(1)
 
@@ -52,6 +65,9 @@ def run_model_job(model_run, experiment="test_MPI"):
     try:
         job = get_current_job()
 
+        job.meta['stdout'] = []
+        job.meta['stderr'] = []
+
         model_run.job_id = job.id
         model_run.state = ModelRun.STARTED
         model_run.save()
@@ -63,7 +79,7 @@ def run_model_job(model_run, experiment="test_MPI"):
         release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
         ns = os.environ.get('MLBENCH_NAMESPACE')
 
-        limit_resources(model_run, v1, release_name, ns)
+        limit_resources(model_run, release_name, ns, job)
 
         # start run
         ret = v1.list_namespaced_pod(
@@ -98,9 +114,6 @@ def run_model_job(model_run, experiment="test_MPI"):
         job.meta['master_name'] = name
         job.save()
 
-        job.meta['stdout'] = []
-        job.meta['stderr'] = []
-
         resp = stream.stream(v1.connect_get_namespaced_pod_exec, name,
                              ns,
                              command=exec_command,
@@ -124,4 +137,7 @@ def run_model_job(model_run, experiment="test_MPI"):
         model_run.save()
     except Exception as e:
         model_run.state = ModelRun.FAILED
+
+        job.meta['stderr'].append(str(e))
+        job.save()
         model_run.save()

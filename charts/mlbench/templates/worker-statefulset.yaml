@@ -17,7 +17,7 @@ spec:
   serviceName: {{ .Release.Name }}
   podManagementPolicy: Parallel
   updateStrategy:
-    - type: RollingUpdate
+    type: RollingUpdate
   template:
     metadata:
       labels:

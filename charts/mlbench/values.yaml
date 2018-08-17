@@ -35,7 +35,7 @@ worker:
 
   resources:
     limits:
-      - cpu: 12000m
+      cpu: 8000m
 
   sshKey:
     id_rsa: |
