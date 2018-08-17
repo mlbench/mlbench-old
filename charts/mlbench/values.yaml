@@ -5,6 +5,8 @@ master:
 
   name: master
 
+  maximumWorkers: 100
+
   image:
     repository: mlbench/mlbench_master
     tag: latest
@@ -30,6 +32,10 @@ worker:
     port: 22
 
   replicaCount: 2
+
+  resources:
+    limits:
+      - cpu: 12000m
 
   sshKey:
     id_rsa: |

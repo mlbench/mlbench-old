@@ -47,6 +47,10 @@ spec:
               value: {{ .Release.Name }}
             - name: MLBENCH_NAMESPACE
               value: {{ .Release.Namespace }}
+            - name: MLBENCH_MAX_WORKERS
+              value: {{ .Values.master.maximumWorkers }}
+            - name: MLBENCH_WORKERS_MAX_CPU
+              value: {{ .Values.worker.resources.limits.cpu }}
           resources:
           serviceAccountName: {{ template "mlbench.master.fullname" . }}
 {{ toYaml .Values.resources | indent 12 }}

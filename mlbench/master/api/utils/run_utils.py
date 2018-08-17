@@ -4,6 +4,39 @@ import kubernetes.stream as stream
 from rq import get_current_job
 
 import os
+from time import sleep
+
+
+def limit_resources(model_run, kube_api, name, namespace):
+    name = "{}-mlbench-worker".format(name)
+
+    body = [
+        {
+            'op': 'replace',
+            'path': '/spec/replicas',
+            'value': model_run.num_workers
+        },
+        {
+            'op': 'replace',
+            'path': '/spec/template/spec/containers/0/resources/limits/cpu',
+            'value': model_run.cpu_limit
+        }
+        ]
+
+    kube_api.api_instance.patch_namespaced_stateful_set(name, namespace, body)
+
+    while True:
+        response = kube_api.read_namespaced_stateful_set_status(name,
+                                                                namespace)
+        s = response.status
+        if (s.updated_replicas == response.spec.replicas and
+            s.replicas == response.spec.replicas and
+            s.available_replicas == response.spec.replicas and
+            s.observed_generation >= response.metadata.generation):
+            return
+
+        sleep(1)
+
 
 
 @django_rq.job('default', result_ttl=-1)
@@ -30,6 +63,9 @@ def run_model_job(model_run, experiment="test_MPI"):
         release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
         ns = os.environ.get('MLBENCH_NAMESPACE')
 
+        limit_resources(model_run, v1, release_name, ns)
+
+        # start run
         ret = v1.list_namespaced_pod(
             ns,
             label_selector="component=worker,app=mlbench,release={}"

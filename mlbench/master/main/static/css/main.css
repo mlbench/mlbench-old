@@ -160,3 +160,7 @@ body {
 .in {
   opacity: .9;
 }
+
+#add-run-modal .form-group span {
+  margin-left: 15px;
+}

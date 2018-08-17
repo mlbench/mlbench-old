@@ -28,22 +28,22 @@
                     <input type="text" class="form-control" id="run-name">
                 </div>
                 <div class="form-group">
-                    <label for="num-nodes" class="col-form-label">Workers:</label><br>
-                    <input id="num-nodes" class="form-control" data-slider-id='ex1Slider' type="text" data-slider-min="1" data-slider-max="{{max_nodes}}" data-slider-step="1" data-slider-value="{{max_nodes}}"/>
-                    <span id="num-nodes-val">{{max_nodes}}</span>
+                    <label for="num-workers" class="col-form-label">Number of Workers:</label><br>
+                    <input id="num-workers" class="form-control" data-slider-id='ex1Slider' type="text" data-slider-min="1" data-slider-max="{{max_workers}}" data-slider-step="1" data-slider-value="{{max_workers}}"/>
+                    <span id="num-workers-val">{{max_workers}}</span>
                 </div>
                 <div class="form-group">
-                    <label for="num-cpus" class="col-form-label">CPUs:</label><br>
+                    <label for="num-cpus" class="col-form-label">Number of CPUs:</label><br>
                     <input id="num-cpus" class="form-control" data-slider-id='ex2Slider' type="text" data-slider-min="1" data-slider-max="{{max_cpus}}" data-slider-step="1" data-slider-value="{{max_cpus}}"/>
                     <span id="num-cpus-val">{{max_cpus}}</span>
                 </div>
                 <div class="form-group">
-                    <label for="max-memory" class="col-form-label">Memory:</label><br>
+                    <label for="max-memory" class="col-form-label">Memory (Mb):</label><br>
                     <input id="max-memory" class="form-control" data-slider-id='ex3Slider' type="text" data-slider-min="10" data-slider-max="{{max_memory}}" data-slider-step="1" data-slider-value="{{max_memory}}"/>
                     <span id="max-memory-val">{{max_memory}}</span>
                 </div>
                 <div class="form-group">
-                    <label for="max-bandwidth" class="col-form-label">Bandwidth:</label><br>
+                    <label for="max-bandwidth" class="col-form-label">Bandwidth (Mbps):</label><br>
                     <input id="max-bandwidth" class="form-control" data-slider-id='ex4Slider' type="text" data-slider-min="1" data-slider-max="{{max_bandwidth}}" data-slider-step="1" data-slider-value="{{max_bandwidth}}"
                         data-slider-ticks="[1, 10, 100, 1000, 10000]" data-slider-ticks-labels='["1", "10", "100", "1000", "10000"]' data-slider-ticks-snap-bounds="30"/>
                     <span id="max-bandwidth-val">{{max_bandwidth}}</span>
@@ -66,9 +66,9 @@
         });
 
         // sliders
-        $("#num-nodes").slider({});
-        $("#num-nodes").on("slide", function(slideEvt) {
-            $("#num-nodes-val").text(slideEvt.value);
+        $("#num-workers").slider({});
+        $("#num-workers").on("slide", function(slideEvt) {
+            $("#num-workers-val").text(slideEvt.value);
         });
 
         $("#num-cpus").slider({});
@@ -100,7 +100,7 @@
             $.post( "api/runs/",
                 {
                     name: $('#run-name').val(),
-                    num_nodes: $('#num-nodes').val(),
+                    num_workers: $('#num-workers').val(),
                     num_cpus: $('#num-cpus').val(),
                     max_memory: $('#max-memory').val(),
                     max_bandwidth: $('#max-bandwidth').val(),

@@ -5,6 +5,8 @@ from rq.job import Job
 
 from api.models import ModelRun, KubePod, KubeMetric
 
+import os
+
 
 # Create your views here.
 def index(request):
@@ -21,10 +23,19 @@ def worker(request, pod_name):
 def runs(request):
     """List all runs page"""
     runs = ModelRun.objects.all()
+
+    max_workers = os.environ.get('MLBENCH_MAX_WORKERS')
+    max_cpu = os.environ.get('MLBENCH_WORKERS_MAX_CPU')
+    if "m" in max_cpu:
+        max_cpu = int(max_cpu.replace("m")) / 1000
+    else:
+        max_cpu = int(max_cpu)
+
+
     return render(request, 'main/runs.html', {
         'runs': runs,
-        'max_nodes': 2,
-        'max_cpus': 12,
+        'max_workers': max_workers,
+        'max_cpus': max_cpu,
         'max_memory': 30000,
         'max_bandwidth': 1000})
 

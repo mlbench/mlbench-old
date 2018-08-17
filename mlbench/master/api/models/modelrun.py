@@ -25,6 +25,9 @@ class ModelRun(models.Model):
         default=INITIALIZED)
     job_id = models.CharField(max_length=38, default="")
 
+    cpu_limit = models.CharField(max_length=8, default="12000m")
+    num_workers = models.IntegerField(default=2)
+
     job_metadata = {}
 
     def start(self):
