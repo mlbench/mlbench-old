@@ -17,3 +17,8 @@ worker:
     repository: localhost:5000/mlbench_worker
     tag: latest
     pullPolicy: Always
+
+limits:
+  cpu: 8000m
+  maximumWorkers: 2
+  bandwidth: 100

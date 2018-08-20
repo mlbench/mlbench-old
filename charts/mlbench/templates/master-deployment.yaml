@@ -48,9 +48,11 @@ spec:
             - name: MLBENCH_NAMESPACE
               value: {{ .Release.Namespace }}
             - name: MLBENCH_MAX_WORKERS
-              value: !!string {{ .Values.master.maximumWorkers }}
+              value: !!string {{ .Values.limits.maximumWorkers }}
             - name: MLBENCH_WORKERS_MAX_CPU
-              value: !!string {{  .Values.worker.resources.limits.cpu }}
+              value: !!string {{  .Values.limits.cpu }}
+            - name: MLBENCH_MAX_BANDWIDTH
+              value: !!string {{ .Values.limits.bandwidth }}
           resources:
           serviceAccountName: {{ template "mlbench.master.fullname" . }}
 {{ toYaml .Values.resources | indent 12 }}

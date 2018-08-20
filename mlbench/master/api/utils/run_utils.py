@@ -9,6 +9,9 @@ from time import sleep
 
 def limit_resources(model_run, name, namespace, job):
     kube_api = client.AppsV1beta1Api()
+    v1Api = client.CoreV1Api()
+
+    release_name = os.environ.get('MLBENCH_KUBE_RELEASENAME')
 
     name = "{}-mlbench-worker".format(name)
 
@@ -27,6 +30,7 @@ def limit_resources(model_run, name, namespace, job):
 
     kube_api.patch_namespaced_stateful_set(name, namespace, body)
 
+    # wait for SatefulSet to upgrade
     while True:
         response = kube_api.read_namespaced_stateful_set_status(name,
                                                                 namespace)
@@ -34,7 +38,7 @@ def limit_resources(model_run, name, namespace, job):
         if (s.current_replicas == response.spec.replicas and
                 s.replicas == response.spec.replicas and
                 s.observed_generation >= response.metadata.generation):
-            return
+            break
 
         job.meta['stdout'].append(
             "Waiting for workers: Current: {}/{}, Replicas: {}/{}, "
@@ -50,6 +54,65 @@ def limit_resources(model_run, name, namespace, job):
 
         sleep(1)
 
+    # set network limits on all pods
+    ret = v1Api.list_namespaced_pod(
+        namespace,
+        label_selector="component=worker,app=mlbench,release={}"
+        .format(release_name))
+
+    threads = []
+    commands = [
+        'tc qdisc del dev eth0 root',
+        'tc class del dev eth0 classid 1:11',
+        'tc class del dev eth0 classid 1:1',
+        'tc qdisc add dev eth0 handle 1: root htb default 11',
+        'tc class add dev eth0 parent 1: classid 1:1 htb rate'
+        ' {}mbps'.format(model_run.network_bandwidth_limit),
+        'tc class add dev eth0 parent 1:1 classid 1:11 htb rate'
+        ' {}mbps'.format(model_run.network_bandwidth_limit)
+        ]
+
+    for i in ret.items:
+        name = i.metadata.name
+        exec_command = [
+            '/bin/bash',
+            '-c',
+            ' ; '.join(commands)
+        ]
+
+        job.meta['stdout'].append(
+            "Running Bandwidth Limitation: {}".format(" ".join(exec_command)))
+
+        resp = stream.stream(v1Api.connect_get_namespaced_pod_exec, name,
+                             namespace,
+                             command=exec_command,
+                             stderr=True, stdin=False,
+                             stdout=True, tty=False,
+                             _preload_content=False)
+        resp.update(timeout=1)
+        if resp.peek_stdout():
+            out = resp.read_stdout()
+            job.meta['stdout'] += out.splitlines()
+        if resp.peek_stderr():
+            err = resp.read_stderr()
+            job.meta['stderr'] += err.splitlines()
+
+        job.save()
+        threads.append(resp)
+
+    # wait for commands to execute
+    while any(t.is_open() for t in threads):
+        for resp in threads:
+            resp.update(timeout=1)
+            if resp.peek_stdout():
+                out = resp.read_stdout()
+                job.meta['stdout'] += out.splitlines()
+            if resp.peek_stderr():
+                err = resp.read_stderr()
+                job.meta['stderr'] += err.splitlines()
+
+        job.save()
+        sleep(1)
 
 
 @django_rq.job('default', result_ttl=-1)

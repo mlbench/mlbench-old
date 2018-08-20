@@ -47,10 +47,13 @@ spec:
           #   initialDelaySeconds: 15
           #   periodSeconds: 20
           resources:
-{{ toYaml .Values.worker.resources | indent 12 }}
+            limits:
+              cpu: {{ .Values.limits.cpu}}
           volumeMounts:
           - name: mlbench-ssh-key
             mountPath: /ssh-key/root
+          securityContext:
+            privileged: true
       volumes:
       - name: mlbench-ssh-key
         secret:

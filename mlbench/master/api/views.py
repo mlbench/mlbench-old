@@ -247,7 +247,8 @@ class ModelRunView(ViewSet):
         run = ModelRun(
             name=d['name'],
             num_workers=d['num_workers'],
-            cpu_limit=cpu
+            cpu_limit=cpu,
+            network_bandwidth_limit=d['max_bandwidth']
         )
 
         run.start()

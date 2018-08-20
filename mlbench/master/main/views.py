@@ -25,7 +25,9 @@ def runs(request):
     runs = ModelRun.objects.all()
 
     max_workers = os.environ.get('MLBENCH_MAX_WORKERS')
+    max_bandwidth = os.environ.get('MLBENCH_MAX_BANDWIDTH')
     max_cpu = os.environ.get('MLBENCH_WORKERS_MAX_CPU')
+
     if "m" in max_cpu:
         max_cpu = int(max_cpu.replace("m", "")) / 1000
     else:
