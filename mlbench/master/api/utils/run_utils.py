@@ -5,6 +5,7 @@ from rq import get_current_job
 
 import os
 from time import sleep
+import socket
 
 
 def limit_resources(model_run, name, namespace, job):
@@ -55,6 +56,7 @@ def limit_resources(model_run, name, namespace, job):
         sleep(1)
 
     # set network limits on all pods
+    master_ip = socket.gethostbyname(socket.gethostname())
     ret = v1Api.list_namespaced_pod(
         namespace,
         label_selector="component=worker,app=mlbench,release={}"
@@ -62,14 +64,21 @@ def limit_resources(model_run, name, namespace, job):
 
     threads = []
     commands = [
-        'tc qdisc del dev eth0 root',
-        'tc class del dev eth0 classid 1:11',
-        'tc class del dev eth0 classid 1:1',
-        'tc qdisc add dev eth0 handle 1: root htb default 11',
-        'tc class add dev eth0 parent 1: classid 1:1 htb rate'
-        ' {}mbps'.format(model_run.network_bandwidth_limit),
-        'tc class add dev eth0 parent 1:1 classid 1:11 htb rate'
-        ' {}mbps'.format(model_run.network_bandwidth_limit)
+        # remove existing entries, if they exist
+        'tc qdisc show dev eth0 | grep -q htb && tc qdisc del dev eth0 root'
+        ' handle 1: htb',
+        # add root class
+        'tc qdisc add dev eth0 root handle 1: htb default 11',
+        'tc class add dev eth0 parent 1: classid 1:1 htb rate '
+        '10000mbit ceil 10000mbit',
+        # add limited defaulz class
+        'tc class add dev eth0 parent 1:1 classid 1:11 htb rate '
+        '{0}mbit ceil {0}mbit'.format(model_run.network_bandwidth_limit),
+        # add unlimited class for communication with master
+        'tc class add dev eth0 parent 1:1 classid 1:12 htb rate '
+        '10000mbit ceil 10000mbit',
+        'tc filter add dev eth0 protocol ip parent 1:0 prio 0 u32 match ip '
+        'dst {}/32 flowid 1:12'.format(master_ip)
         ]
 
     for i in ret.items:
