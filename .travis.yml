@@ -68,6 +68,9 @@ jobs:
           --set worker.image.tag=travis-ci-test \
           --set worker.imagePullSecret=regcred \
           --set master.imagePullSecret=regcred \
+          --set limits.cpu=8000m \
+          --set limits.maximumWorkers=2 \
+          --set limits.bandwidth=1000 \
           --wait \
           charts/mlbench/
         - ./kubectl --context=dind get services |grep 'mlbench-master'
