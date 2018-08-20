@@ -22,10 +22,13 @@
           </button>
         </div>
         <div class="modal-body">
-            <form >
+            <form class="needs-validation" novalidate>
                 <div class="form-group">
                     <label for="run-name" class="col-form-label">Name:</label>
-                    <input type="text" class="form-control" id="run-name">
+                    <input type="text" class="form-control" id="run-name" required>
+                    <div class="invalid-feedback">
+                        Please enter a name for this run.
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="num-workers" class="col-form-label">Number of Workers:</label><br>
@@ -95,7 +98,11 @@
 
 
         $('#add-run-button').click(function(){
-            if(!$('#run-name').val()){
+            var form = $(".needs-validation")[0];
+            if (form.checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+                form.classList.add('was-validated');
                 return;
             }
 
