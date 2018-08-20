@@ -48,11 +48,11 @@ spec:
             - name: MLBENCH_NAMESPACE
               value: {{ .Release.Namespace }}
             - name: MLBENCH_MAX_WORKERS
-              value: !!string {{ .Values.limits.maximumWorkers }}
+              value: !!string {{required "Please enter the maximum number of nodes available to mlbench with the .Values.limits.maximumWorkers setting!" .Values.limits.maximumWorkers }}
             - name: MLBENCH_WORKERS_MAX_CPU
-              value: !!string {{  .Values.limits.cpu }}
+              value: !!string {{required "Please enter the maximum number of cpus per node available to mlbench with the .Values.limits.cpu setting! E.g. Kubernetes 8 or 8000m notation for 8 cpus"  .Values.limits.cpu }}
             - name: MLBENCH_MAX_BANDWIDTH
-              value: !!string {{ .Values.limits.bandwidth }}
+              value: !!string {{required "Please enter the maximum network bandwidth (in mbit/s) available to mlbench with the .Values.limits.bandwidth setting!" .Values.limits.bandwidth }}
           resources:
           serviceAccountName: {{ template "mlbench.master.fullname" . }}
 {{ toYaml .Values.resources | indent 12 }}
