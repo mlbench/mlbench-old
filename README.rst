@@ -16,6 +16,7 @@ A public and reproducible collection of reference implementations and benchmark 
 **This is a work in progress and not usable so far**
 
 
+* Project website: https://mlbench.github.io/
 * Free software: Apache Software License 2.0
 * Documentation: https://mlbench.readthedocs.io.
 
@@ -31,15 +32,10 @@ Features
 * Our benchmark code is easy to run on the **public cloud**.
 * Here is an `older design doc`_ for this project.
 
-TODO
-----
 
-Everything
 
 Community
 ---------
-
-Project website: https://mlbench.github.io/
 
 About us: See `Authors`_
 
