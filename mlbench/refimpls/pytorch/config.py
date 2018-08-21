@@ -18,6 +18,12 @@ class AttrDict(dict):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
 
 class Context(object):
     def __init__(self, optimizer, dataset, model, controlflow, meta, runtime):
@@ -43,7 +49,7 @@ def _init_context(args):
         'logging_file': 'mlbench.log',
         'checkpoint_root': '/checkpoint',
         # For debug mode, overwrite checkpoint
-        'use_cuda': False,
+        'use_cuda': not args.no_cuda,
         'backend': 'mpi',
         'manual_seed': 42,
         'mode': 'develop',
@@ -77,6 +83,7 @@ def _init_context(args):
         'train': True,
         'val': True,
         'reshuffle_per_epoch': False,
+        'num_classes': 10
     }
 
     default_model = {
@@ -150,7 +157,7 @@ def config_pytorch(meta):
     meta.graph = FCGraph(meta)
 
     if meta.use_cuda:
-        torch.cuda.set_device(meta.graph.assigned_gpu_id)
+        meta.graph.assigned_gpu_id()
 
     # enable cudnn accelerator if we are using cuda.
     if meta.use_cuda:
@@ -180,7 +187,8 @@ def init_context(args):
     # Context build from args, file and defaults
     context = _init_context(args)
 
-    dist.init_process_group(context.meta.backend)
+    if not dist._initialized:
+        dist.init_process_group(context.meta.backend)
 
     config_logging(context)
 

@@ -1,6 +1,20 @@
 # -*- coding: utf-8 -*-
 
 
+def linear_cycle(lr_init=0.1, epochs=10, low_lr=0.005, extra=5, **kwargs):
+    def f(progress):
+        if progress < epochs / 2:
+            return 2 * lr_init * (1 - float(epochs - progress) / epochs)
+        elif progress <= epochs:
+            return low_lr + 2 * lr_init * float(epochs - progress) / epochs
+        elif progress <= epochs + extra:
+            return low_lr * float(extra - (progress - epochs)) / extra
+        else:
+            return low_lr / 10
+
+    return f
+
+
 def adjust_learning_rate(args, optimizer, init_lr=0.1):
     """Sets the learning rate to the initial LR decayed by the number of accessed sample.
     """

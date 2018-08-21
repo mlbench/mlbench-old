@@ -22,9 +22,6 @@ def get_dataset(context):
             dataset.num_workers, context.meta.rank, context.meta.world_size,
             dataset.reshuffle_per_epoch, context.meta.debug, dataset_type='train')
 
-        # if context.meta.debug:
-        #     display_one_batch(dataset.train_.loader)
-
     if dataset.val:
         dataset.val_ = create_dataset(
             dataset.name, dataset.root_folder, dataset.batch_size,

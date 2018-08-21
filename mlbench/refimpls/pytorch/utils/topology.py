@@ -16,6 +16,7 @@ class FCGraph(object):
     def current_device(self):
         return torch.device(self.current_device_name())
 
-    @property
     def assigned_gpu_id(self):
-        raise NotImplementedError
+        # TODO: now only consider there is
+        if self.world_size == torch.cuda.device_count():
+            torch.cuda.set_device(self.rank)

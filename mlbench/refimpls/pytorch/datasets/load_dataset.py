@@ -1,6 +1,8 @@
 import os
 import math
+import numpy as np
 import torch
+from PIL import Image
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
@@ -32,6 +34,37 @@ def maybe_download(name, datasets_path, split='train', transform=None,
                               transform=transform,
                               target_transform=target_transform,
                               download=download)
+    elif name == 'cifar10':
+        # https://github.com/IamTao/dl-benchmarking/blob/master/tasks/cv/pytorch/code/dataset/create_data.py
+        # https://github.com/kuangliu/pytorch-cifar/blob/master/main.py
+        # and
+        # https://github.com/bkj/basenet/blob/49b2b61e5b9420815c64227c5a10233267c1fb14/examples/cifar10.py
+        # Choose different std
+        cifar10_stats = {
+            "mean": (0.4914, 0.4822, 0.4465),
+            "std": (0.24705882352941178, 0.24352941176470588, 0.2615686274509804),
+        }
+
+        if train:
+            transform = transforms.Compose([
+                # transforms.Lambda(lambda x: np.asarray(x)),
+                # transforms.Lambda(lambda x: np.pad(x, [(4, 4), (4, 4), (0, 0)], mode='reflect')),
+                # transforms.Lambda(lambda x: Image.fromarray(x)),
+                transforms.RandomCrop(32),
+
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(cifar10_stats['mean'], cifar10_stats['std']),
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(cifar10_stats['mean'], cifar10_stats['std']),
+            ])
+
+        return datasets.CIFAR10(root=root, train=train, download=True,
+                                transform=transform)
+
     else:
         raise NotImplementedError
 
