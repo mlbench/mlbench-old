@@ -68,9 +68,9 @@ jobs:
           --set worker.image.tag=travis-ci-test \
           --set worker.imagePullSecret=regcred \
           --set master.imagePullSecret=regcred \
-          --set limits.cpu=8000m \
+          --set limits.cpu=1000m \
           --set limits.maximumWorkers=2 \
-          --set limits.bandwidth=1000 \
+          --set limits.bandwidth=100 \
           --wait \
           --timeout 900 \
           charts/mlbench/
