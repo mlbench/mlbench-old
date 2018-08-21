@@ -1,4 +1,6 @@
 
+weave:
+  enabled: false
 
 master:
   enabled: true
