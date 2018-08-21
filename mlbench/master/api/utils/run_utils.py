@@ -54,7 +54,9 @@ def run_model_job(model_run, experiment="test_MPI"):
             '/conda/bin/python', "/codes/main.py",
             '--experiment', experiment,
             '--run_id',
-            model_run.id]
+            model_run.id,
+            '--config-file', '/codes/configs/debug_cifar10.json'
+        ]
         job.meta['command'] = str(exec_command)
 
         name = ret.items[0].metadata.name

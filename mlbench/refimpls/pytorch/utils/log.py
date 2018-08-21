@@ -135,6 +135,9 @@ def todo(content, who='all'):
 def configuration_information(context):
     centering("Configuration Information", 0)
 
+    centering('Meta', 0, symbol='=', length=40)
+    context.log('meta')
+
     centering('Opimizer', 0, symbol='=', length=40)
     context.log('optimizer')
 

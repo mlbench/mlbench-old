@@ -1,6 +1,7 @@
 import os
 import logging
 import torch
+import json
 import random
 import shutil
 import torch.backends.cudnn as cudnn
@@ -44,14 +45,14 @@ class Context(object):
 def _init_context(args):
     config_file = args.config_file
 
-    meta = {
+    default_meta = {
         'logging_level': eval('logging.' + args.logging_level.upper()),
         'logging_file': 'mlbench.log',
         'checkpoint_root': '/checkpoint',
         # For debug mode, overwrite checkpoint
         'use_cuda': not args.no_cuda,
         'backend': 'mpi',
-        'manual_seed': 42,
+        'manual_seed': args.seed,
         'mode': 'develop',
         'debug': args.debug,
         'topk': (1, 5),
@@ -104,12 +105,14 @@ def _init_context(args):
             config = json.load(f)
 
         default_optimizer.update(config.get('optimizer', {}))
-        default_controlflow.update(config.get('workflow', {}))
+        default_controlflow.update(config.get('controlflow', {}))
         default_dataset.update(config.get('dataset', {}))
         default_model.update(config.get('model', {}))
+        default_runtime.update(config.get('runtime', {}))
+        default_meta.update(config.get('meta', {}))
 
     return Context(AttrDict(default_optimizer), AttrDict(default_dataset), AttrDict(default_model),
-                   AttrDict(default_controlflow), AttrDict(meta), AttrDict(default_runtime))
+                   AttrDict(default_controlflow), AttrDict(default_meta), AttrDict(default_runtime))
 
 
 def config_logging(context):
@@ -144,12 +147,12 @@ def config_pytorch(meta):
     if meta.manual_seed is not None:
         random.seed(meta.manual_seed)
         torch.manual_seed(meta.manual_seed)
-        cudnn.deterministic = True
-        log.warning('You have chosen to seed training. '
-                    'This will turn on the CUDNN deterministic setting, '
-                    'which can slow down your training considerably! '
-                    'You may see unexpected behavior when restarting '
-                    'from checkpoints.', 0)
+        # cudnn.deterministic = True
+        # log.warning('You have chosen to seed training. '
+        #             'This will turn on the CUDNN deterministic setting, '
+        #             'which can slow down your training considerably! '
+        #             'You may see unexpected behavior when restarting '
+        #             'from checkpoints.', 0)
 
     # define the graph for the computation.
     if meta.use_cuda:

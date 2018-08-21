@@ -20,15 +20,13 @@ def str2bool(v):
 
 def main():
     # Training settings
-    parser = argparse.ArgumentParser(description='Entrypoint to client (pytorch) side of mlbench.')
+    parser = argparse.ArgumentParser(description='Entrypoint to distributed training of neural networks.')
     parser.add_argument('--no-cuda', action='store_true', default=True,
                         help='disables CUDA training')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
+    parser.add_argument('--seed', type=int, default=42, metavar='S',
                         help='random seed (default: 1)')
     parser.add_argument('--run_id', type=str, default='0', metavar='S',
                         help='Id of current run.')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                        help='how many batches to wait before logging training status')
     parser.add_argument('--logging-level', type=str, default='DEBUG', metavar='N',
                         help='')
     parser.add_argument('--debug', type=str2bool, default=False, metavar='N',
