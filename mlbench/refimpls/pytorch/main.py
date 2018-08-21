@@ -51,7 +51,7 @@ def main():
     model = get_model(context)
 
     # The optimizer here can be any one subclass of `torch.optim.optimizer.Optimizer`
-    optimizer = get_optimizer(context, model)
+    optimizer, scheduler = get_optimizer(context, model)
 
     # Criterions are like `torch.nn.CrossEntropyLoss()`
     criterion = get_criterion(context)
@@ -69,7 +69,7 @@ def main():
     log.configuration_information(context)
 
     controlflow(model=model, optimizer=optimizer, criterion=criterion,
-                metrics=metrics, context=context)
+                metrics=metrics, scheduler=scheduler, context=context)
 
 
 if __name__ == '__main__':

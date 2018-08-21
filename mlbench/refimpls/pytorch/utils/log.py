@@ -47,10 +47,16 @@ class AsyncMetricsPost(object):
 
     def __init__(self):
         self._initialized = False
+        self._incluster = True
 
     def init(self):
         from kubernetes import config, client
-        config.load_incluster_config()
+        try:
+            config.load_incluster_config()
+        except Exception as e:
+            self._incluster = False
+            return
+
         configuration = client.Configuration()
 
         class MyApiClient(client.ApiClient):
@@ -101,6 +107,8 @@ class AsyncMetricsPost(object):
         """
         if not self._initialized:
             self.init()
+            if not self._incluster:
+                return
 
         command = [
             "/usr/bin/curl",
@@ -115,7 +123,7 @@ async_post = AsyncMetricsPost()
 
 
 def post_metrics(payload, rank):
-    if rank == 0:
+    if rank == 0 and async_post._incluster:
         async_post.post(payload)
 
 

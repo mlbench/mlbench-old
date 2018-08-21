@@ -134,7 +134,7 @@ def do_validate(model, optimizer, criterion, metrics, context):
 
 
 class TrainValidation(object):
-    def __call__(self, model, optimizer, criterion, metrics, context):
+    def __call__(self, model, optimizer, criterion, metrics, scheduler, context):
         # define some parameters for training.
         log.info('There are {} epochs, {} mini-batches per epoch (batch size:{}).'
                  .format(context.controlflow.num_epochs,
@@ -143,9 +143,13 @@ class TrainValidation(object):
         dist.barrier()
 
         # train the model and evaluate the model per args.eval_freq
-        for epoch in range(context.controlflow.start_epoch,
-                           context.controlflow.num_epochs):
-            log.info("Current epoch : {}".format(epoch), 0)
+        for epoch in range(context.controlflow.start_epoch, context.controlflow.num_epochs):
             context.runtime.current_epoch = epoch
+
+            # schedule learning rates
+            scheduler.step()
+
+            log.info("Current epoch : {} : lr={}".format(epoch, scheduler.get_lr()), 0)
+
             train_epoch(model, optimizer, criterion, context)
             do_validate(model, optimizer, criterion, metrics, context)

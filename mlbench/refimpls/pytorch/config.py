@@ -63,7 +63,7 @@ def _init_context(args):
 
     default_optimizer = {
         "name": "sgd",
-        "lr": 0.01,
+        "lr_init": 0.1,
         "momentum": 0.9,
         'criterion': 'CrossEntropyLoss'
     }

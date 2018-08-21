@@ -86,7 +86,7 @@ def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_si
 
     data_loader = torch.utils.data.DataLoader(
         data_to_load, batch_size=batch_size, shuffle=data_type_label,
-        num_workers=num_workers, pin_memory=True, drop_last=False)
+        num_workers=num_workers, pin_memory=False, drop_last=False)
 
     return AttrDict({'loader': data_loader,
                      'num_samples_per_device': num_samples_per_device,
