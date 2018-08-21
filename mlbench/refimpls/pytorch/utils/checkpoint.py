@@ -63,7 +63,7 @@ def save(state, is_best, context):
         raise NotImplementedError
 
 
-def resume(context, model, optimizer):
+def resume(context, model, optimizer, scheduler):
     if context.meta.resume:
         # reload model from the latest checkpoint.
         checkpoint_index = ''
@@ -80,10 +80,10 @@ def resume(context, model, optimizer):
             # restore some run-time info.
             context.controlflow.start_epoch = checkpoint['current_epoch'] + 1
 
-            # restore model.
             model.load_state_dict(checkpoint['state_dict'])
-            # restore optimizer.
             optimizer.load_state_dict(checkpoint['optimizer'])
+            scheduler.load_state_dict(checkpoint['scheduler'])
+
             # logging.
             log.info("Loaded checkpoint '{}' (epoch {})".format(
                 context.meta.resume, checkpoint['current_epoch']))

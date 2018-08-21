@@ -91,7 +91,7 @@ def validate(model, optimizer, criterion, metrics, context):
     return top1_avg, top5_avg
 
 
-def do_validate(model, optimizer, criterion, metrics, context):
+def do_validate(model, optimizer, criterion, metrics, scheduler, context):
     """Evaluate the model on the test dataset and save to the checkpoint."""
     # evaluate the model.
     val_prec1, val_prec5 = validate(model, optimizer, criterion, metrics, context)
@@ -116,6 +116,7 @@ def do_validate(model, optimizer, criterion, metrics, context):
         'current_epoch': context.runtime.current_epoch,
         'state_dict': model.state_dict(),
         'optimizer': optimizer.state_dict(),
+        'scheduler': scheduler.state_dict(),
         'best_prec1': context.runtime.best_prec1,
     }, is_best, context)
 
@@ -151,4 +152,4 @@ class TrainValidation(object):
             log.info("Current epoch : {} : lr={}".format(epoch, scheduler.get_lr()), 0)
 
             train_epoch(model, optimizer, criterion, context)
-            do_validate(model, optimizer, criterion, metrics, context)
+            do_validate(model, optimizer, criterion, metrics, scheduler, context)

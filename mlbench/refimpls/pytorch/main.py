@@ -61,7 +61,7 @@ def main():
 
     # Resume training of `run_id` if possible
     if context.meta.resume:
-        context = checkpoint.resume(context, model, optimizer)
+        context = checkpoint.resume(context, model, optimizer, scheduler)
 
     # Print configuration information to terminal.
     log.configuration_information(context)
