@@ -22,10 +22,36 @@
           </button>
         </div>
         <div class="modal-body">
-            <form >
+            <form class="needs-validation" novalidate>
                 <div class="form-group">
                     <label for="run-name" class="col-form-label">Name:</label>
-                    <input type="text" class="form-control" id="run-name">
+                    <input type="text" class="form-control" id="run-name" required>
+                    <div class="invalid-feedback">
+                        Please enter a name for this run.
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="num-workers" class="col-form-label">Number of Workers:</label><br>
+                    <input id="num-workers" class="form-control" data-slider-id='ex1Slider' type="text" data-slider-min="1" data-slider-max="{{max_workers}}" data-slider-step="1" data-slider-value="{{max_workers}}"/>
+                    <span id="num-workers-val">{{max_workers}}</span>
+                </div>
+                <div class="form-group">
+                    <label for="num-cpus" class="col-form-label">Number of CPUs:</label><br>
+                    <input id="num-cpus" class="form-control" data-slider-id='ex2Slider' type="text" data-slider-min="1" data-slider-max="{{max_cpus}}" data-slider-step="1" data-slider-value="{{max_cpus}}"/>
+                    <span id="num-cpus-val">{{max_cpus}}</span>
+                </div>
+                <div class="form-group" style="display:none;">
+                    <label for="max-memory" class="col-form-label">Memory (Mb):</label><br>
+                    <input id="max-memory" class="form-control" data-slider-id='ex3Slider' type="text" data-slider-min="10" data-slider-max="{{max_memory}}" data-slider-step="1" data-slider-value="{{max_memory}}"/>
+                    <span id="max-memory-val">{{max_memory}}</span>
+                </div>
+                <div class="form-group">
+                    <label for="max-bandwidth" class="col-form-label">Bandwidth (mbit/s):</label><br>
+                    <input id="max-bandwidth" class="form-control" data-slider-id='ex4Slider' type="text" data-slider-min="1" data-slider-max="{{max_bandwidth}}" data-slider-step="1" data-slider-value="{{max_bandwidth}}"
+                        data-slider-ticks="[1, 10 {% if max_bandwidth >= 100 %}, 100 {% if max_bandwidth >= 1000 %}, 1000 {% if max_bandwidth >= 10000 %}, 10000{% endif %}{% endif %}{% endif %}]"
+                        data-slider-ticks-labels='["1", "10" {% if max_bandwidth >= 100 %}, "100" {% if max_bandwidth >= 1000 %}, "1000" {% if max_bandwidth >= 10000 %}, "10000"{% endif %}{% endif %}{% endif %}]'
+                        data-slider-ticks-snap-bounds="30"/>
+                    <span id="max-bandwidth-val">{{max_bandwidth}}</span>
                 </div>
             </form>
         </div>
@@ -41,16 +67,53 @@
 <script type="text/javascript">
     $(document).ready(function () {
         $('#add-run-modal').on('show.bs.modal', function (e) {
-            $('#run-name').val("Run " + new Date().toString());
+            //$('#run-name').val("Run " + new Date().toString());
         });
 
+        // sliders
+        $("#num-workers").slider({});
+        $("#num-workers").on("slide", function(slideEvt) {
+            $("#num-workers-val").text(slideEvt.value);
+        });
+
+        $("#num-cpus").slider({});
+        $("#num-cpus").on("slide", function(slideEvt) {
+            $("#num-cpus-val").text(slideEvt.value);
+        });
+
+        $("#max-memory").slider({});
+        $("#max-memory").on("slide", function(slideEvt) {
+            $("#max-memory-val").text(slideEvt.value);
+        });
+
+        $("#max-bandwidth").slider({
+            min: 1,
+            max: 1000,
+            scale: 'logarithmic',
+            step: 1
+        });
+        $("#max-bandwidth").on("slide", function(slideEvt) {
+            $("#max-bandwidth-val").text(slideEvt.value);
+        });
+
+
         $('#add-run-button').click(function(){
-            if(!$('#run-name').val()){
+            var form = $(".needs-validation")[0];
+            if (form.checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+                form.classList.add('was-validated');
                 return;
             }
 
             $.post( "api/runs/",
-                {name: $('#run-name').val()},
+                {
+                    name: $('#run-name').val(),
+                    num_workers: $('#num-workers').val(),
+                    num_cpus: $('#num-cpus').val(),
+                    max_memory: $('#max-memory').val(),
+                    max_bandwidth: $('#max-bandwidth').val(),
+                },
                 function( data ) {
                     location.reload();
                 });

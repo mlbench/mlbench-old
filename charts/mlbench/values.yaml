@@ -62,3 +62,8 @@ worker:
       -----END RSA PRIVATE KEY-----
     id_rsa_pub: |
       ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCj03zzBJxEKd9MTkcxXXJ0+r8KW/WBJG7rz9Dc0cMkPXsvBPY8NalhnVDzwkoja26+Niy59/7OLXLMcK7avQ20NNpjaIFTgQDIB/q8h/eq0cIxnK07DdEa0yDprYJgG0OICjCbgYjARGu87MqeuLhhnvAezYkT6lqI9Tj85zg7YFsoXvL+i6BZWC5uezPal99BPOekpzFEvP009yj7JyzNuJYP5KSxf4U/lMHODo0ZXY46CmuJd4d2Cgh6EddqWbjRPDRIwXso8lnCAxnOfAtJQASDQPhVWVH7CbDRJBNNPzB8J7tVDCFvyH0GlWKgQdSxWJ3jdxnuYjQvqPNBt3BF
+
+limits:
+  cpu:
+  maximumWorkers:
+  bandwidth:

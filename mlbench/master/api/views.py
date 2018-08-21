@@ -242,8 +242,13 @@ class ModelRunView(ViewSet):
                 'message': 'There is already an active run'
             }, status=status.HTTP_409_CONFLICT)
 
+        cpu = "{}m".format(float(d['num_cpus']) * 1000)
+
         run = ModelRun(
-            name=d['name']
+            name=d['name'],
+            num_workers=d['num_workers'],
+            cpu_limit=cpu,
+            network_bandwidth_limit=d['max_bandwidth']
         )
 
         run.start()
