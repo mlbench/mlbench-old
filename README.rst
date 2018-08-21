@@ -29,7 +29,7 @@ Features
 * We provide **precisely defined tasks** and datasets to have a fair and precise comparison of all algorithms and frameworks.
 * Independently of all solver implementations, we provide universal **evaluation code** allowing to compare the result metrics of different solvers and frameworks.
 * Our benchmark code is easy to run on the **public cloud**.
-* Here is an older [design doc](https://docs.google.com/document/d/1jM4zXRDezEJmIKwoDOKNlGvuNNJk5_FxcBrn1mfYp0E/edit#) for this project.
+* Here is an `older design doc`_ for this project.
 
 TODO
 ----
@@ -38,6 +38,8 @@ Everything
 
 Community
 ---------
+
+Project website: https://mlbench.github.io/
 
 About us: See `Authors`_
 
@@ -52,5 +54,6 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+.. _`older design doc`: https://docs.google.com/document/d/1jM4zXRDezEJmIKwoDOKNlGvuNNJk5_FxcBrn1mfYp0E
 
 .. _Authors: AUTHORS.rst
