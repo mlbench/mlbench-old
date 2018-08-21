@@ -1,3 +1,4 @@
+{{ if .Values.weave.enabled }}
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
@@ -109,3 +110,4 @@ spec:
             type: FileOrCreate
   updateStrategy:
     type: RollingUpdate
+{{ end }}
