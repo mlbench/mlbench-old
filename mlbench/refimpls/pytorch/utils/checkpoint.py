@@ -45,15 +45,22 @@ def determine_restore_ckpt_path(rank, checkpoint_root, run_id):
 
 
 def save(state, is_best, context):
+    if context.meta.save is None:
+        return
+
     dirname = context.meta.ckpt_run_dir
     filename = get_ckpt_id(context.runtime.current_epoch, context.meta.rank)
-
     checkpoint_path = os.path.join(dirname, filename)
     best_model_path = os.path.join(dirname, 'model_best.pth.tar')
-    torch.save(state, checkpoint_path)
 
-    if is_best:
-        shutil.copyfile(checkpoint_path, best_model_path)
+    if context.meta.save == 'all':
+        torch.save(state, checkpoint_path)
+        if is_best:
+            shutil.copyfile(checkpoint_path, best_model_path)
+    elif context.meta.save == 'best':
+        torch.save(state, best_model_path)
+    else:
+        raise NotImplementedError
 
 
 def resume(context, model, optimizer):

@@ -111,14 +111,13 @@ def do_validate(model, optimizer, criterion, metrics, context):
         context.runtime.best_epoch[-1] if len(context.runtime.best_epoch) != 0 else '',
         context.runtime.current_epoch, context.runtime.best_prec1), 0)
 
-    if context.meta.save:
-        checkpoint.save({
-            'context': context,
-            'current_epoch': context.runtime.current_epoch,
-            'state_dict': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-            'best_prec1': context.runtime.best_prec1,
-        }, is_best, context)
+    checkpoint.save({
+        'context': context,
+        'current_epoch': context.runtime.current_epoch,
+        'state_dict': model.state_dict(),
+        'optimizer': optimizer.state_dict(),
+        'best_prec1': context.runtime.best_prec1,
+    }, is_best, context)
 
     log.post_metrics({
         "run_id": context.meta.run_id,

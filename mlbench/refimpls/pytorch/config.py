@@ -58,14 +58,17 @@ def _init_context(args):
         'metrics': 'accuracy',
         'run_id': args.run_id,
         'resume': args.resume,
-        'save': True
+        # save `all` or save `best` or None
+        'save': 'all'
     }
 
     default_optimizer = {
         "name": "sgd",
         "lr_init": 0.1,
         "momentum": 0.9,
-        'criterion': 'CrossEntropyLoss'
+        'criterion': 'CrossEntropyLoss',
+        'nesterov': True,
+        'weight_decay': 5e-4,
     }
 
     default_controlflow = {
@@ -163,11 +166,6 @@ def config_pytorch(meta):
     if meta.use_cuda:
         torch.backends.cudnn.enabled = True
         torch.backends.cudnn.benchmark = True
-
-    log.todo("TODO: Add graph into meta and determine device.", 0)
-
-    # set_local_stat(args)
-    log.todo("TODO: Add set_local_stat.", 0)
 
 
 def config_path(context):
