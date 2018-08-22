@@ -1,5 +1,7 @@
-from config import initialize
+import argparse
+import re
 
+from config import initialize
 from utils.parser import MainParser
 from datasets.load_dataset import create_dataset
 from models import get_model
@@ -11,11 +13,33 @@ from controlflow.controlflow import get_controlflow
 from utils import checkpoint
 
 
-def main():
-    parser = MainParser()
-    options = parser.parse_args()
-    options = initialize(options)
+def get_options():
+    parser = argparse.ArgumentParser(description="""""")
+    parser.add_argument('--run_id', type=str, default=10, help='')
+    parser.add_argument("--experiment", type=str, default='test_MPI',
+                        help="[default: %(default)s] add experiment.")
+    parser.add_argument("--config-file", type=str, help="")
+    args = parser.parse_args()
 
+    with open(args.config_file, 'r') as f:
+        arguments = ' '.join(f.readlines())
+        config_list = re.split('\s+', arguments)
+
+    config_list += ['--run_id', str(args.run_id)]
+
+    parser = MainParser()
+    options = parser.parse_args(config_list)
+
+    for k, v in options.__dict__.items():
+        print(k, v)
+
+    return options
+
+
+def main():
+    options = get_options()
+
+    options = initialize(options)
     options = create_dataset(options, train=True)
     options = create_dataset(options, train=False)
 

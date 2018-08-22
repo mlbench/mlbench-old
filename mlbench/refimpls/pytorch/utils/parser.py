@@ -20,7 +20,7 @@ class BaseParser(argparse.ArgumentParser):
         super(BaseParser, self).__init__(add_help=add_help)
 
         if use_cuda:
-            self.add_argument('--use_cuda', action='store_true', default=True,
+            self.add_argument('--use_cuda', action='store_true', default=False,
                               help="[default: %(default)s] use cuda or not.")
 
         if communication_backend:

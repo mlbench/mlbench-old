@@ -126,10 +126,11 @@ class TrainValidation(object):
                          options.batch_size), 0)
 
         # train the model and evaluate the model per args.eval_freq
-        dist.barrier()
-        max_epochs = min(options.train_epochs, options.max_train_steps)
+        max_epochs = min(options.train_epochs, options.max_train_steps)\
+            if options.max_train_steps else options.train_epochs
         start_epoch = options.runtime['current_epoch'] if options.resume else 0
 
+        dist.barrier()
         with Timeit() as timeit:
             for epoch in range(start_epoch, max_epochs):
                 options.runtime['current_epoch'] = epoch
