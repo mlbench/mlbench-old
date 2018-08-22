@@ -1,0 +1,1 @@
+--debug --checkpoint never --train_epochs 3 --dataset_name cifar10 --batch_size 128 --model_name resnet18 

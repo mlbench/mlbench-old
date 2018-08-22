@@ -117,7 +117,7 @@ class DatasetParser(argparse.ArgumentParser):
                               "If the given dataset name, its directory is root_data_dir/dataset_name.")
 
         if name:
-            self.add_argument("--name", type=str, default='mnist', metavar="<DN>",
+            self.add_argument("--dataset_name", type=str, default='mnist', metavar="<DN>",
                               help="[default: %(default)s] the dataset name for training.")
 
         if reshuffle_per_epoch:
@@ -167,7 +167,7 @@ class ModelParser(argparse.ArgumentParser):
 
 
 class ControlflowParser(argparse.ArgumentParser):
-    def __init__(self, add_help=True, train_epochs=True):
+    def __init__(self, add_help=True, train_epochs=True, epochs_between_evals=True):
         super(ControlflowParser, self).__init__(add_help=add_help)
 
         if train_epochs:
@@ -178,3 +178,16 @@ class ControlflowParser(argparse.ArgumentParser):
             self.add_argument("--epochs_between_evals", type=int, default=1, metavar="<EBE>",
                               help="[default: %(default)s] The number of training epochs to run "
                               "between evaluations.")
+
+
+class MainParser(argparse.ArgumentParser):
+    """An example of main parser."""
+
+    def __init__(self):
+        super(MainParser, self).__init__(parents=[
+            BaseParser(add_help=False),
+            PerformanceParser(add_help=False),
+            DatasetParser(add_help=False),
+            ModelParser(add_help=False),
+            ControlflowParser(add_help=False)
+        ])
