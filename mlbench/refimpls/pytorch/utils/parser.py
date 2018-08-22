@@ -100,3 +100,26 @@ class PerformanceParser(argparse.ArgumentParser):
                               "used for calculations. Variables may be cast to a higher"
                               "precision on a case-by-case basis for numerical stability.",
                               metavar="<DT>")
+
+
+class DatasetParser(argparse.ArgumentParser):
+    def __init__(self, add_help=True, batch_size=True, root_data_dir=True, name=True,
+                 reshuffle_per_epoch=True):
+        super(DatasetParser, self).__init__(add_help=add_help)
+
+        if batch_size:
+            self.add_argument("--batch_size", type=int, default=32, metavar="<BS>",
+                              help="[default: %(default)s] default batch size for training and evaluation.")
+
+        if root_data_dir:
+            self.add_argument("--root_data_dir", type=str, default="/datasets/torch", metavar="<DD>",
+                              help="[default: %(default)s] root directory to all datasets."
+                              "If the given dataset name, its directory is root_data_dir/dataset_name.")
+
+        if name:
+            self.add_argument("--name", type=str, default='mnist', metavar="<DN>",
+                              help="[default: %(default)s] the dataset name for training.")
+
+        if reshuffle_per_epoch:
+            self.add_argument("--reshuffle_per_epoch", action='store_true', default=True,
+                              help="[default: %(default)s] reshuffle the dataset per epoch.")
