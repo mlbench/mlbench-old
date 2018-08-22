@@ -3,6 +3,13 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import torch
+
+DTYPE_MAP = {
+    "fp16": torch.float16,
+    "fp32": torch.float32,
+    "fp64": torch.float64,
+}
 
 
 class BaseParser(argparse.ArgumentParser):
@@ -57,3 +64,39 @@ class BaseParser(argparse.ArgumentParser):
         if debug:
             self.add_argument('--debug', action='store_true', default=False,
                               help="[default: %(default)s] turn on debug mode.")
+
+
+class PerformanceParser(argparse.ArgumentParser):
+    def __init__(self, add_help=True, num_parallel_workers=True, use_synthetic_data=True,
+                 max_train_steps=True, dtype=True):
+        super(PerformanceParser, self).__init__(add_help=add_help)
+
+        if num_parallel_workers:
+            self.add_argument("--num_parallel_workers", "-npw", type=int, default=4,
+                              help="[default: %(default)s] The number of records that are "
+                              "processed in parallel  during input processing. This can be "
+                              "optimized per data set but for generally homogeneous data "
+                              "sets, should be approximately the number of available CPU "
+                              "cores.",
+                              metavar="<NPW>")
+
+        if use_synthetic_data:
+            self.add_argument("--use_synthetic_data", action="store_true", default=False,
+                              help="[default: %(default)s] If set, use fake data (zeroes) instead of a real dataset. "
+                              "This mode is useful for performance debugging, as it removes "
+                              "input processing steps, but will not learn anything.")
+
+        if max_train_steps:
+            self.add_argument("--max_train_steps", type=int, default=None, metavar="<MTS>",
+                              help="[default: %(default)s] The model will stop training if the "
+                                   "global_step reaches this value. If not set, training will run"
+                                   "until the specified number of epochs have run as usual. It is"
+                                   "generally recommended to set --train_epochs=1 when using this"
+                                   "flag.")
+
+        if dtype:
+            self.add_argument("--dtype", type=str, default="fp32", choices=list(DTYPE_MAP.keys()),
+                              help="[default: %(default)s] {%(choices)s} The PyTorch datatype "
+                              "used for calculations. Variables may be cast to a higher"
+                              "precision on a case-by-case basis for numerical stability.",
+                              metavar="<DT>")
