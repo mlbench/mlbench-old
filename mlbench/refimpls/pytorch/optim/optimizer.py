@@ -34,6 +34,7 @@ def get_optimizer(options, model):
                               momentum=options.momentum,
                               weight_decay=options.weight_decay,
                               nesterov=options.nesterov)
+        print(optimizer)
     else:
         raise NotImplementedError("The optimizer `{}` specified by `options` is not implemented."
                                   .format(options.opt_name))

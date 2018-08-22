@@ -14,7 +14,4 @@ def get_model(options):
     else:
         raise NotImplementedError
 
-    if options.use_cuda:
-        model.cuda()
-
     return model

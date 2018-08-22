@@ -134,46 +134,43 @@ def todo(content, who='all'):
         logger.warning("{}".format(content))
 
 
-def configuration_information(context):
+def configuration_information(options):
     centering("Configuration Information", 0)
-    context.log('meta')
-    context.log('optimizer')
-    context.log('model')
-    context.log('dataset')
-    context.log('controlflow')
+    options.log('meta')
+    options.log('optimizer')
+    options.log('model')
+    options.log('dataset')
+    options.log('controlflow')
     centering("START TRAINING", 0)
 
 
-def log_train(context, batch_idx, loss):
+def log_train(options, batch_idx, loss):
     debug("Training Batch {:5}: loss={:.3f}".format(batch_idx, loss))
     post_metrics({
-        "run_id": context.meta.run_id,
-        "name": "train loss @ rank{}".format(context.meta.rank),
+        "run_id": options.run_id,
+        "name": "train loss @ rank{}".format(options.rank),
         "value": loss,
         "date": str(datetime.datetime.now()),
         "cumulative": False,
         "metadata":
         "Training loss at rank {}, epoch {} and batch {}".format(
-            context.meta.rank, context.runtime.current_epoch,
-            batch_idx
-        )
-    }, context.meta.rank)
+            options.rank, options.runtime['current_epoch'], batch_idx)
+    }, options.rank)
 
 
-def log_val(context, val_prec1):
-    log.info('best accuracy for rank {}:(best epoch {}, current epoch {}): {:.3f} %'.format(
-        context.meta.rank,
-        context.runtime.best_epoch[-1] if len(context.runtime.best_epoch) != 0 else '',
-        context.runtime.current_epoch, context.runtime.best_prec1), 0)
+def log_val(options, val_prec1):
+    info('best accuracy for rank {}:(best epoch {}, current epoch {}): {:.3f} %'.format(
+        options.rank,
+        options.runtime['best_epoch'],
+        options.runtime['current_epoch'], options.runtime['best_prec1']), 0)
 
-    log.post_metrics({
-        "run_id": context.meta.run_id,
+    post_metrics({
+        "run_id": options.run_id,
         "name": "Prec@1",
         "value": "{:.3f}".format(val_prec1),
         "date": str(datetime.datetime.now()),
         "cumulative": False,
         "metadata":
         "Validation Prec1 at epoch {}".format(
-            context.runtime.current_epoch
-        )
-    }, context.meta.rank)
+            options.runtime['current_epoch'])
+    }, options.rank)

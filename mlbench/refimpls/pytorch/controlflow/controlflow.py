@@ -1,6 +1,7 @@
 import time
 import torch
 import torch.distributed as dist
+import itertools
 
 from utils import log
 from utils import checkpoint
@@ -24,7 +25,7 @@ def aggregate_gradients(model, world_size):
         param.grad.data /= world_size
 
 
-def train_epoch(model, optimizer, criterion, context):
+def train_epoch(model, optimizer, criterion, options):
     """Train model for one epoch of data.
 
     Parameters
@@ -35,26 +36,29 @@ def train_epoch(model, optimizer, criterion, context):
         an optimizer for the model.
     criterion : {torch.nn.modules.loss}
         defined loss function.
-    context : {Context}
+    options : {Context}
         global configurations.
     """
     # switch to train mode
     model.train()
 
-    for batch_idx, (data, target) in enumerate(context.dataset.train_.loader):
-        if context.meta.use_cuda:
+    if options.max_batch_per_epoch is None:
+        counter = itertools.count(0)
+    else:
+        counter = range(options.max_batch_per_epoch)
+
+    for batch_idx, (data, target) in zip(counter, options.train_loader):
+        if options.use_cuda:
             data, target = data.cuda(), target.cuda()
 
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
         loss.backward()
-        aggregate_gradients(model, context.meta.world_size)
+        aggregate_gradients(model, options.world_size)
         optimizer.step()
 
-        log.log_train(context, batch_idx, loss.item())
-        if context.meta.debug and batch_idx >= 10:
-            break
+        log.log_train(options, batch_idx, loss.item())
 
 
 def aggregate_accuracy(top1, top5):
@@ -67,14 +71,20 @@ def aggregate_accuracy(top1, top5):
     return top1_avg, top5_avg
 
 
-def validate(model, optimizer, criterion, metrics, context):
+def validate(model, optimizer, criterion, metrics, options):
     model.eval()
 
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
-    for batch_idx, (data, target) in enumerate(context.dataset.val_.loader):
-        if context.meta.use_cuda:
+
+    if options.max_batch_per_epoch is None:
+        counter = itertools.count(0)
+    else:
+        counter = range(options.max_batch_per_epoch)
+
+    for batch_idx, (data, target) in zip(counter, options.val_loader):
+        if options.use_cuda:
             data, target = data.cuda(), target.cuda()
 
         with torch.no_grad():
@@ -91,46 +101,44 @@ def validate(model, optimizer, criterion, metrics, context):
             top1.update(prec1[0], data.size(0))
             top5.update(prec5[0], data.size(0))
 
-        if context.meta.debug and batch_idx >= 10:
-            break
-
     top1_avg, top5_avg = aggregate_accuracy(top1, top5)
     log.info('Prec@1: {:.3f} Prec@5: {:.3f}'.format(top1_avg, top5_avg), 0)
     return top1_avg, top5_avg
 
 
-def do_validate(model, optimizer, criterion, metrics, scheduler, context):
+def do_validate(model, optimizer, criterion, metrics, scheduler, options):
     """Evaluate the model on the test dataset and save to the checkpoint."""
     # evaluate the model.
-    val_prec1, val_prec5 = validate(model, optimizer, criterion, metrics, context)
+    val_prec1, val_prec5 = validate(model, optimizer, criterion, metrics, options)
 
     # remember best prec@1 and save checkpoint.
-    if hasattr(context.runtime, 'best_prec1'):
-        is_best = val_prec1 > context.runtime.best_prec1
+    if 'best_prec1' in options.runtime:
+        is_best = val_prec1 > options.runtime['best_prec1']
     else:
         is_best = True
 
     if is_best:
-        context.runtime.best_prec1 = val_prec1
-        context.runtime.best_epoch += [context.runtime.current_epoch]
+        options.runtime['best_prec1'] = val_prec1.item()
+        options.runtime['best_epoch'] = options.runtime['current_epoch']
 
-    log.log_val()
+    log.log_val(options, val_prec1)
 
-    checkpoint.save(context, model, optimizer, scheduler, is_best)
+    checkpoint.save(options, model, optimizer, scheduler, is_best)
 
 
 class TrainValidation(object):
-    def __call__(self, model, optimizer, criterion, metrics, scheduler, context):
+    def __call__(self, model, optimizer, criterion, metrics, scheduler, options):
         # define some parameters for training.
         log.info('There are {} epochs, {} mini-batches per epoch (batch size:{}).'
-                 .format(context.controlflow.num_epochs,
-                         context.dataset.train_.num_batches,
-                         context.dataset.batch_size), 0)
-        dist.barrier()
+                 .format(options.train_epochs, options.train_num_batches,
+                         options.batch_size), 0)
 
         # train the model and evaluate the model per args.eval_freq
-        for epoch in range(context.controlflow.start_epoch, context.controlflow.num_epochs):
-            context.runtime.current_epoch = epoch
+        dist.barrier()
+        max_epochs = min(options.train_epochs, options.max_train_steps)
+        start_epoch = options.runtime['current_epoch'] if options.resume else 0
+        for epoch in range(start_epoch, max_epochs):
+            options.runtime['current_epoch'] = epoch
 
             # schedule learning rates
             scheduler.step()
@@ -138,5 +146,29 @@ class TrainValidation(object):
             # Per epoch information.
             log.info("Current epoch : {} : lr={}".format(epoch, scheduler.get_lr()), 0)
 
-            train_epoch(model, optimizer, criterion, context)
-            do_validate(model, optimizer, criterion, metrics, scheduler, context)
+            train_epoch(model, optimizer, criterion, options)
+            do_validate(model, optimizer, criterion, metrics, scheduler, options)
+
+
+def get_controlflow(options):
+    """Get optimizer and scheduler for the given configuration.
+
+    Using the configurations in the `options`, create an optimizer associated with
+    parameters of `model`. A learning rate for optimizer is created as well.
+
+    Parameters
+    ----------
+    options : {argparse.Namespace}
+         A options object containing all configurations.
+
+    Returns
+    -------
+    controlflow
+        A controlflow object.
+
+    Raises
+    ------
+    NotImplementedError
+        The controlflow specified by `options` is not implemented.
+    """
+    return TrainValidation()

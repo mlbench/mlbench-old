@@ -40,63 +40,65 @@ def determine_restore_ckpt_path(rank, checkpoint_root, run_id):
         path = os.path.join(checkpoint_root, found_ckpts, get_ckpt_id(epoch, rank))
         return path
     else:
-        raise FileNotFoundError(found_ckpts)
+        raise FileNotFoundError("Found {} ; Expect {}".format(found_ckpts, ))
 
 
-def save(context, model, optimizer, scheduler, is_best):
-    if context.meta.save is None:
+def save(options, model, optimizer, scheduler, is_best):
+    if options.checkpoint == 'never':
         return
 
     state = {
-        'context_runtime': context.runtime,
-        'current_epoch': context.runtime.current_epoch,
+        'options_runtime': options.runtime,
         'state_dict': model.state_dict(),
         'optimizer': optimizer.state_dict(),
         'scheduler': scheduler.state_dict(),
-        'best_prec1': context.runtime.best_prec1,
+        'best_prec1': options.runtime['best_prec1'],
     }
 
-    dirname = context.meta.ckpt_run_dir
-    filename = get_ckpt_id(context.runtime.current_epoch, context.meta.rank)
+    dirname = options.ckpt_run_dir
+    filename = get_ckpt_id(options.runtime['current_epoch'], options.rank)
     checkpoint_path = os.path.join(dirname, filename)
     best_model_path = os.path.join(dirname, 'model_best.pth.tar')
 
-    if context.meta.save == 'all':
+    if options.checkpoint == 'all':
         torch.save(state, checkpoint_path)
         if is_best:
             shutil.copyfile(checkpoint_path, best_model_path)
-    elif context.meta.save == 'best':
+    elif options.checkpoint == 'best':
         torch.save(state, best_model_path)
     else:
         raise NotImplementedError
 
 
-def resume(context, model, optimizer, scheduler):
-    """Recover the state of context, model, optimizer and scheduler."""
-    if context.meta.resume:
+def resume(options, model, optimizer, scheduler):
+    checkpoint_index = ''
+    checkpoint_path = determine_restore_ckpt_path(
+        options.rank, options.checkpoint_root, options.run_id)
+
+    log.info('Try to load previous model from the path:{}'.format(checkpoint_path))
+    if os.path.isfile(checkpoint_path):
+        # get checkpoint.
+        checkpoint = torch.load(checkpoint_path)
+        # restore some run-time info.
+
+        model.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        scheduler.load_state_dict(checkpoint['scheduler'])
+
+        # logging.
+        log.info("Loaded checkpoint '{}' (epoch {})".format(
+            checkpoint_path, checkpoint['options_runtime']['current_epoch']))
+        checkpoint['options_runtime']['current_epoch'] = checkpoint['options_runtime']['current_epoch'] + 1
+    else:
+        raise FileNotFoundError("No checkpoint found at '{}'".format(options.resume))
+    return checkpoint['options_runtime']
+
+
+def maybe_resume(options, model, optimizer, scheduler):
+    """Recover the state of options, model, optimizer and scheduler."""
+    if options.resume:
         # reload model from the latest checkpoint.
-        checkpoint_index = ''
-        checkpoint_path = determine_restore_ckpt_path(
-            context.meta.rank, context.meta.checkpoint_root, context.meta.run_id)
-
-        log.info('Try to load previous model from the path:{}'.format(checkpoint_path))
-        if os.path.isfile(checkpoint_path):
-            # get checkpoint.
-            checkpoint = torch.load(checkpoint_path)
-
-            context.runtime = checkpoint['context_runtime']
-
-            # restore some run-time info.
-            context.controlflow.start_epoch = checkpoint['current_epoch'] + 1
-
-            model.load_state_dict(checkpoint['state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            scheduler.load_state_dict(checkpoint['scheduler'])
-
-            # logging.
-            log.info("Loaded checkpoint '{}' (epoch {})".format(
-                context.meta.resume, checkpoint['current_epoch']))
-        else:
-            raise FileNotFoundError("No checkpoint found at '{}'".format(context.meta.resume))
-
-    return context
+        options.runtime = resume(options, model, optimizer, scheduler)
+    else:
+        options.runtime = {}
+    return options

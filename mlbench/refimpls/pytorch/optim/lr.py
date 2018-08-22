@@ -1,35 +1,21 @@
 # -*- coding: utf-8 -*-
 """Scheduling Learning Rates."""
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim.lr_scheduler import LambdaLR, MultiStepLR
 
 
-def linear_cycle(optimizer, lr_init=0.1, epochs=10, low_lr=0.005, extra=5):
-
+def const(optimizer):
     def f(curr_epoch):
-        if curr_epoch < epochs / 2:
-            return 2 * lr_init * (1 - float(epochs - curr_epoch) / epochs)
-        elif curr_epoch <= epochs:
-            return low_lr + 2 * lr_init * float(epochs - curr_epoch) / epochs
-        elif curr_epoch <= epochs + extra:
-            return low_lr * float(extra - (curr_epoch - epochs)) / extra
-        else:
-            return low_lr / 10
-
-    return LambdaLR(optimizer, lr_lambda=[f])
-
-
-def const(optimizer, lr_init):
-    def f(curr_epoch):
-        return lr_init
+        return 1
     return LambdaLR(optimizer, lr_lambda=[f])
 
 
 def get_scheduler(options, optimizer):
     if options.lr_scheduler == 'const':
-        return const(optimizer, options.lr)
-    elif options.lr_scheduler == 'linear_cycle':
-        return linear_cycle(optimizer, lr_init=options.lr,
-                            epochs=options.train_epochs, low_lr=0.005, extra=5)
+        return const(optimizer)
+    elif options.lr_scheduler == 'MultiStepLR':
+        half = options.train_epochs // 2
+        two_thirds = int(options.train_epochs * 2 / 3)
+        return MultiStepLR(optimizer, milestones=[half, two_thirds], gamma=0.1)
     else:
         raise NotImplementedError
 

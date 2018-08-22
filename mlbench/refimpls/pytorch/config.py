@@ -17,6 +17,7 @@ logger = logging.getLogger('mlbench')
 
 def config_logging(options):
     """Setup logging modules."""
+
     level = options.logging_level
     logging_file = options.logging_file
 
@@ -26,6 +27,9 @@ def config_logging(options):
             return True
 
     logger = logging.getLogger('mlbench')
+    if len(logger.handlers) >= 2:
+        return
+
     logger.setLevel(level)
     logger.addFilter(RankFilter())
 

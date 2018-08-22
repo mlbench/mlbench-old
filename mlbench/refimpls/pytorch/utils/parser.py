@@ -32,7 +32,7 @@ class BaseParser(argparse.ArgumentParser):
                               help="the run_id for the experiment.")
 
         if resume:
-            self.add_argument('--resume', action='store_true', default=True,
+            self.add_argument('--resume', action='store_true', default=False,
                               help="[default: %(default)s] resume experiment specified by run_id.")
 
         if seed:
@@ -68,7 +68,7 @@ class BaseParser(argparse.ArgumentParser):
 
 class PerformanceParser(argparse.ArgumentParser):
     def __init__(self, add_help=True, num_parallel_workers=True, use_synthetic_data=True,
-                 max_train_steps=True, dtype=True):
+                 max_train_steps=True, dtype=True, max_batch_per_epoch=True):
         super(PerformanceParser, self).__init__(add_help=add_help)
 
         if num_parallel_workers:
@@ -100,6 +100,10 @@ class PerformanceParser(argparse.ArgumentParser):
                               "used for calculations. Variables may be cast to a higher"
                               "precision on a case-by-case basis for numerical stability.",
                               metavar="<DT>")
+
+        if max_batch_per_epoch:
+            self.add_argument("--max_batch_per_epoch", type=int, default=None, metavar="<MBPE>",
+                              help="[default: %(default)s] maximum number of batchs in one peoch.")
 
 
 class DatasetParser(argparse.ArgumentParser):
@@ -175,7 +179,7 @@ class ModelParser(argparse.ArgumentParser):
                               help="[default: %(default)s] The metrics to measure training and evaluations.")
 
         if nesterov:
-            self.add_argument("--nesterov", action='store_true', default=True,
+            self.add_argument("--nesterov", action='store_true', default=False,
                               help="[default: %(default)s] apply nesterov in the optimizer.")
 
         if weight_decay:
