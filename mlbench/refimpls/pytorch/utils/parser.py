@@ -104,7 +104,7 @@ class PerformanceParser(argparse.ArgumentParser):
 
 class DatasetParser(argparse.ArgumentParser):
     def __init__(self, add_help=True, batch_size=True, root_data_dir=True, name=True,
-                 reshuffle_per_epoch=True):
+                 reshuffle_per_epoch=True, preprocessing_version=True, download_dataset=True):
         super(DatasetParser, self).__init__(add_help=add_help)
 
         if batch_size:
@@ -119,6 +119,14 @@ class DatasetParser(argparse.ArgumentParser):
         if name:
             self.add_argument("--dataset_name", type=str, default='mnist', metavar="<DN>",
                               help="[default: %(default)s] the dataset name for training.")
+
+        if download_dataset:
+            self.add_argument("--download_dataset", action="store_true", default=True,
+                              help="[default: %(default)s] allow download dataset.")
+
+        if preprocessing_version:
+            self.add_argument("--preprocessing_version", type=str, default="default", metavar="<PV>",
+                              help="[default: %(default)s] versions for preprocessing methods.")
 
         if reshuffle_per_epoch:
             self.add_argument("--reshuffle_per_epoch", action='store_true', default=True,
