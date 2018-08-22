@@ -18,6 +18,22 @@ def linear_cycle(optimizer, lr_init=0.1, epochs=10, low_lr=0.005, extra=5):
     return LambdaLR(optimizer, lr_lambda=[f])
 
 
+def const(optimizer, lr_init):
+    def f(curr_epoch):
+        return lr_init
+    return LambdaLR(optimizer, lr_lambda=[f])
+
+
+def get_scheduler(options, optimizer):
+    if options.lr_scheduler == 'const':
+        return const(optimizer, options.lr)
+    elif options.lr_scheduler == 'linear_cycle':
+        return linear_cycle(optimizer, lr_init=options.lr,
+                            epochs=options.train_epochs, low_lr=0.005, extra=5)
+    else:
+        raise NotImplementedError
+
+
 # def adjust_learning_rate(args, optimizer, init_lr=0.1):
 #     """Sets the learning rate to the initial LR decayed by the number of accessed sample.
 #     """

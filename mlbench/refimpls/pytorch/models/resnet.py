@@ -81,19 +81,19 @@ class ResNet18_CIFAR10(nn.Module):
         return x
 
 
-def resnet18(**kwargs):
+def resnet18_bkj(options):
     """Constructs a ResNet-18 model.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet18_CIFAR10([2, 2, 2, 2], **kwargs)
+    model = ResNet18_CIFAR10([2, 2, 2, 2], num_classes=options.num_classes)
     return model
 
 
-def resnet18_bkj(context):
-    """Constructs a ResNet-18 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet18_CIFAR10([2, 2, 2, 2], num_classes=context.dataset.num_classes)
-    return model
+def get_model(options):
+    if options.model_name == 'resnet18':
+        if options.model_version == 'default':
+            return resnet18_bkj(options)
+
+    raise NotImplementedError("{}_{} is not implemented.".format(
+        options.model_name, options.model_version))

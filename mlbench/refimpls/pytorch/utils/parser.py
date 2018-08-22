@@ -137,7 +137,8 @@ class ModelParser(argparse.ArgumentParser):
     """Arguments related to model, optimizer, lr-scheduler, training, etc."""
 
     def __init__(self, add_help=True, lr=True, momentum=True, criterion=True, nesterov=True,
-                 weight_decay=True, opt_name=True, model_name=True, model_version=True):
+                 weight_decay=True, opt_name=True, model_name=True, model_version=True,
+                 lr_scheduler=True, metrics=True):
         super(ModelParser, self).__init__(add_help=add_help)
 
         if opt_name:
@@ -149,12 +150,16 @@ class ModelParser(argparse.ArgumentParser):
                               help="[default: %(default)s] name of the model to use.")
 
         if model_version:
-            self.add_argument("--model_version", type=str, default='v1', metavar="<MV>",
+            self.add_argument("--model_version", type=str, default='default', metavar="<MV>",
                               help="[default: %(default)s] version of model.")
 
         if lr:
             self.add_argument("--lr", type=float, default=0.1, metavar='<LR>',
                               help="[default: %(default)s] initial learning rate.")
+
+        if lr_scheduler:
+            self.add_argument("--lr_scheduler", type=str, default='const', metavar='<LS>',
+                              help="[default: %(default)s] name of learning rate scheduler.")
 
         if momentum:
             self.add_argument("--momentum", type=float, default=0.9, metavar='<M>',
@@ -164,6 +169,10 @@ class ModelParser(argparse.ArgumentParser):
             self.add_argument("--criterion", type=str, default='CrossEntropyLoss', metavar='<CR>',
                               help="[default: %(default)s] name of training loss function."
                               "Support loss functions from `torch.nn.modules.loss`.")
+
+        if metrics:
+            self.add_argument("--metrics", type=str, default='topk', metavar='<ME>',
+                              help="[default: %(default)s] The metrics to measure training and evaluations.")
 
         if nesterov:
             self.add_argument("--nesterov", action='store_true', default=True,
