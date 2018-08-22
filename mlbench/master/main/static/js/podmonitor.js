@@ -1,19 +1,21 @@
 var PodMonitor = function(parent_id, metric_selector, target_element, metric_type, api_url){
     this.node_data = {'last_metrics_update': new Date(0)};
     this.nodeRefreshInterval = 1 * 1000;
-    this.metricsRefreshInterval = 20 * 1000;
+    this.metricsRefreshInterval = 5 * 1000;
     this.renderInterval = 1 * 1000;
     this.parent_id = parent_id;
     this.target_element = target_element;
     this.metric_selector = metric_selector;
     this.metric_type = metric_type;
     this.api_url = api_url;
+    this.metrics = [];
 
     this.updateMetrics = function(){
         var parent_id = this.parent_id;
         var value = this.node_data;
         var metric_type = this.metric_type;
         var api_url = this.api_url;
+        var metrics_names = this.metrics;
 
         $.getJSON(api_url + parent_id + "/",
             {since: value['last_metrics_update'].toJSON(),
@@ -27,6 +29,9 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
                     if(!(key in value['node_metrics'])){
                         value['node_metrics'][key] = [];
                     }
+                    if(-1 === metrics_names.indexOf(key)){
+                        metrics_names.push(key);
+                    }
                     value['node_metrics'][key] = value['node_metrics'][key].concat(values);
                     value['last_metrics_update'] = new Date();
                 });
@@ -36,14 +41,14 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
     this.plotMetrics = function(element, metrics, value, title){
         var self = this;
 
-        if(!(metrics['node_metrics']) || metrics['node_metrics'][value].length == 0){
+        if(!(value) || !(metrics['node_metrics']) || metrics['node_metrics'][value].length == 0){
             return;
         }
 
         var el = $(element);
         d3.select(el[0]).selectAll("*").remove();
 
-        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
+        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S.%fZ");
 
         var cumulative = metrics['node_metrics'][value][0]['cumulative'];
 
@@ -138,4 +143,6 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
     //setInterval(this.updateNodes, this.nodeRefreshInterval);
     setInterval(this.updateMetrics, this.metricsRefreshInterval);
     setInterval(this.renderNodes, this.renderInterval);
+
+    return this;
 }

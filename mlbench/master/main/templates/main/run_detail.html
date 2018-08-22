@@ -30,11 +30,9 @@
         </div>
         <div class="row flex-grow-1 d-flex flex-column">
             <ul class="nav nav-tabs flex-grow-0" id="myTab" role="tablist">
-                {% if metrics.count > 0 %}
                 <li class="nav-item">
                     <a class="nav-link active" id="graph-tab" data-toggle="tab" href="#graph" role="tab" aria-controls="graph" aria-selected="true">Graphs</a>
                 </li>
-                {% endif %}
                 <li class="nav-item">
                     <a class="nav-link" id="stdout-tab" data-toggle="tab" href="#stdout" role="tab" aria-controls="stdout" aria-selected="false">Stdout</a>
                 </li>
@@ -43,7 +41,7 @@
                 </li>
             </ul>
             <div class="tab-content flex-grow-1 d-flex flex-column" id="myTabContent">
-                {% if metrics.count > 0 %}
+
                 <div class="tab-pane fade show active flex-grow-1" style="height:0" id="graph" role="tabpanel" aria-labelledby="graph-tab">
                     <div class="dropdown" id="metric-dropdown">
                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -57,7 +55,6 @@
                     </div>
                     <svg class="d-flex w-100" style="height:50rem;" id="metric-svg"></svg>
                 </div>
-                {% endif %}
                 <div class="tab-pane fade scrollbar scrollbar-primary flex-grow-1" id="stdout" role="tabpanel" aria-labelledby="stdout-tab">
                     <pre>
                         {% for line in run.job_metadata.stdout %}
@@ -106,10 +103,32 @@
 
         var monitor = PodMonitor('{{run.id}}', function(){return $("#metric-dropdown a.active").text()}, "#metric-svg", 'run', '{% url 'api:metrics-list' %}');
 
-        $("#metric-dropdown a").click(function(){
+        var dropdownClick = function(){
             $("#metric-dropdown a").removeClass("active");
             $(this).addClass("active");
-        });
+        };
+
+        $("#metric-dropdown a").click(dropdownClick);
+
+        var currentMetrics = [{% for metric in metrics %}'{{metric.name}}',{% endfor %}];
+
+        var checkNewMetrics = function(){
+                var newMetrics = monitor.metrics.filter(value => -1 === currentMetrics.indexOf(value));
+
+                $.each(newMetrics, function(key, value){
+                    var entry = $("<a class='dropdown-item' href='#'>" + value + "</a>");
+                    $("#metric-dropdown .dropdown-menu").append(entry);
+                    entry.click(dropdownClick);
+
+                    if(currentMetrics.length == 0){
+                        entry.addClass('active');
+                    }
+
+                    currentMetrics.push(value);
+                });
+        };
+
+        setInterval(checkNewMetrics, 1000)
     });
 </script>
 {% endblock %}

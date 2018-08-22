@@ -5,6 +5,7 @@ from api.models import KubePod, KubeMetric, ModelRun
 from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
 import django_rq
 from rq.job import Job
+from django.utils.dateparse import parse_datetime
 
 from itertools import groupby
 from datetime import datetime
@@ -43,7 +44,7 @@ class KubeMetricsView(ViewSet):
 
         pod_metrics = {pod.name: {
             g[0]: [
-                {'date': e.date, 'value': e.value, 'cumulative': e.cumulative}
+                KubeMetricsSerializer(e).data
                 for e in sorted(g[1], key=lambda x: x.date)
             ] for g in groupby(
                 sorted(pod.metrics.all(), key=lambda m: m.name),
@@ -52,7 +53,7 @@ class KubeMetricsView(ViewSet):
 
         run_metrics = {run.name: {
             g[0]: [
-                {'date': e.date, 'value': e.value}
+                KubeMetricsSerializer(e).data
                 for e in sorted(g[1], key=lambda x: x.date)
             ] for g in groupby(
                 sorted(run.metrics.all(), key=lambda m: m.name),
@@ -94,11 +95,7 @@ class KubeMetricsView(ViewSet):
 
         result = {
             g[0]: [
-                {
-                    'date': e.date,
-                    'value': e.value,
-                    'cumulative': e.cumulative
-                }
+                KubeMetricsSerializer(e).data
                 for e in sorted(g[1], key=lambda x: x.date)
                 if since is None or e.date > since
             ] for g in groupby(
@@ -133,7 +130,7 @@ class KubeMetricsView(ViewSet):
 
             metric = KubeMetric(
                 name=d['name'],
-                date=d['date'],
+                date=parse_datetime(d['date']),
                 value=d['value'],
                 metadata=d['metadata'],
                 cumulative=d['cumulative'],
@@ -155,7 +152,7 @@ class KubeMetricsView(ViewSet):
 
             metric = KubeMetric(
                 name=d['name'],
-                date=d['date'],
+                date=parse_datetime(d['date']),
                 value=d['value'],
                 metadata=d['metadata'],
                 cumulative=d['cumulative'],

@@ -33,13 +33,12 @@ def runs(request):
     else:
         max_cpu = int(max_cpu)
 
-
     return render(request, 'main/runs.html', {
         'runs': runs,
         'max_workers': max_workers,
         'max_cpus': max_cpu,
         'max_memory': 30000,
-        'max_bandwidth': 1000})
+        'max_bandwidth': max_bandwidth})
 
 
 def run(request, run_id):
@@ -50,23 +49,6 @@ def run(request, run_id):
     job = Job.fetch(run.job_id, redis_conn)
 
     run.job_metadata = job.meta
-
-    metric = KubeMetric(name="test",
-                        date=timezone.now(),
-                        value="0.0",
-                        metadata="",
-                        cumulative=False,
-                        model_run=run)
-
-    metric2 = KubeMetric(name="test",
-                         date=timezone.now() + timezone.timedelta(minutes=1),
-                         value="1.0",
-                         metadata="",
-                         cumulative=False,
-                         model_run=run)
-
-    metric.save()
-    metric2.save()
 
     metrics = run.metrics.order_by('name').values('name').distinct()
 
