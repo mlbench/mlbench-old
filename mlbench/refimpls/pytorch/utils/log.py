@@ -144,8 +144,8 @@ def configuration_information(options):
     centering("START TRAINING", 0)
 
 
-def log_train(options, batch_idx, loss):
-    debug("Training Batch {:5}: loss={:.3f}".format(batch_idx, loss))
+def train_batch(options, batch_idx, loss):
+    debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss))
     post_metrics({
         "run_id": options.run_id,
         "name": "train loss @ rank{}".format(options.rank),

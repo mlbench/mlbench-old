@@ -6,6 +6,7 @@ import itertools
 from utils import log
 from utils import checkpoint
 from utils.metrics import AverageMeter
+from utils.helper import Timeit
 
 
 def aggregate_gradients(model, world_size):
@@ -25,6 +26,14 @@ def aggregate_gradients(model, world_size):
         param.grad.data /= world_size
 
 
+def _counter(options):
+    if options.max_batch_per_epoch is None:
+        counter = itertools.count(0)
+    else:
+        counter = range(options.max_batch_per_epoch)
+    return counter
+
+
 def train_epoch(model, optimizer, criterion, options):
     """Train model for one epoch of data.
 
@@ -42,12 +51,7 @@ def train_epoch(model, optimizer, criterion, options):
     # switch to train mode
     model.train()
 
-    if options.max_batch_per_epoch is None:
-        counter = itertools.count(0)
-    else:
-        counter = range(options.max_batch_per_epoch)
-
-    for batch_idx, (data, target) in zip(counter, options.train_loader):
+    for batch_idx, (data, target) in zip(_counter(options), options.train_loader):
         if options.use_cuda:
             data, target = data.cuda(), target.cuda()
 
@@ -58,32 +62,16 @@ def train_epoch(model, optimizer, criterion, options):
         aggregate_gradients(model, options.world_size)
         optimizer.step()
 
-        log.log_train(options, batch_idx, loss.item())
-
-
-def aggregate_accuracy(top1, top5):
-    def helper(array):
-        array = torch.FloatTensor(array)
-        dist.all_reduce(array, op=dist.reduce_op.SUM)
-        return array[0] / array[1]
-    top1_avg = helper([top1.sum, top1.count])
-    top5_avg = helper([top5.sum, top5.count])
-    return top1_avg, top5_avg
+        log.train_batch(options, batch_idx, loss.item())
 
 
 def validate(model, optimizer, criterion, metrics, options):
     model.eval()
 
     losses = AverageMeter()
-    top1 = AverageMeter()
-    top5 = AverageMeter()
 
-    if options.max_batch_per_epoch is None:
-        counter = itertools.count(0)
-    else:
-        counter = range(options.max_batch_per_epoch)
-
-    for batch_idx, (data, target) in zip(counter, options.val_loader):
+    metrics.reset()
+    for batch_idx, (data, target) in zip(_counter(options), options.val_loader):
         if options.use_cuda:
             data, target = data.cuda(), target.cuda()
 
@@ -91,25 +79,27 @@ def validate(model, optimizer, criterion, metrics, options):
             output = model(data)
 
             loss = criterion(output, target)
-            losses.update(loss.item(), data.size(0))
 
             prec1, prec5 = metrics(output, target)
 
             log.debug("Validate Batch {:5}: Prec@1={:.3f} Prec@5={:.3f}"
                       .format(batch_idx, prec1.item(), prec5.item()), 0)
 
-            top1.update(prec1[0], data.size(0))
-            top5.update(prec5[0], data.size(0))
+            losses.update(loss.item(), data.size(0))
+            metrics.update(prec1, prec5, data)
 
-    top1_avg, top5_avg = aggregate_accuracy(top1, top5)
-    log.info('Prec@1: {:.3f} Prec@5: {:.3f}'.format(top1_avg, top5_avg), 0)
+    top1_avg, top5_avg = metrics.average()
+    log.info('Prec@1: {:.3f} Prec@5: {:.3f} Loss: {:.3f}'.format(
+        top1_avg, top5_avg, losses.avg), 0)
     return top1_avg, top5_avg
 
 
-def do_validate(model, optimizer, criterion, metrics, scheduler, options):
+def do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit):
     """Evaluate the model on the test dataset and save to the checkpoint."""
     # evaluate the model.
     val_prec1, val_prec5 = validate(model, optimizer, criterion, metrics, options)
+
+    timeit.pause()
 
     # remember best prec@1 and save checkpoint.
     if 'best_prec1' in options.runtime:
@@ -125,6 +115,8 @@ def do_validate(model, optimizer, criterion, metrics, scheduler, options):
 
     checkpoint.save(options, model, optimizer, scheduler, is_best)
 
+    timeit.resume()
+
 
 class TrainValidation(object):
     def __call__(self, model, optimizer, criterion, metrics, scheduler, options):
@@ -137,17 +129,20 @@ class TrainValidation(object):
         dist.barrier()
         max_epochs = min(options.train_epochs, options.max_train_steps)
         start_epoch = options.runtime['current_epoch'] if options.resume else 0
-        for epoch in range(start_epoch, max_epochs):
-            options.runtime['current_epoch'] = epoch
 
-            # schedule learning rates
-            scheduler.step()
+        with Timeit() as timeit:
+            for epoch in range(start_epoch, max_epochs):
+                options.runtime['current_epoch'] = epoch
 
-            # Per epoch information.
-            log.info("Current epoch : {} : lr={}".format(epoch, scheduler.get_lr()), 0)
+                # schedule learning rates
+                scheduler.step()
 
-            train_epoch(model, optimizer, criterion, options)
-            do_validate(model, optimizer, criterion, metrics, scheduler, options)
+                # Per epoch information.
+                log.info("Current epoch : {} : lr={} : time={:10.3e}"
+                         .format(epoch, scheduler.get_lr(), timeit.cumu), 0)
+
+                train_epoch(model, optimizer, criterion, options)
+                do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit)
 
 
 def get_controlflow(options):
