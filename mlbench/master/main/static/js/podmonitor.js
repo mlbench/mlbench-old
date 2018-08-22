@@ -43,33 +43,35 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
         var el = $(element);
         d3.select(el[0]).selectAll("*").remove();
 
+        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
+
         var cumulative = metrics['node_metrics'][value][0]['cumulative'];
 
         if(cumulative){
-            var transform = function(cur, prev){return 1000 * (cur - prev) / self.metricsRefreshInterval;};
+            var transform = function(cur, prev){
+                return 1000 * (cur['value'] - prev['value']) / Math.max(1, parseTime(cur['date']) - parseTime(prev['date']));
+            };
         }else{
-            var transform = function(cur, prev){return cur;};
+            var transform = function(cur, prev){return cur['value'];};
         }
 
-        prev = metrics['node_metrics'][value][0]['value'];
+        prev = metrics['node_metrics'][value][0];
         data = [];
 
         len = metrics['node_metrics'][value].length;
 
         var max = 0;
 
-        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S.%fZ");
-
         for(var i = 0; i < len; i++){
             var cur = metrics['node_metrics'][value][i];
-            cur_val = transform(cur['value'], prev);
+            cur_val = transform(cur, prev);
 
             if(cur_val > max){
                 max = cur_val;
             }
 
             data.push({x: parseTime(cur['date']), y: cur_val});
-            prev = cur['value'];
+            prev = cur;
         }
 
         if(data.length == 1){
@@ -90,10 +92,10 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
         var line = d3.line()
             .x(function(d) { return x(d.x); })
             .y(function(d) { return y(d.y); })
-            .curve(d3.curveMonotoneX);
+            .curve(d3.curveLinear);
 
         x.domain(d3.extent(data, function(d) { return d.x; }));
-        y.domain([0, Math.max(1, d3.max(data, function(d) { return d.y; }))]);
+        y.domain([0, Math.max(1, d3.max(data, function(d) { return +d.y; }))]);
 
         g.append("path")
             .data([data])

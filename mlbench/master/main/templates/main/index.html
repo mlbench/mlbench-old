@@ -26,6 +26,8 @@
             <div class="d-flex flex-column w-100 justify-content-between">
                 <svg class="d-flex w-100 cpu" style="height:10rem;"></svg>
                 <svg class="d-flex w-100 memory" style="height:10rem;"></svg>
+                <svg class="d-flex w-100 network-in" style="height:10rem;"></svg>
+                <svg class="d-flex w-100 network-out" style="height:10rem;"></svg>
             </div>
         </div>
     </div>
@@ -37,6 +39,8 @@
         this.nodeRefreshInterval = 1 * 1000;
         this.metricsRefreshInterval = 20 * 1000;
         this.renderInterval = 1 * 1000;
+
+        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
 
         this.updateNodes = function(){
             var nodes = this.nodes;
@@ -80,25 +84,23 @@
                 return;
             }
 
-            prev = metrics['node_metrics'][value][0]['value'];
+            prev = metrics['node_metrics'][value][0];
             data = [];
 
             len = metrics['node_metrics'][value].length;
 
             var max = 0;
 
-            var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S.%fZ");
-
             for(var i = 0; i < len; i++){
                 var cur = metrics['node_metrics'][value][i];
-                cur_val = transform(cur['value'], prev);
+                cur_val = transform(cur, prev);
 
                 if(cur_val > max){
                     max = cur_val;
                 }
 
                 data.push({x: parseTime(cur['date']), y: cur_val});
-                prev = cur['value'];
+                prev = cur;
             }
 
             if(data.length == 1){
@@ -121,10 +123,10 @@
             var line = d3.line()
                 .x(function(d) { return x(d.x); })
                 .y(function(d) { return y(d.y); })
-                .curve(d3.curveMonotoneX);
+                .curve(d3.curveLinear);
 
             x.domain(d3.extent(data, function(d) { return d.x; }));
-            y.domain([0, Math.max(1, d3.max(data, function(d) { return d.y; }))]);
+            y.domain([0, Math.max(1, d3.max(data, function(d) { return +d.y; }))]);
 
             g.append("path")
                 .data([data])
@@ -158,8 +160,10 @@
                 $("#nodes-list").append(card)
 
                 if(('node_metrics' in value)){
-                    self.plotMetrics("#card-" + node + " svg.cpu", value, "container_cpu_usage_seconds_total", "CPU (%)", function(cur, prev){return 100 * 1000 * (cur - prev) / self.metricsRefreshInterval});
-                    self.plotMetrics("#card-" + node + " svg.memory", value,  "container_memory_usage_bytes", "Memory (Mb)", function(cur, prev){return cur / 1024 / 1024});
+                    self.plotMetrics("#card-" + node + " svg.cpu", value, "cpu", "CPU Cores", function(cur, prev){return cur['value']});
+                    self.plotMetrics("#card-" + node + " svg.memory", value,  "memory", "Memory (Mb)", function(cur, prev){return cur['value'] });
+                    self.plotMetrics("#card-" + node + " svg.network-in", value,  "network_in", "Network In (Mb/s)", function(cur, prev){return 1000 * (cur['value'] - prev['value']) / Math.max(1, parseTime(cur['date']) - parseTime(prev['date'])) });
+                    self.plotMetrics("#card-" + node + " svg.network-out", value,  "network_out", "Network In (Mb/s)", function(cur, prev){return 1000 * (cur['value'] - prev['value']) / Math.max(1, parseTime(cur['date']) - parseTime(prev['date']))});
                 }
             });
 
