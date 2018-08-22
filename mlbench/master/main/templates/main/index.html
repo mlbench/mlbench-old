@@ -162,8 +162,8 @@
                 if(('node_metrics' in value)){
                     self.plotMetrics("#card-" + node + " svg.cpu", value, "cpu", "CPU Cores", function(cur, prev){return cur['value']});
                     self.plotMetrics("#card-" + node + " svg.memory", value,  "memory", "Memory (Mb)", function(cur, prev){return cur['value'] });
-                    self.plotMetrics("#card-" + node + " svg.network-in", value,  "network_in", "Network In (Mb/s)", function(cur, prev){return 1000 * (cur['value'] - prev['value']) / Math.max(1, parseTime(cur['date']) - parseTime(prev['date'])) });
-                    self.plotMetrics("#card-" + node + " svg.network-out", value,  "network_out", "Network In (Mb/s)", function(cur, prev){return 1000 * (cur['value'] - prev['value']) / Math.max(1, parseTime(cur['date']) - parseTime(prev['date']))});
+                    self.plotMetrics("#card-" + node + " svg.network-in", value,  "network_in", "Network In (Mb/s)", function(cur, prev){return 1000 * Math.max(0, cur['value'] - prev['value']) / Math.max(1, parseTime(cur['date']) - parseTime(prev['date'])) });
+                    self.plotMetrics("#card-" + node + " svg.network-out", value,  "network_out", "Network In (Mb/s)", function(cur, prev){return 1000 * Math.max(0, cur['value'] - prev['value']) / Math.max(1, parseTime(cur['date']) - parseTime(prev['date']))});
                 }
             });
 

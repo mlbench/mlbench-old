@@ -49,7 +49,7 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
 
         if(cumulative){
             var transform = function(cur, prev){
-                return 1000 * (cur['value'] - prev['value']) / Math.max(1, parseTime(cur['date']) - parseTime(prev['date']));
+                return 1000 * Math.max(0, cur['value'] - prev['value']) / Math.max(1, parseTime(cur['date']) - parseTime(prev['date']));
             };
         }else{
             var transform = function(cur, prev){return cur['value'];};
