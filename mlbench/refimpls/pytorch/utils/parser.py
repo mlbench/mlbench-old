@@ -123,3 +123,58 @@ class DatasetParser(argparse.ArgumentParser):
         if reshuffle_per_epoch:
             self.add_argument("--reshuffle_per_epoch", action='store_true', default=True,
                               help="[default: %(default)s] reshuffle the dataset per epoch.")
+
+
+class ModelParser(argparse.ArgumentParser):
+    """Arguments related to model, optimizer, lr-scheduler, training, etc."""
+
+    def __init__(self, add_help=True, lr=True, momentum=True, criterion=True, nesterov=True,
+                 weight_decay=True, opt_name=True, model_name=True, model_version=True):
+        super(ModelParser, self).__init__(add_help=add_help)
+
+        if opt_name:
+            self.add_argument("--opt_name", type=str, default='sgd', metavar="<ON>",
+                              help="[default: %(default)s] name of the optimizer to use.")
+
+        if model_name:
+            self.add_argument("--model_name", type=str, default='resnet18', metavar="<MN>",
+                              help="[default: %(default)s] name of the model to use.")
+
+        if model_version:
+            self.add_argument("--model_version", type=str, default='v1', metavar="<MV>",
+                              help="[default: %(default)s] version of model.")
+
+        if lr:
+            self.add_argument("--lr", type=float, default=0.1, metavar='<LR>',
+                              help="[default: %(default)s] initial learning rate.")
+
+        if momentum:
+            self.add_argument("--momentum", type=float, default=0.9, metavar='<M>',
+                              help="[default: %(default)s] initial momentum.")
+
+        if criterion:
+            self.add_argument("--criterion", type=str, default='CrossEntropyLoss', metavar='<CR>',
+                              help="[default: %(default)s] name of training loss function."
+                              "Support loss functions from `torch.nn.modules.loss`.")
+
+        if nesterov:
+            self.add_argument("--nesterov", action='store_true', default=True,
+                              help="[default: %(default)s] apply nesterov in the optimizer.")
+
+        if weight_decay:
+            self.add_argument("--weight_decay", type=float, default=5e-4, metavar='<WD>',
+                              help="[default: %(default)s] weight decay of the optimizer.")
+
+
+class ControlflowParser(argparse.ArgumentParser):
+    def __init__(self, add_help=True, train_epochs=True):
+        super(ControlflowParser, self).__init__(add_help=add_help)
+
+        if train_epochs:
+            self.add_argument("--train_epochs", type=int, default=1, metavar='<TE>',
+                              help="[default: %(default)s] number of epochs to train.")
+
+        if epochs_between_evals:
+            self.add_argument("--epochs_between_evals", type=int, default=1, metavar="<EBE>",
+                              help="[default: %(default)s] The number of training epochs to run "
+                              "between evaluations.")
