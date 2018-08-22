@@ -21,8 +21,7 @@ def get_ckpt_id(epoch, rank):
 
 
 def determine_restore_ckpt_path(rank, checkpoint_root, run_id):
-    """Determine the checkpoint path to restore.
-    """
+    """Determine the checkpoint path to restore."""
     ckpt_run_dirs = os.listdir(checkpoint_root)
 
     # parse run_ids
@@ -44,9 +43,18 @@ def determine_restore_ckpt_path(rank, checkpoint_root, run_id):
         raise FileNotFoundError(found_ckpts)
 
 
-def save(state, is_best, context):
+def save(context, model, optimizer, scheduler, is_best):
     if context.meta.save is None:
         return
+
+    state = {
+        'context_runtime': context.runtime,
+        'current_epoch': context.runtime.current_epoch,
+        'state_dict': model.state_dict(),
+        'optimizer': optimizer.state_dict(),
+        'scheduler': scheduler.state_dict(),
+        'best_prec1': context.runtime.best_prec1,
+    }
 
     dirname = context.meta.ckpt_run_dir
     filename = get_ckpt_id(context.runtime.current_epoch, context.meta.rank)
@@ -64,6 +72,7 @@ def save(state, is_best, context):
 
 
 def resume(context, model, optimizer, scheduler):
+    """Recover the state of context, model, optimizer and scheduler."""
     if context.meta.resume:
         # reload model from the latest checkpoint.
         checkpoint_index = ''
@@ -75,7 +84,7 @@ def resume(context, model, optimizer, scheduler):
             # get checkpoint.
             checkpoint = torch.load(checkpoint_path)
 
-            context = checkpoint['context']
+            context.runtime = checkpoint['context_runtime']
 
             # restore some run-time info.
             context.controlflow.start_epoch = checkpoint['current_epoch'] + 1

@@ -7,14 +7,9 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
 from utils import log
+from utils.helper import AttrDict
 
 from .partition_data import DataPartitioner
-
-
-class AttrDict(dict):
-    def __init__(self, *args, **kwargs):
-        super(AttrDict, self).__init__(*args, **kwargs)
-        self.__dict__ = self
 
 
 def maybe_download(name, datasets_path, split='train', transform=None,
@@ -42,14 +37,14 @@ def maybe_download(name, datasets_path, split='train', transform=None,
         # Choose different std
         cifar10_stats = {
             "mean": (0.4914, 0.4822, 0.4465),
-            "std": (0.24705882352941178, 0.24352941176470588, 0.2615686274509804),
+            "std": (0.247059, 0.243529, 0.261569),
         }
 
         if train:
             transform = transforms.Compose([
-                # transforms.Lambda(lambda x: np.asarray(x)),
-                # transforms.Lambda(lambda x: np.pad(x, [(4, 4), (4, 4), (0, 0)], mode='reflect')),
-                # transforms.Lambda(lambda x: Image.fromarray(x)),
+                transforms.Lambda(lambda x: np.asarray(x)),
+                transforms.Lambda(lambda x: np.pad(x, [(4, 4), (4, 4), (0, 0)], mode='reflect')),
+                transforms.Lambda(lambda x: Image.fromarray(x)),
                 transforms.RandomCrop(32),
 
                 transforms.RandomHorizontalFlip(),
@@ -81,8 +76,6 @@ def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_si
     data_to_load = partition.use(rank)
 
     num_samples_per_device = len(data_to_load)
-    # log.info('There are {} samples for {}, load {} data for process (rank {}), and partition it'.format(
-    #     len(dataset), dataset_type, num_samples_per_device, rank))
 
     data_loader = torch.utils.data.DataLoader(
         data_to_load, batch_size=batch_size, shuffle=data_type_label,
