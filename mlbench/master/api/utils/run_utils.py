@@ -7,7 +7,7 @@ import os
 
 
 @django_rq.job('default', result_ttl=-1)
-def run_model_job(model_run, experiment="test_MPI"):
+def run_model_job(model_run, experiment="test_mpi"):
     """RQ Job to execute OpenMPI
 
     Arguments:

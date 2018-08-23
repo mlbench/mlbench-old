@@ -1,16 +1,15 @@
 """Config environments."""
-import os
 import logging
-import torch
-import json
+import os
 import random
+import torch
 import shutil
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 
-from utils.topology import FCGraph
-from utils import log
 from utils import checkpoint
+from utils import log
+from utils.topology import FCGraph
 
 logger = logging.getLogger('mlbench')
 

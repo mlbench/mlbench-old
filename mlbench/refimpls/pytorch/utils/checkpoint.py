@@ -1,10 +1,9 @@
 import os
-import torch
 import shutil
-import torch.distributed as dist
+import torch
 
-from utils import log
 from utils import communication as comm
+from utils import log
 
 
 def get_ckpt_run_dir(checkpoint_root, run_id, dataset_name, model_name, optimizer_name):
@@ -71,7 +70,6 @@ def save(options, model, optimizer, scheduler, is_best):
 
 
 def resume(options, model, optimizer, scheduler):
-    checkpoint_index = ''
     checkpoint_path = determine_restore_ckpt_path(
         options.rank, options.checkpoint_root, options.run_id)
 

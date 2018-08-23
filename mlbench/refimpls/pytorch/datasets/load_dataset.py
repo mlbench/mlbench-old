@@ -1,12 +1,10 @@
-import os
 import math
+import os
+from PIL import Image
 import numpy as np
 import torch
-from PIL import Image
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-
-from utils import log
 
 from .partition_data import DataPartitioner
 
@@ -70,7 +68,7 @@ class CIFAR10_V2(datasets.CIFAR10):
 
 def maybe_download(name, datasets_path, train=True, download=True, preprocessing_version='default'):
     """
-    Find the class with dataset name and preprocessing methods. If the dataset is not in the 
+    Find the class with dataset name and preprocessing methods. If the dataset is not in the
     given localtion, then choose to download or not depending on `download`.
     """
     root = os.path.join(datasets_path, name)

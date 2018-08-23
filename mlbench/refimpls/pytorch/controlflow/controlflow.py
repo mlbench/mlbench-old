@@ -1,10 +1,9 @@
-import time
 import torch
-import torch.distributed as dist
 import itertools
+import torch.distributed as dist
 
-from utils import log
 from utils import checkpoint
+from utils import log
 from utils.metrics import AverageMeter
 from utils.helper import Timeit
 

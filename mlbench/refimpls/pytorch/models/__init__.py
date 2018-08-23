@@ -1,7 +1,5 @@
-import models.testnet
 import models.resnet
-
-from utils import log
+import models.testnet
 
 
 def get_model(options):

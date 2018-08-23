@@ -2,21 +2,21 @@ import argparse
 import re
 
 from config import initialize
-from utils.parser import MainParser
 from datasets.load_dataset import create_dataset
+from utils.parser import MainParser
 from models import get_model
-from optim.optimizer import get_optimizer
 from optim.lr import get_scheduler
-from utils.metrics import get_metrics
-from utils.criterions import get_criterion
+from optim.optimizer import get_optimizer
 from controlflow.controlflow import get_controlflow
+from utils.criterions import get_criterion
+from utils.metrics import get_metrics
 from utils import checkpoint
 
 
 def get_options():
     parser = argparse.ArgumentParser(description="""""")
     parser.add_argument('--run_id', type=str, default=10, help='')
-    parser.add_argument("--experiment", type=str, default='test_MPI',
+    parser.add_argument("--experiment", type=str, default='test_mpi',
                         help="[default: %(default)s] add experiment.")
     parser.add_argument("--config-file", type=str, help="")
     args = parser.parse_args()

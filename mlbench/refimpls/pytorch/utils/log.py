@@ -1,12 +1,11 @@
 """
 colors: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
 """
-import logging
-import torch.distributed as dist
-import json
-import time
-import subprocess
 import datetime
+import json
+import logging
+import subprocess
+import torch.distributed as dist
 
 
 logger = logging.getLogger('mlbench')
