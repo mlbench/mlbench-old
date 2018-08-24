@@ -30,8 +30,9 @@ def get_options():
     parser = MainParser()
     options = parser.parse_args(config_list)
 
+    max_len = len(options.__dict__.keys())
     for k, v in options.__dict__.items():
-        print(k, v)
+        print("{k:>{x}} {v:}".format(k=k, v=v, x=max_len))
 
     return options
 

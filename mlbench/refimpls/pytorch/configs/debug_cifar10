@@ -1,10 +1,10 @@
---debug
---checkpoint never 
+---debug
+---checkpoint never
 --dataset_name cifar10
 --batch_size 128
---model_name resnet18
---model_version default 
---train_epochs 100
---max_train_steps 10
---num_parallel_workers 0
---max_batch_per_epoch 10
+---model_name resnet20
+---model_version default
+---train_epochs 100
+---max_train_steps 1
+---num_parallel_workers 0
+---max_batch_per_epoch 10

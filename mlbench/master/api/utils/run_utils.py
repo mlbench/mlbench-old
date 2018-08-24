@@ -76,7 +76,7 @@ def run_model_job(model_run, experiment="test_mpi"):
 
         # keep writing openmpi output to job metadata
         while resp.is_open():
-            resp.update(timeout=1)
+            resp.update(timeout=None)
             if resp.peek_stdout():
                 out = resp.read_stdout()
                 job.meta['stdout'] += out.splitlines()
