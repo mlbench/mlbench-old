@@ -72,7 +72,8 @@ def run_model_job(model_run, experiment="test_mpi"):
                              command=exec_command,
                              stderr=True, stdin=False,
                              stdout=True, tty=False,
-                             _preload_content=False)
+                             _preload_content=False,
+                             _request_timeout=None)
 
         # keep writing openmpi output to job metadata
         while resp.is_open():
