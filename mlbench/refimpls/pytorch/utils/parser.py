@@ -129,7 +129,7 @@ class DatasetParser(argparse.ArgumentParser):
                               help="[default: %(default)s] allow download dataset.")
 
         if preprocessing_version:
-            self.add_argument("--preprocessing_version", type=str, default="default", metavar="<PV>",
+            self.add_argument("--preprocessing_version", type=str, default="v1", metavar="<PV>",
                               help="[default: %(default)s] versions for preprocessing methods.")
 
         if reshuffle_per_epoch:

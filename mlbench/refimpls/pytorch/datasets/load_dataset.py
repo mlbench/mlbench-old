@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 from PIL import Image
 import numpy as np
 import torch
@@ -8,20 +9,25 @@ import torchvision.transforms as transforms
 
 from .partition_data import DataPartitioner
 
+_DATASET_MAP = {
+    "cifar10v1": "CIFAR10V1",
+    "mnistv1": "MNISTV1"
+}
 
-class MNIST_DEFAULT(datasets.MNIST):
+
+class MNISTV1(datasets.MNIST):
     def __init__(self, root, train=True, download=False):
         transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))])
 
-        super(MNIST_DEFAULT, self).__init__(root=root,
-                                            train=train,
-                                            transform=transform,
-                                            download=download)
+        super(MNISTV1, self).__init__(root=root,
+                                      train=train,
+                                      transform=transform,
+                                      download=download)
 
 
-class CIFAR10_DEFAULT(datasets.CIFAR10):
+class CIFAR10V1(datasets.CIFAR10):
     """CIFAR10 with default preprocessing.
 
     https://github.com/bkj/basenet/blob/49b2b61e5b9420815c64227c5a10233267c1fb14/examples/cifar10.py
@@ -51,22 +57,22 @@ class CIFAR10_DEFAULT(datasets.CIFAR10):
                 transforms.ToTensor(),
                 transforms.Normalize(cifar10_stats['mean'], cifar10_stats['std']),
             ])
-        super(CIFAR10_DEFAULT, self).__init__(root=root, train=train,
-                                              transform=transform,
-                                              download=download)
+        super(CIFAR10V1, self).__init__(root=root, train=train,
+                                        transform=transform,
+                                        download=download)
 
 
-class CIFAR10_V2(datasets.CIFAR10):
+class CIFAR10V2(datasets.CIFAR10):
     """
     # https://github.com/IamTao/dl-benchmarking/blob/master/tasks/cv/pytorch/code/dataset/create_data.py
     # https://github.com/kuangliu/pytorch-cifar/blob/master/main.py
     """
 
     def __init__(self, root, train=True, download=False):
-        pass
+        raise NotImplementedError
 
 
-def maybe_download(name, datasets_path, train=True, download=True, preprocessing_version='default'):
+def maybe_download(name, datasets_path, train=True, download=True, preprocessing_version='v1'):
     """
     Find the class with dataset name and preprocessing methods. If the dataset is not in the
     given localtion, then choose to download or not depending on `download`.
@@ -75,9 +81,10 @@ def maybe_download(name, datasets_path, train=True, download=True, preprocessing
     if not os.path.exists(root):
         os.makedirs(root)
 
-    dataset_with_predefined_trasform = eval((name + "_" + preprocessing_version).upper())
+    current_module = sys.modules[__name__]
+    dataset_class = _DATASET_MAP[name + preprocessing_version]
 
-    return dataset_with_predefined_trasform(root=root, train=train, download=download)
+    return getattr(current_module, dataset_class)(root=root, train=train, download=download)
 
 
 def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_size,

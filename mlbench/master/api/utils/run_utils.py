@@ -55,7 +55,7 @@ def run_model_job(model_run, experiment="test_mpi"):
             '--experiment', experiment,
             '--run_id',
             model_run.id,
-            '--config-file', '/codes/configs/debug_cifar10.json'
+            '--config-file', '/codes/configs/debug_cifar10'
         ]
         job.meta['command'] = str(exec_command)
 
