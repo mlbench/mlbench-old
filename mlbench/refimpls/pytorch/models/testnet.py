@@ -2,8 +2,6 @@
 
 https://github.com/pytorch/examples/blob/master/mnist/main.py
 """
-
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 

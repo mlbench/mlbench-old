@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import KubePod, ModelRun, KubeMetric
+from api.models import KubeMetric, KubePod, ModelRun
 
 
 class KubePodSerializer(serializers.HyperlinkedModelSerializer):

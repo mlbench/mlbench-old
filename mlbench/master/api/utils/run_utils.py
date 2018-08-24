@@ -125,7 +125,7 @@ def limit_resources(model_run, name, namespace, job):
 
 
 @django_rq.job('default', result_ttl=-1)
-def run_model_job(model_run, experiment="test_MPI"):
+def run_model_job(model_run, experiment="test_mpi"):
     """RQ Job to execute OpenMPI
 
     Arguments:
@@ -178,7 +178,9 @@ def run_model_job(model_run, experiment="test_MPI"):
             '/conda/bin/python', "/codes/main.py",
             '--experiment', experiment,
             '--run_id',
-            model_run.id]
+            model_run.id,
+            '--config-file', '/codes/configs/debug_cifar10'
+        ]
         job.meta['command'] = str(exec_command)
 
         name = ret.items[0].metadata.name
@@ -191,11 +193,12 @@ def run_model_job(model_run, experiment="test_MPI"):
                              command=exec_command,
                              stderr=True, stdin=False,
                              stdout=True, tty=False,
-                             _preload_content=False)
+                             _preload_content=False,
+                             _request_timeout=None)
 
         # keep writing openmpi output to job metadata
         while resp.is_open():
-            resp.update(timeout=1)
+            resp.update(timeout=None)
             if resp.peek_stdout():
                 out = resp.read_stdout()
                 job.meta['stdout'] += out.splitlines()

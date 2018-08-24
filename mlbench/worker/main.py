@@ -1,15 +1,14 @@
 import argparse
+import socket
 import torch
 import torch.distributed as dist
-import socket
-import sys
 
 
 def get_hostname():
     return socket.gethostname()
 
 
-def test_MPI():
+def test_mpi():
     dist.init_process_group('mpi')
     world_size = dist.get_world_size()
     rank = dist.get_rank()
@@ -140,13 +139,11 @@ def test_synchronize_sgd():
 
 
 if __name__ == '__main__':
-    import argparse
-
-    methods = {test_MPI, test_asynchronize_sgd, test_synchronize_sgd}
+    methods = {test_mpi, test_asynchronize_sgd, test_synchronize_sgd}
     methods = {method.__name__: method for method in methods}
 
     parser = argparse.ArgumentParser(description="""Test functionalities.""")
-    parser.add_argument('experiment', type=str, help='', default="test_MPI",
+    parser.add_argument('experiment', type=str, help='', default="test_mpi",
                         choices=list(methods.keys()))
     args = parser.parse_args()
 

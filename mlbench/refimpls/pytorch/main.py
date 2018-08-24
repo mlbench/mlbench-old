@@ -1,75 +1,70 @@
 import argparse
-import json
-import config
+import re
 
-from optim import get_optimizer, get_criterion
-from controlflow import get_controlflow
+from config import initialize
+from datasets.load_dataset import create_dataset
+from utils.parser import MainParser
 from models import get_model
-from datasets import get_dataset
-from utils import log, get_metrics, checkpoint
+from optim.lr import get_scheduler
+from optim.optimizer import get_optimizer
+from controlflow.controlflow import get_controlflow
+from utils.criterions import get_criterion
+from utils.metrics import get_metrics
+from utils import checkpoint
 
 
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+def get_options():
+    parser = argparse.ArgumentParser(description="""""")
+    parser.add_argument('--run_id', type=str, default=10, help='')
+    parser.add_argument("--experiment", type=str, default='test_mpi',
+                        help="[default: %(default)s] add experiment.")
+    parser.add_argument("--config-file", type=str, help="")
+    args = parser.parse_args()
+
+    with open(args.config_file, 'r') as f:
+        arguments = ' '.join(f.readlines())
+        config_list = re.split('\s+', arguments)
+
+    config_list += ['--run_id', str(args.run_id)]
+
+    parser = MainParser()
+    options = parser.parse_args(config_list)
+
+    max_len = len(options.__dict__.keys())
+    for k, v in options.__dict__.items():
+        print("{k:>{x}} {v:}".format(k=k, v=v, x=max_len))
+
+    return options
 
 
 def main():
-    # Training settings
-    parser = argparse.ArgumentParser(description='Entrypoint to client (pytorch) side of mlbench.')
-    parser.add_argument('--no-cuda', action='store_true', default=True,
-                        help='disables CUDA training')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--run_id', type=str, default='0', metavar='S',
-                        help='Id of current run.')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                        help='how many batches to wait before logging training status')
-    parser.add_argument('--logging-level', type=str, default='DEBUG', metavar='N',
-                        help='')
-    parser.add_argument('--debug', type=str2bool, default=False, metavar='N',
-                        help='In debug mode some of intermediate data will be printed out.')
-    parser.add_argument('--resume', type=str2bool, default=False, metavar='N',
-                        help='Restore the experiment specified by run_id.')
-    parser.add_argument('--config-file', type=str, default=None, metavar='N',
-                        help='A json file specifying detailed information about the configuration.')
-    parser.add_argument('--experiment', type=str, default=None, metavar='N',
-                        help='The name of the experiment to run (added for compatibility.')
-    args = parser.parse_args()
+    options = get_options()
 
-    # Initialize environements and load default settings to `context`
-    context = config.init_context(args)
+    options = initialize(options)
+    options = create_dataset(options, train=True)
+    options = create_dataset(options, train=False)
 
-    # Get dataset
-    get_dataset(context)
+    model = get_model(options)
 
-    # The model here can be any model subclass of `nn.Module`
-    model = get_model(context)
+    optimizer = get_optimizer(options, model)
 
-    # The optimizer here can be any one subclass of `torch.optim.optimizer.Optimizer`
-    optimizer = get_optimizer(context, model)
+    scheduler = get_scheduler(options, optimizer)
 
     # Criterions are like `torch.nn.CrossEntropyLoss()`
-    criterion = get_criterion(context)
+    criterion = get_criterion(options)
 
-    metrics = get_metrics(context)
+    metrics = get_metrics(options)
 
-    # Controlflow decides the main logic of training, validating or testing.
-    controlflow = get_controlflow(context)
+    if options.use_cuda:
+        model.cuda()
+        criterion.cuda()
+        # TODO: add accuracy metrics to cuda?
 
-    # Resume training of `run_id` if possible
-    if context.meta.resume:
-        context = checkpoint.resume(context, model, optimizer)
+    options = checkpoint.maybe_resume(options, model, optimizer, scheduler)
 
-    # Print configuration information to terminal.
-    log.configuration_information(context)
-
+    controlflow = get_controlflow(options)
     controlflow(model=model, optimizer=optimizer, criterion=criterion,
-                metrics=metrics, context=context)
+                metrics=metrics, scheduler=scheduler, options=options)
 
 
 if __name__ == '__main__':

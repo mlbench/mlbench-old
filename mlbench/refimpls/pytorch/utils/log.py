@@ -1,11 +1,12 @@
 """
 colors: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
 """
-import logging
-import torch.distributed as dist
+import datetime
 import json
-import time
+import logging
 import subprocess
+import torch.distributed as dist
+
 
 logger = logging.getLogger('mlbench')
 
@@ -47,10 +48,16 @@ class AsyncMetricsPost(object):
 
     def __init__(self):
         self._initialized = False
+        self._incluster = True
 
     def init(self):
         from kubernetes import config, client
-        config.load_incluster_config()
+        try:
+            config.load_incluster_config()
+        except Exception as e:
+            self._incluster = False
+            return
+
         configuration = client.Configuration()
 
         class MyApiClient(client.ApiClient):
@@ -101,6 +108,8 @@ class AsyncMetricsPost(object):
         """
         if not self._initialized:
             self.init()
+            if not self._incluster:
+                return
 
         command = [
             "/usr/bin/curl",
@@ -115,7 +124,7 @@ async_post = AsyncMetricsPost()
 
 
 def post_metrics(payload, rank):
-    if rank == 0:
+    if rank == 0 and async_post._incluster:
         async_post.post(payload)
 
 
@@ -124,19 +133,43 @@ def todo(content, who='all'):
         logger.warning("{}".format(content))
 
 
-def configuration_information(context):
+def configuration_information(options):
     centering("Configuration Information", 0)
-
-    centering('Opimizer', 0, symbol='=', length=40)
-    context.log('optimizer')
-
-    centering('Model', 0, symbol='=', length=40)
-    context.log('model')
-
-    centering('Dataset', 0, symbol='=', length=40)
-    context.log('dataset')
-
-    centering('Controlflow', 0, symbol='=', length=40)
-    context.log('controlflow')
-
+    options.log('meta')
+    options.log('optimizer')
+    options.log('model')
+    options.log('dataset')
+    options.log('controlflow')
     centering("START TRAINING", 0)
+
+
+def train_batch(options, batch_idx, loss):
+    debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss))
+    post_metrics({
+        "run_id": options.run_id,
+        "name": "train loss @ rank{}".format(options.rank),
+        "value": loss,
+        "date": str(datetime.datetime.now()),
+        "cumulative": False,
+        "metadata":
+        "Training loss at rank {}, epoch {} and batch {}".format(
+            options.rank, options.runtime['current_epoch'], batch_idx)
+    }, options.rank)
+
+
+def log_val(options, val_prec1):
+    info('best accuracy for rank {}:(best epoch {}, current epoch {}): {:.3f} %'.format(
+        options.rank,
+        options.runtime['best_epoch'],
+        options.runtime['current_epoch'], options.runtime['best_prec1']), 0)
+
+    post_metrics({
+        "run_id": options.run_id,
+        "name": "Prec@1",
+        "value": "{:.3f}".format(val_prec1),
+        "date": str(datetime.datetime.now()),
+        "cumulative": False,
+        "metadata":
+        "Validation Prec1 at epoch {}".format(
+            options.runtime['current_epoch'])
+    }, options.rank)

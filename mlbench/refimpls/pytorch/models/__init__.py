@@ -1,14 +1,15 @@
-from .testnet import TestNet
+import models.resnet
+import models.testnet
 
-from utils import log
 
-
-def get_model(context):
-    if context.model.name == 'testnet':
-        model = TestNet()
+def get_model(options):
+    """Return model in the device."""
+    if options.model_name == 'testnet':
+        model = models.testnet.TestNet()
+    elif options.model_name.startswith('resnet'):
+        # Use the resnet18 used in https://github.com/bkj/basenet/
+        model = models.resnet.get_model(options)
     else:
         raise NotImplementedError
-
-    log.todo("TODO: convert model to the corresponding device.", 0)
 
     return model

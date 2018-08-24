@@ -1,0 +1,8 @@
+--max_train_steps 2
+--dataset_name cifar10
+--batch_size 128
+--max_batch_per_epoch 10
+--checkpoint never
+--train_epochs 2
+--model_name resnet20
+--num_parallel_workers 0
