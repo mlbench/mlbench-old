@@ -1,8 +1,10 @@
+from api.models import KubePod, KubeMetric, ModelRun
+from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
+from api.utils.utils import secure_filename
+
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from api.models import KubePod, KubeMetric, ModelRun
-from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSerializer
 import django_rq
 from rq.job import Job
 from django.utils.dateparse import parse_datetime
@@ -127,6 +129,8 @@ class KubeMetricsView(ViewSet):
                     run = ModelRun.objects.get(pk=pk)
                     pods = run.pods.all()
 
+                    filename = secure_filename(run.name)
+
                     since = run.created_at
                     until = run.finished_at
 
@@ -141,10 +145,19 @@ class KubeMetricsView(ViewSet):
                         zf.writestr('{}.json'.format(pod.name),
                                     metrics_file.getvalue())
 
+                else:
+                    pod = KubePod.objects.filter(name=pk).first()
+                    filename = secure_filename(pod.name)
+
                 zf.close()
 
-                return Response(result_file.getvalue(),
-                                status=status.HTTP_200_OK)
+                response = Response(result_file.getvalue(),
+                                    status=status.HTTP_200_OK)
+
+                response['content-disposition'] = (
+                    'attachment; '
+                    'filename=metrics_{}.zip'.format(filename))
+                return response
 
         return Response(result, status=status.HTTP_200_OK)
 
