@@ -28,6 +28,16 @@
             <div class="col-3">Workers </div>
             <div class="col-9">{{ run.job_metadata.pods }}</div>
         </div>
+        <div class="row">
+            <div class="col-12">
+                <button type="button" class="btn btn-outline-success" id="download-button">
+                    Download Measurements
+
+                    <span data-feather="download"></span>
+                </button>
+            </div>
+            <div class="col-9"></div>
+        </div>
         <div class="row flex-grow-1 d-flex flex-column">
             <ul class="nav nav-tabs flex-grow-0" id="myTab" role="tablist">
                 <li class="nav-item">
@@ -128,7 +138,16 @@
                 });
         };
 
-        setInterval(checkNewMetrics, 1000)
+        setInterval(checkNewMetrics, 1000);
+
+        $("#download-button").click(function(e){
+            var run_id = '{{run.id}}';
+            var metric_type = 'run';
+            var api_url = '{% url 'api:metrics-list' %}';
+            var download_url = api_url + parent_id + "/?metric_type=" + metric_type + "&format=zip";
+            e.preventDefault();  //stop the browser from following
+            window.location.href = download_url;
+        });
     });
 </script>
 {% endblock %}
