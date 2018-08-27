@@ -15,7 +15,10 @@ logger = logging.getLogger('mlbench')
 
 
 def config_logging(options):
-    """Setup logging modules."""
+    """Setup logging modules.
+
+    A stream handler and file handler are added to default logger `mlbench`.
+    """
 
     level = options.logging_level
     logging_file = options.logging_file
@@ -48,16 +51,15 @@ def config_logging(options):
 
 
 def config_pytorch(options):
-    """Config packages.
+    """Config pytorch packages.
 
     Fix random number for packages and initialize distributed environment for pytorch.
     Setup cuda environment for pytorch.
 
-    Parameters
-    ----------
-    options : {argparse.Namespace}
-        Configurations.
+    :param options: A global object containing specified options.
+    :type options: argparse.Namespace
     """
+
     # Setting `cudnn.deterministic = True` will turn on
     # CUDNN deterministic setting which can slow down training considerably.
     # Unexpected behavior may also be observed from checkpoint.

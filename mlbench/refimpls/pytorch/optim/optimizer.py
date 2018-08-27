@@ -7,22 +7,13 @@ def get_optimizer(options, model):
     Using the configurations in the `options`, create an optimizer associated with
     parameters of `model`. A learning rate for optimizer is created as well.
 
-    Parameters
-    ----------
-    options : {argparse.Namespace}
-        A options object containing all configurations.
-    model : {torch.nn.Module}
-        A model to be optimized by the optimizer.
-
-    Returns
-    -------
-    optimizer
-        optimizer of the given model.
-
-    Raises
-    ------
-    NotImplementedError
-        The optimizer specified by `options` is not implemented.
+    :param options: A global object containing specified options.
+    :type options: argparse.Namespace
+    :param model: A model to be optimized by the optimizer.
+    :type model: torch.nn.Module
+    :returns: optimizer of the given model.
+    :rtype: optimizer
+    :raises: NotImplementedError
     """
     if options.opt_name == 'sgd':
         optimizer = optim.SGD(model.parameters(),

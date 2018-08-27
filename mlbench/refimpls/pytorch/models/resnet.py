@@ -1,28 +1,54 @@
 """Contains definitions for Residual Networks.
-Residual networks ('v1' ResNets) were originally proposed in:
-[1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
+
+Residual networks were originally proposed in [KaXS15]_ . Then they improve the [KaXS16]_ 
+Here we refer to the settings in [KaXS15]_ as `v1` and [KaXS16]_  as `v2`.
+
+Since `torchvision resnet <https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py>`_ 
+has already implemented 
+
+* ResNet-18
+* ResNet-34
+* ResNet-50
+* ResNet-101
+* ResNet-152
+
+for image net. Here we only implemented the remaining models 
+
+* ResNet-20
+* ResNet-32
+* ResNet-44
+* ResNet-56 
+
+for CIFAR-10 dataset. Besides, their implementation uses projection shortcut by default. 
+
+
+.. rubric:: References
+
+.. [KaXS15] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun 
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 
-Since torchvision (https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py) has already implemented
-ResNet-18, ResNet-34, ResNet-50, ResNet-101, ResNet-152 for image net. Here we only implemented the remaining
-models ResNet-20, ResNet-32, ResNet-44, ResNet-56 for CIFAR-10 dataset. Besides, their implementation uses projection
-shortcut by default. 
+.. [KaXS16] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
+    Identity Mappings in Deep Residual Networks. arXiv: 1603.05027
+
 """
 
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-DEFAULT_RESNETCIFAR_VERSION = 1
+_DEFAULT_RESNETCIFAR_VERSION = 1
 
 
 def batch_norm(num_features):
-    """
-    See the Disclaimers in 
+    """Create a batch normalization layer.
 
-        https://github.com/KaimingHe/deep-residual-networks/tree/a7026cb6d478e131b765b898c312e25f9f6dc031
+    See the Disclaimers in Kaiming's 
+    `github repository <https://github.com/KaimingHe/deep-residual-networks/tree/a7026cb6d478e131b765b898c312e25f9f6dc031>`_
 
     * they compute the mean and variance on a sufficiently large traing batch instead of moving average;
     * they learn gamma and beta in affine function.
+
+    :param num_features: number of features passed to batch normalization
+    :type num_features: int
     """
     return nn.BatchNorm2d(num_features=num_features, eps=1e-05, momentum=0, affine=True, track_running_stats=False)
 
@@ -32,19 +58,29 @@ def conv3x3(in_channels, out_channels, stride=1):
     return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
 
 
-class _BasicBlockV1(nn.Module):
-    """
-    The basic block in [1] performs "pre-activation".
+class BasicBlockV1(nn.Module):
+    """The basic block in [KaXS15]_ is used for shallower ResNets.
 
-    This class is similar to `BasicBlock` in 
+    The activation functions (ReLU and BN) are viewed as post-activation of the weight layer.
 
-        https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
-
-    with different nn.BatchNorm2d configuration.
+    .. note::
+        This class is similar to `BasicBlock` in
+        `resnet <https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py>`_.
+        but with different nn.BatchNorm2d configuration.
     """
 
     def __init__(self, in_channels, out_channels, stride=1, downsample=None):
-        super(_BasicBlockV1, self).__init__()
+        """
+        :param in_channels: input channels
+        :type in_channels: int
+        :param out_channels: output channels
+        :type out_channels: int
+        :param stride: stride of the first layer, defaults to 1
+        :type stride: int, optional
+        :param downsample: projection identity map or no downsample, defaults to None
+        :type downsample: nn.module or None, optional
+        """
+        super(BasicBlockV1, self).__init__()
 
         self.conv1 = conv3x3(in_channels, out_channels, stride)
         self.bn1 = batch_norm(out_channels)
@@ -55,41 +91,44 @@ class _BasicBlockV1(nn.Module):
         self.stride = stride
 
     def forward(self, x):
-        # See [2] Figure 1, Left, (a) original.
-
-        # The identity map is used when the input and output have same number of channels.
-        if self.downsample is not None:
-            residual = self.downsample(x)
-        else:
-            residual = x
+        residual = self.downsample(x) if self.downsample is not None else x
 
         out = self.conv1(x)
         out = self.bn1(out)
         out = self.relu(out)
         out = self.conv2(out)
         out = self.bn2(out)
-        # Short cut connection.
+
+        # Shortcut connection.
         out += residual
         out = self.relu(out)
-
         return out
 
 
-class _BottleneckBlockV1(nn.Module):
-    # TODO
+class BottleneckBlockV1(nn.Module):
+    """Bottleneck building block proposed in [KaXS15]_ (post-activation)."""
+    pass
+
+
+class BottleneckBlockV2(nn.Module):
+    """Bottleneck building block proposed in [KaXS16]_ (post-activation)."""
     pass
 
 
 class ResNetCIFAR(nn.Module):
     """
-    The ResNet struction defined in [1] and [2].
+    The ResNet struction defined in [KaXS15]_ and [KaXS16]_.
+
+    For CIFAR-10 dataset, the ResNet are configured to have 6n+2 layers where fixing n={3,5,7,9}
+    gives ResNet-20,32,44,56 seperately. The input image is assumed to have a shape of 32*32 pixels.
     """
 
-    def __init__(self, resnet_size, bottleneck, num_classes, shortcut, version=DEFAULT_RESNETCIFAR_VERSION):
+    def __init__(self, resnet_size, bottleneck, num_classes, shortcut, version=_DEFAULT_RESNETCIFAR_VERSION):
         super(ResNetCIFAR, self).__init__()
 
         if resnet_size % 6 != 2:
-            raise ValueError("The resnet_size should be (6 * num_blocks + 2). Got {}.".format(resnet_size))
+            raise ValueError("The resnet_size should be (6 * num_blocks + 2). Got {}."
+                             .format(resnet_size))
 
         num_blocks = (resnet_size - 2) // 6
 
@@ -100,7 +139,7 @@ class ResNetCIFAR(nn.Module):
             raise NotImplementedError
         else:
             if version == 1:
-                block = _BasicBlockV1
+                block = BasicBlockV1
             else:
                 raise NotImplementedError
 
@@ -113,6 +152,7 @@ class ResNetCIFAR(nn.Module):
         else:
             raise NotImplementedError
 
+        # 6n layers
         self.conv_1 = self._make_layer(block, in_channels=16, out_channels=16,
                                        num_blocks=num_blocks, init_stride=1, shortcut=shortcut)
         self.conv_2 = self._make_layer(block, in_channels=16, out_channels=32,
@@ -135,7 +175,7 @@ class ResNetCIFAR(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def _make_layer(self, block, in_channels, out_channels, num_blocks, init_stride=1, shortcut='projection'):
-        """Create a block """
+        """Create a block of 2*n depth."""
         if shortcut not in ['identity', 'projection']:
             raise ValueError("Shortcut 'identity' and 'projection' are supported. Got {}.".format(shortcut))
 
@@ -170,9 +210,7 @@ class ResNetCIFAR(nn.Module):
 
         # The plane has shape (1, 1)
         x = x.view(x.size(0), -1)
-
         x = self.classifier(x)
-
         return x
 
 
@@ -247,7 +285,13 @@ class ResNet18_CIFAR10(nn.Module):
 
 
 def resnet18_bkj(options):
-    """Constructs a ResNet-18 model."""
+    """Constructs a ResNet-18 model from DAWN.
+
+    This 
+    `implementation <https://github.com/bkj/basenet/blob/49b2b61e5b9420815c64227c5a10233267c1fb14/examples/cifar10.py>`_
+    comes from which gives results in 
+    `DAWNBench <https://github.com/stanford-futuredata/dawn-bench-entries/blob/master/CIFAR10/train/basenet.json>`_.
+    """
     model = ResNet18_CIFAR10([2, 2, 2, 2], num_classes=options.num_classes)
     return model
 
