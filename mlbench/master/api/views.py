@@ -6,10 +6,14 @@ from api.serializers import KubePodSerializer, ModelRunSerializer, KubeMetricsSe
 import django_rq
 from rq.job import Job
 from django.utils.dateparse import parse_datetime
+from django.core.files import File
 
 from itertools import groupby
 from datetime import datetime
 import pytz
+import zipfile
+import io
+import json
 
 
 class KubePodView(ViewSet):
@@ -28,6 +32,18 @@ class KubePodView(ViewSet):
 class KubeMetricsView(ViewSet):
     """Handles the /api/metrics endpoint
     """
+
+    def __format_result(self, metrics, since, until=None):
+        return {
+            g[0]: [
+                KubeMetricsSerializer(e).data
+                for e in sorted(g[1], key=lambda x: x.date)
+                if ((since is None or e.date > since)
+                    and (until is None or e.date > until))
+            ] for g in groupby(
+                sorted(metrics, key=lambda m: m.name),
+                key=lambda m: m.name)
+        }
 
     def list(self, request, format=None):
         """Get all metrics
@@ -93,15 +109,42 @@ class KubeMetricsView(ViewSet):
             run = ModelRun.objects.get(pk=pk)
             metrics = run.metrics.all()
 
-        result = {
-            g[0]: [
-                KubeMetricsSerializer(e).data
-                for e in sorted(g[1], key=lambda x: x.date)
-                if since is None or e.date > since
-            ] for g in groupby(
-                sorted(metrics, key=lambda m: m.name),
-                key=lambda m: m.name)
-        }
+        result = self.__format_result(metrics, since)
+
+        if request.accepted_renderer.format == 'zip':
+            result_file = io.BytesIO()
+
+            with zipfile.ZipFile(result_file,
+                                 mode='w',
+                                 compression=zipfile.ZIP_DEFLATED) as zf:
+
+                metrics_file = io.StringIO()
+                metrics_file.write(json.dumps(result, indent=4))
+
+                zf.writestr('result.json', metrics_file.getvalue())
+
+                if metric_type == 'run':
+                    run = ModelRun.objects.get(pk=pk)
+                    pods = run.pods.all()
+
+                    since = run.created_at
+                    until = run.finished_at
+
+                    for pod in pods:
+                        pod_file = io.StringIO()
+                        pod_metrics = pod.metrics.all()
+                        pod_metrics = self.__format_result(
+                            metrics,
+                            since,
+                            until)
+                        pod_file.write(json.dumps(pod_metrics, indent=4))
+                        zf.writestr('{}.json'.format(pod.name),
+                                    metrics_file.getvalue())
+
+                zf.close()
+
+                return Response(result_file.getvalue(),
+                                status=status.HTTP_200_OK)
 
         return Response(result, status=status.HTTP_200_OK)
 
