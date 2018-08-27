@@ -124,7 +124,7 @@ def limit_resources(model_run, name, namespace, job):
         sleep(1)
 
 
-@django_rq.job('default', result_ttl=-1)
+@django_rq.job('default', result_ttl=-1, timeout=-1, ttl=-1)
 def run_model_job(model_run, experiment="test_mpi"):
     """RQ Job to execute OpenMPI
 
