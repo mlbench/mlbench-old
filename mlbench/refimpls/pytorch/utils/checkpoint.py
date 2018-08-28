@@ -51,7 +51,6 @@ def save(options, model, optimizer, scheduler, is_best):
         'state_dict': model.state_dict(),
         'optimizer': optimizer.state_dict(),
         'scheduler': scheduler.state_dict(),
-        'best_prec1': options.runtime['best_prec1'],
     }
 
     dirname = options.ckpt_run_dir

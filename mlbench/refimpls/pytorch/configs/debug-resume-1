@@ -1,0 +1,10 @@
+--debug
+--checkpoint all
+--dataset_name mnist
+--batch_size 128
+--model_name testnet
+--model_version default
+--train_epochs 10
+--max_train_steps 5
+--num_parallel_workers 0
+--max_batch_per_epoch 10

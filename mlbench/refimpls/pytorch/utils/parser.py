@@ -5,6 +5,8 @@ from __future__ import print_function
 import argparse
 import torch
 
+from optim.lr import SchedulerParser
+
 DTYPE_MAP = {
     "fp16": torch.float16,
     "fp32": torch.float32,
@@ -215,5 +217,6 @@ class MainParser(argparse.ArgumentParser):
             PerformanceParser(add_help=False),
             DatasetParser(add_help=False),
             ModelParser(add_help=False),
-            ControlflowParser(add_help=False)
+            ControlflowParser(add_help=False),
+            SchedulerParser(add_help=False)
         ])

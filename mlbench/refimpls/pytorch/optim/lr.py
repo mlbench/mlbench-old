@@ -8,6 +8,20 @@
 
 """
 from torch.optim.lr_scheduler import LambdaLR, MultiStepLR
+import argparse
+
+
+class SchedulerParser(argparse.ArgumentParser):
+    def __init__(self, add_help=False, multisteplr_milestones=True, multisteplr_gamma=True):
+        super(SchedulerParser, self).__init__(add_help=add_help)
+
+        if multisteplr_milestones:
+            self.add_argument('--multisteplr_milestones', type=str, default='0.5,0.67', metavar='<MSLRMS>',
+                              help="[default: %(default)s] milestones in terms of percentage of total epochs/batches.")
+
+        if multisteplr_gamma:
+            self.add_argument('--multisteplr_gamma', type=float, default=0.1, metavar='<MSLRG>',
+                              help="[default: %(default)s] Multiplicative factor of learning rate decay.")
 
 
 def const(optimizer):
@@ -20,9 +34,13 @@ def get_scheduler(options, optimizer):
     if options.lr_scheduler == 'const':
         return const(optimizer)
     elif options.lr_scheduler == 'MultiStepLR':
-        half = options.train_epochs // 2
-        two_thirds = int(options.train_epochs * 2 / 3)
-        return MultiStepLR(optimizer, milestones=[half, two_thirds], gamma=0.1)
+        steps = options.train_epochs if options.lr_scheduler_level == 'epoch' \
+            else options.train_num_batches
+
+        milestone_percents = options.multisteplr_milestones.split(',')
+        milestones = [int(steps * float(ms)) for ms in milestone_percents]
+        return MultiStepLR(optimizer, milestones=milestones,
+                           gamma=options.multisteplr_gamma)
     else:
         raise NotImplementedError
 
