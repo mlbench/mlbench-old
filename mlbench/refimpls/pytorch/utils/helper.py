@@ -10,9 +10,10 @@ class Timeit(object):
         self._paused = False
 
     def pause(self):
-        self._cumu += time.time() - self.t
-        self.t = time.time()
-        self._paused = True
+        if not self._paused:
+            self._cumu += time.time() - self.t
+            self.t = time.time()
+            self._paused = True
 
     def resume(self):
         if self._paused:

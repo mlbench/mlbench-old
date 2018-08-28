@@ -13,7 +13,7 @@ from torch.optim.lr_scheduler import LambdaLR, MultiStepLR
 def const(optimizer):
     def f(curr_epoch):
         return 1
-    return LambdaLR(optimizer, lr_lambda=[f])
+    return LambdaLR(optimizer, lr_lambda=f)
 
 
 def get_scheduler(options, optimizer):
