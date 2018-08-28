@@ -1,5 +1,4 @@
 """
-colors: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
 """
 import datetime
 import json
@@ -123,7 +122,7 @@ class AsyncMetricsPost(object):
 async_post = AsyncMetricsPost()
 
 
-def post_metrics(payload, rank):
+def _post_metrics(payload, rank):
     if rank == 0 and async_post._incluster:
         async_post.post(payload)
 
@@ -143,33 +142,22 @@ def configuration_information(options):
     centering("START TRAINING", 0)
 
 
-def train_batch(options, batch_idx, loss):
-    debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss))
-    post_metrics({
-        "run_id": options.run_id,
-        "name": "train loss @ rank{}".format(options.rank),
-        "value": loss,
-        "date": str(datetime.datetime.now()),
-        "cumulative": False,
-        "metadata":
-        "Training loss at rank {}, epoch {} and batch {}".format(
-            options.rank, options.runtime['current_epoch'], batch_idx)
-    }, options.rank)
-
-
-def log_val(options, val_prec1):
-    info('best accuracy for rank {}:(best epoch {}, current epoch {}): {:.3f} %'.format(
+def log_val(options, best_metric_name):
+    info('{} for rank {}:(best epoch {}, current epoch {}): {:.3f}'.format(
+        best_metric_name,
         options.rank,
         options.runtime['best_epoch'],
-        options.runtime['current_epoch'], options.runtime['best_prec1']), 0)
+        options.runtime['current_epoch'],
+        options.runtime[best_metric_name]), 0)
 
-    post_metrics({
+
+def post_metrics(options, metric_name, value):
+    _post_metrics({
         "run_id": options.run_id,
-        "name": "Prec@1",
-        "value": "{:.3f}".format(val_prec1),
+        "name": metric_name,
+        "value": "{:.3f}".format(value),
         "date": str(datetime.datetime.now()),
         "cumulative": False,
-        "metadata":
-        "Validation Prec1 at epoch {}".format(
-            options.runtime['current_epoch'])
+        "metadata": "Validation {} at epoch {}".format(
+            metric_name, options.runtime['current_epoch'])
     }, options.rank)

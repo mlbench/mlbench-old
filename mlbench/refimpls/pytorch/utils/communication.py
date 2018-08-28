@@ -1,3 +1,4 @@
+import torch
 import torch.distributed as dist
 
 
@@ -13,3 +14,12 @@ def aggregate_gradients(model, world_size):
         # all reduce.
         dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
         param.grad.data /= world_size
+
+
+def global_average(sum, count):
+    def helper(array):
+        array = torch.FloatTensor(array)
+        dist.all_reduce(array, op=dist.reduce_op.SUM)
+        return array[0] / array[1]
+    avg = helper([sum, count])
+    return avg

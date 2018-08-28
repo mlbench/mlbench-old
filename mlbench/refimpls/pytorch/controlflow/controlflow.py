@@ -5,7 +5,7 @@ from utils import checkpoint
 from utils import log
 from utils.metrics import AverageMeter
 from utils.helper import Timeit, maybe_range, update_best_runtime_metric
-from utils.communication import aggregate_gradients
+from utils.communication import aggregate_gradients, global_average
 
 
 def train_epoch(model, optimizer, criterion, options):
@@ -25,17 +25,21 @@ def train_epoch(model, optimizer, criterion, options):
         aggregate_gradients(model, options.world_size)
         optimizer.step()
 
-        log.train_batch(options, batch_idx, loss.item())
         if options.lr_scheduler_level == 'batch':
             scheduler.step()
+
+        with torch.no_grad():
+            log.debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss.item()))
+            log.post_metrics(options, 'Train Loss @ {}'.format(options.rank), loss.item())
 
 
 def validate(model, optimizer, criterion, metrics, options):
     model.eval()
 
     losses = AverageMeter()
+    for metric in metrics:
+        metric.reset()
 
-    metrics.reset()
     for batch_idx, (data, target) in zip(maybe_range(options.max_batch_per_epoch),
                                          options.val_loader):
         if options.use_cuda:
@@ -45,34 +49,38 @@ def validate(model, optimizer, criterion, metrics, options):
             output = model(data)
 
             loss = criterion(output, target)
-
-            prec1, prec5 = metrics(output, target)
-
-            log.debug("Validate Batch {:5}: Prec@1={:.3f} Prec@5={:.3f}"
-                      .format(batch_idx, prec1.item(), prec5.item()), 0)
-
             losses.update(loss.item(), data.size(0))
-            metrics.update(prec1, prec5, data)
 
-    top1_avg, top5_avg = metrics.average()
-    log.info('Prec@1: {:.3f} Prec@5: {:.3f} Loss: {:.3f}'.format(
-        top1_avg, top5_avg, losses.avg), 0)
-    return top1_avg, top5_avg
+            for metric in metrics:
+                metric_value = metric(output, target)
+                metric.update(metric_value, data.size(0))
+
+    metrics_averages = [metric.average().item() for metric in metrics]
+    loss_average = global_average(losses.sum, losses.count).item()
+    return metrics_averages, loss_average
 
 
 def do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit):
     """Evaluate the model on the test dataset and save to the checkpoint."""
     # evaluate the model.
-    val_prec1, val_prec5 = validate(model, optimizer, criterion, metrics, options)
+    metrics_values, loss = validate(model, optimizer, criterion, metrics, options)
 
     timeit.pause()
 
-    is_best = update_best_runtime_metric(options, val_prec1.item(), 'prec1')
+    if len(metrics_values) > 0:
+        # Assume the first metric is used to determine the best model to checkpoint.
+        prim_metric = metrics[0]
+        prim_metric_value = metrics_values[0]
 
-    checkpoint.save(options, model, optimizer, scheduler, is_best)
+        is_best, best_metric_name = update_best_runtime_metric(options, prim_metric_value, prim_metric.name)
 
-    log.log_val(options, val_prec1)
+        checkpoint.save(options, model, optimizer, scheduler, is_best)
+        log.log_val(options, best_metric_name)
 
+        for metric, value in zip(metrics, metrics_values):
+            log.post_metrics(options, metric.name, value)
+
+    log.post_metrics(options, 'Validation Loss', loss)
     timeit.resume()
 
 

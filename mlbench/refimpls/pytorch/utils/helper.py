@@ -1,5 +1,6 @@
 import time
 import itertools
+from utils import log
 
 
 class Timeit(object):
@@ -47,4 +48,5 @@ def update_best_runtime_metric(options, metric_value, metric_name):
     if is_best:
         options.runtime[best_metric_name] = metric_value
         options.runtime['best_epoch'] = options.runtime['current_epoch']
-    return is_best
+
+    return is_best, best_metric_name
