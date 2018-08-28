@@ -31,7 +31,7 @@ def limit_resources(model_run, name, namespace, job):
 
     kube_api.patch_namespaced_stateful_set(name, namespace, body)
 
-    # wait for SatefulSet to upgrade
+    # wait for StatefulSet to upgrade
     while True:
         response = kube_api.read_namespaced_stateful_set_status(name,
                                                                 namespace)
@@ -124,7 +124,7 @@ def limit_resources(model_run, name, namespace, job):
         sleep(1)
 
 
-@django_rq.job('default', result_ttl=-1)
+@django_rq.job('default', result_ttl=-1, timeout=-1, ttl=-1)
 def run_model_job(model_run, experiment="test_mpi"):
     """RQ Job to execute OpenMPI
 
@@ -132,7 +132,7 @@ def run_model_job(model_run, experiment="test_mpi"):
         model_run {models.ModelRun} -- the database entry this job is associated with
     """
 
-    from api.models import ModelRun
+    from api.models import ModelRun, KubePod
 
     try:
         job = get_current_job()
@@ -160,13 +160,20 @@ def run_model_job(model_run, experiment="test_mpi"):
             .format(release_name))
 
         pods = []
+        db_pods = []
         hosts = []
         for i in ret.items:
             pods.append((i.status.pod_ip,
                          i.metadata.namespace,
                          i.metadata.name,
                          str(i.metadata.labels)))
+
+            db_pod = KubePod.objects.get(name=i.metadata.name)
+            db_pods.append(db_pod)
             hosts.append("{}.{}".format(i.metadata.name, release_name))
+
+        model_run.pods.set(db_pods)
+        model_run.save()
 
         job.meta['pods'] = pods
         job.save()

@@ -19,6 +19,7 @@ class ModelRun(models.Model):
 
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(default=None, blank=True, null=True)
     state = models.CharField(
         max_length=20,
         choices=STATE_CHOICES,

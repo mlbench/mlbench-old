@@ -15,6 +15,7 @@ class ModelRunSerializer(serializers.HyperlinkedModelSerializer):
             'id',
             'name',
             'created_at',
+            'finished_at',
             'state',
             'job_id',
             'job_metadata']
