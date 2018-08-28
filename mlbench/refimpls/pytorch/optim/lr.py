@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Scheduling Learning Rates."""
+"""Scheduling Learning Rates.
+
+.. rubric:: References
+
+.. [ginsburg2018large] Ginsburg, Boris and Gitman, Igor and You, Yang
+    Large Batch Training of Convolutional Networks with Layer-wise Adaptive Rate Scaling
+
+"""
 from torch.optim.lr_scheduler import LambdaLR, MultiStepLR
 
 
@@ -56,15 +63,16 @@ def get_scheduler(options, optimizer):
 
 
 # def adjust_learning_rate_by_lars(args, global_lr, para):
-#     """Adjust the learning rate via Layer-Wise Adaptive Rate Scaling (LARS)
+#     """Adjust the learning rate via Layer-Wise Adaptive Rate Scaling (LARS).
 
-#     Layer-Wise Adaptive Rate Scaling (LARS) is proposed in
-#     @article{ginsburg2018large,
-#       title={Large Batch Training of Convolutional Networks with Layer-wise Adaptive Rate Scaling},
-#       author={Ginsburg, Boris and Gitman, Igor and You, Yang},
-#       year={2018}
-#     }
+#     The dataset is stored in [ginsburg2018large]_.
 #     """
+#     w = para.data
+#     g = para.grad.data
+
+#     local_lr = w.norm() / (w.norm() + beta * g.norm())
+#     # v  = m * v +
+
 #     lr = global_lr
 
 #     if args.lr_lars:
