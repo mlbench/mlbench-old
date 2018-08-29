@@ -3,7 +3,7 @@ Credits
 =======
 
 Core Contributors
-----------------
+-----------------
 
 * `Ralf Grubenmann <https://github.com/Panaetius>`_
 * `Lie He <https://github.com/LiamHe>`_
