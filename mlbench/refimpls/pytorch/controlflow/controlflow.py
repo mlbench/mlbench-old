@@ -8,7 +8,7 @@ from utils.helper import Timeit, maybe_range, update_best_runtime_metric
 from utils.communication import aggregate_gradients, global_average
 
 
-def train_epoch(model, optimizer, criterion, options):
+def train_epoch(model, optimizer, criterion, scheduler, options):
     """Train model for one epoch of data."""
     # switch to train mode
     model.train()
@@ -121,7 +121,7 @@ class TrainValidation(object):
             log.info("Current epoch : {} : lr={} : time={:10.3e}"
                      .format(epoch, scheduler.get_lr(), timeit.cumu), 0)
 
-            train_epoch(model, optimizer, criterion, options)
+            train_epoch(model, optimizer, criterion, scheduler, options)
             do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit)
 
 
