@@ -92,15 +92,16 @@ class AsyncMetricsPost(object):
         """Post information via kubernetes client.
 
         Example:
-
-            payload = {
-                "run_id": "1",
-                "name": "accuracy",
-                "cumulative": False,
-                "date": "2018-08-14T09:21:44.331823Z",
-                "value": "1.0",
-                "metadata": "some additional data"
-            }
+            >>> async_post = AsyncMetricsPost()
+            >>> payload = {
+            ...     "run_id": "1",
+            ...     "name": "accuracy",
+            ...     "cumulative": False,
+            ...     "date": "2018-08-14T09:21:44.331823Z",
+            ...     "value": "1.0",
+            ...     "metadata": "some additional data"
+            ... }
+            >>> async_post.post(payload)
 
         See `KubeMetric` in kubemetric.py for the fields and types.
 
