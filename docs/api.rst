@@ -309,12 +309,10 @@ Runs
       
     
 
-   :<json json body:       {
-                            "name": "Name of the run",
-                            "num_workers": 5,
-                            "num_cpus": 4,
-                            "max_bandwidth": 10000
-                          }
+   :<json string name:       Name of the run
+   :<json int num_workers:   Number of worker nodes for the run
+   :<json json num_cpus:     Number of Cores utilized by each worker
+   :<json json max_bandwidth:      Maximum egress bandwidth in mbps for each worker
 
    **Example response**:
 
