@@ -12,7 +12,6 @@ Welcome to mlbench's documentation!
    overview
    dashboard
    api
-   modules
    devguide
    contributing
    authors
