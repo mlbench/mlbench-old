@@ -16,6 +16,8 @@ spec:
       release: {{ .Release.Name }}
   serviceName: {{ .Release.Name }}
   podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -47,10 +49,13 @@ spec:
           #   initialDelaySeconds: 15
           #   periodSeconds: 20
           resources:
-{{ toYaml .Values.resources | indent 12 }}
+            limits:
+              cpu: {{required "Please enter the maximum number of cpus (cores) available per node with the .Values.limits.cpu setting! E.g. Kubernetes 8 or 8000m notation for 8 cpus"  .Values.limits.cpu }}
           volumeMounts:
           - name: mlbench-ssh-key
             mountPath: /ssh-key/root
+          securityContext:
+            privileged: true
       volumes:
       - name: mlbench-ssh-key
         secret:
