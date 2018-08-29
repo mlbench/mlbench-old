@@ -123,3 +123,61 @@ To access mlbench, run these commands and open the URL that's returned:
    .. code-block:: bash
 
       gcloud compute firewall-rules delete --quiet mlbench
+
+
+Minikube
+--------
+
+Installing mlbench to `minikube <https://github.com/kubernetes/minikube>`_.
+
+First build docker images and push them to private registry `localhost:5000`.
+
+.. code-block:: bash
+
+  $ make publish-docker component=master docker_registry=localhost:5000
+  $ make publish-docker component=worker docker_registry=localhost:5000
+
+Then start minikube cluster
+
+.. code-block:: bash
+
+    $ minikube start
+
+Use `tcp-proxy <https://github.com/Tecnativa/docker-tcp-proxy>`_ to forward node's 5000 port to host's port 5000
+so that one can pull images from local registry.
+
+.. code-block:: bash
+
+    $ minikube ssh
+    $ docker run --name registry-proxy -d -e LISTEN=':5000' -e TALK="$(/sbin/ip route|awk '/default/ { print $3 }'):5000" -p 5000:5000 tecnativa/tcp-proxy
+
+Now we can pull images from private registry inside the cluster, check :code:`docker pull localhost:5000/mlbench_master:latest`.
+
+Next install or upgrade a helm chart with desired configurations with name `${RELEASE_NAME}`
+
+.. code-block:: bash
+
+    $ helm init --kube-context minikube --wait
+    $ helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
+
+.. note::
+    The minikube runs a single-node Kubernetes cluster inside a VM. So we need to fix the :code:`replicaCount=1` in `values.yaml`.
+
+Once the installation is finished, one can obtain the url
+
+.. code-block:: bash
+
+    export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services ${RELEASE_NAME}-mlbench-master)
+    export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+    echo http://$NODE_IP:$NODE_PORT
+
+Now the mlbench dashboard should be available at :code:`http://${NODE_IP}:${NODE_PORT}`.
+
+.. note::
+  To access :code:`http://$NODE_IP:$NODE_PORT` outside minikube, run the following command on the host:
+
+  .. code-block:: bash
+
+      $ ssh -i ${MINIKUBE_HOME}/.minikube/machines/minikube/id_rsa -N -f -L localhost:${NODE_PORT}:${NODE_IP}:${NODE_PORT} docker@$(minikube ip)
+
+  where :code:`$MINIKUBE_HOME` is by default :code:`$HOME`. One can view mlbench dashboard at :code:`http://localhost:${NODE_PORT}`
