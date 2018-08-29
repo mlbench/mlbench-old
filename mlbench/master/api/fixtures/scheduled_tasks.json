@@ -7,8 +7,8 @@
         "queue": "default",
         "callable": "api.utils.pod_monitor.check_new_pods",
         "enabled": true,
-        "interval": 1,
-        "interval_unit": "minutes",
+        "interval": 30,
+        "interval_unit": "seconds",
         "scheduled_time": "2018-01-01T00:00:00.000+00:00",
         "result_ttl": 120
       }
@@ -35,7 +35,7 @@
           "queue": "default",
           "callable": "api.utils.pod_monitor.check_pod_metrics",
           "enabled": true,
-          "interval": 10,
+          "interval": 5,
           "interval_unit": "seconds",
           "scheduled_time": "2018-01-01T00:00:40.000+00:00",
           "result_ttl": 120

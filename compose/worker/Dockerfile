@@ -3,7 +3,7 @@
 FROM mlbench/mlbench_worker:mlbench-worker-base
 
 # -------------------- Debug --------------------
-RUN apt-get update && apt-get install -y vim net-tools
+RUN apt-get update && apt-get install -y vim net-tools iproute2
 
 ADD ./mlbench/worker/ /app/
 

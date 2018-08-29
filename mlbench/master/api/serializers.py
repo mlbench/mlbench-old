@@ -15,13 +15,19 @@ class ModelRunSerializer(serializers.HyperlinkedModelSerializer):
             'id',
             'name',
             'created_at',
+            'finished_at',
             'state',
             'job_id',
             'job_metadata']
 
 
 class KubeMetricsSerializer(serializers.HyperlinkedModelSerializer):
-    # TODO:
+    name = serializers.CharField(max_length=50)
+    value = serializers.CharField(max_length=100)
+    date = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%S.%fZ')
+    metadata = serializers.CharField()
+    cumulative = serializers.BooleanField(default=False)
+
     class Meta:
         model = KubeMetric
-        fields = ['name', 'value']
+        fields = ['name', 'value', 'date', 'metadata', 'cumulative']

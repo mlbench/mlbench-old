@@ -19,11 +19,16 @@ class ModelRun(models.Model):
 
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(default=None, blank=True, null=True)
     state = models.CharField(
         max_length=20,
         choices=STATE_CHOICES,
         default=INITIALIZED)
     job_id = models.CharField(max_length=38, default="")
+
+    cpu_limit = models.CharField(max_length=20, default="12000m")
+    num_workers = models.IntegerField(default=2)
+    network_bandwidth_limit = models.IntegerField(default=10000)
 
     job_metadata = {}
 
