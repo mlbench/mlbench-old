@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath('../mlbench/refimpls/pytorch'))
 
 import mlbench
 
-autodoc_mock_imports = ["django", "PIL", "torchvision", "numpy", "torch"]
+autodoc_mock_imports = ["django", "PIL", "torchvision.transforms", "torchvision.datasets"]
 
 
 # -- General configuration ---------------------------------------------
