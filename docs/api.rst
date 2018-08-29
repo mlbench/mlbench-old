@@ -106,7 +106,7 @@ Metrics
                 }
             ]
         }
-    }
+      }
 
    :reqheader Accept: the response content type depends on
                       :mailheader:`Accept` header
@@ -306,9 +306,15 @@ Runs
       POST /api/runs/ HTTP/1.1
       Host: example.com
       Accept: application/json, text/javascript
-      {
-        "name": "Name of the run"
-      }
+      
+    
+
+   :<json json body:       {
+                            "name": "Name of the run",
+                            "num_workers": 5,
+                            "num_cpus": 4,
+                            "max_bandwidth": 10000
+                          }
 
    **Example response**:
 
