@@ -29,8 +29,10 @@ def train_epoch(model, optimizer, criterion, scheduler, options):
             scheduler.step()
 
         with torch.no_grad():
-            log.debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss.item()))
-            log.post_metrics(options, 'Train Loss @ {}'.format(options.rank), loss.item())
+            loss = loss.item()
+            log.debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss))
+            log.post_metrics(options, 'Train Loss @ {}'.format(options.rank), loss)
+            options.runtime['train_loss_hist'].append(loss)
 
 
 def validate(model, optimizer, criterion, metrics, options):
@@ -81,6 +83,9 @@ def do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit
             log.post_metrics(options, metric.name, value)
 
     log.post_metrics(options, 'Validation Loss', loss)
+    options.runtime['val_loss_hist'].append(loss)
+    options.runtime['val_metrics_hist'].append(metrics_values)
+    options.runtime['val_time'].append(timeit.cumu)
     timeit.resume()
 
 
@@ -106,6 +111,11 @@ class TrainValidation(object):
         max_epochs = min(options.train_epochs, options.max_train_steps)\
             if options.max_train_steps else options.train_epochs
         start_epoch = options.runtime['current_epoch'] if options.resume else 0
+
+        options.runtime['train_loss_hist'] = options.runtime.get('train_loss_hist', [])
+        options.runtime['val_loss_hist'] = options.runtime.get('val_loss_hist', [])
+        options.runtime['val_metrics_hist'] = options.runtime.get('val_metrics_hist', [])
+        options.runtime['val_time'] = options.runtime.get('val_time', [])
 
         dist.barrier()
 
