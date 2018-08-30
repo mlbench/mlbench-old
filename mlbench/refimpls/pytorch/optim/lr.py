@@ -80,7 +80,6 @@ def linear_learning_rates(optimizer, base_lr, max_lr, cycle_length, scale_fn):
         cycle = np.floor(1 + iterations / (2 * step_size))
         x = np.abs(iterations/step_size - 2 * cycle + 1)
         lr = base_lr + (max_lr-base_lr) * np.maximum(0, (1-x)) * scale_fn(cycle, iterations)
-        print("iterations", iterations, 'lr = {}'.format(lr))
         return lr / base_lr
 
     # Use base_lr to overwrite the --lr
