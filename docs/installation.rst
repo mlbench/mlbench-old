@@ -78,7 +78,7 @@ Install mlbench (Replace ``${RELEASE_NAME}`` with a name of your choice):
 
    helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
 
-To access mlbench, run these commands and open the URL that' is returned (**Note**: The default instructions returned by `helm` on the commandline return the internal cluster ip only):
+To access mlbench, run these commands and open the URL that is returned (**Note**: The default instructions returned by `helm` on the commandline return the internal cluster ip only):
 
 .. code-block:: bash
 
@@ -132,6 +132,8 @@ To access mlbench, run these commands and open the URL that' is returned (**Note
 
 Minikube
 --------
+
+Minikube allows running a single-node Kubernetes cluster inside a VM on your laptop, for users looking to try out Kubernetes or to develop with it.
 
 Installing mlbench to `minikube <https://github.com/kubernetes/minikube>`_.
 
