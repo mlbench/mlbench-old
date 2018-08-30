@@ -5,6 +5,8 @@ Installation
 
 Make sure to read :doc:`prerequisites` before installing mlbench.
 
+All guides assume you have checked out the mlbench github repository and have a terminal open in the checked-out ``mlbench`` directory.
+
 .. _helm-charts:
 
 Helm Chart values
@@ -40,6 +42,21 @@ Use helm to install the mlbench chart (Replace ``${RELEASE_NAME}`` with a name o
 
    $ helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
 
+Follow the instructions at the end of the helm install to get the dashboard URL. E.g.:
+
+.. code-block:: bash
+   :emphasize-lines: 5,6,7
+
+   $ helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install rel charts/mlbench
+     [...]
+     NOTES:
+     1. Get the application URL by running these commands:
+        export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services rel-mlbench-master)
+        export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+        echo http://$NODE_IP:$NODE_PORT
+
+This outputs the URL the Dashboard is accessible at.
+
 
 Google Cloud / Google Kubernetes Engine (GKE)
 ---------------------------------------------
@@ -61,7 +78,7 @@ Install mlbench (Replace ``${RELEASE_NAME}`` with a name of your choice):
 
    helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
 
-To access mlbench, run these commands and open the URL that's returned (**Note**: The default instructions returned by `helm` on the commandline return the internal cluster ip only):
+To access mlbench, run these commands and open the URL that' is returned (**Note**: The default instructions returned by `helm` on the commandline return the internal cluster ip only):
 
 .. code-block:: bash
 
