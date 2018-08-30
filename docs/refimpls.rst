@@ -5,4 +5,4 @@ Reference Implementations
 .. toctree::
     :maxdepth: 2
 
-    refimpls/modules.rst
+.. refimpls/modules.rst
