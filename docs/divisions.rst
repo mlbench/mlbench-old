@@ -35,8 +35,18 @@ The higher the better
 Time to Accuracy
 ~~~~~~~~~~~~~~~~
 A certain Accuracy, e.g. 97% is defined for a task and the training time of the system until that accuracy is reached is measured.
-The shorter the better
+The shorter the better. 
 
+.. _Deep Residual Learning for Image Recognition: 
+    https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf
+
+.. _CIFAR-10:
+    http://www.cs.toronto.edu/~kriz/cifar.html
+
+Here is a validation error plot of training ResNet on `CIFAR-10`_ using settings in `Deep Residual Learning for Image Recognition`_.
+
+.. image:: images/km2016deep.png
+    :align: center
 
 
 Open Division

@@ -105,6 +105,7 @@ ENV/
 .vscode
 /docs/mlbench.rst
 /docs/modules.rst
+/docs/refimpls/
 
 # helm
 **/charts/*.tgz

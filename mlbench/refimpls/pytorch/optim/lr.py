@@ -1,21 +1,46 @@
 # -*- coding: utf-8 -*-
-"""Scheduling Learning Rates."""
+"""Scheduling Learning Rates.
+
+.. rubric:: References
+
+.. [ginsburg2018large] Ginsburg, Boris and Gitman, Igor and You, Yang
+    Large Batch Training of Convolutional Networks with Layer-wise Adaptive Rate Scaling
+
+"""
 from torch.optim.lr_scheduler import LambdaLR, MultiStepLR
+import argparse
+
+
+class SchedulerParser(argparse.ArgumentParser):
+    def __init__(self, add_help=False, multisteplr_milestones=True, multisteplr_gamma=True):
+        super(SchedulerParser, self).__init__(add_help=add_help)
+
+        if multisteplr_milestones:
+            self.add_argument('--multisteplr_milestones', type=str, default='0.5,0.67', metavar='<MSLRMS>',
+                              help="[default: %(default)s] milestones in terms of percentage of total epochs/batches.")
+
+        if multisteplr_gamma:
+            self.add_argument('--multisteplr_gamma', type=float, default=0.1, metavar='<MSLRG>',
+                              help="[default: %(default)s] Multiplicative factor of learning rate decay.")
 
 
 def const(optimizer):
     def f(curr_epoch):
         return 1
-    return LambdaLR(optimizer, lr_lambda=[f])
+    return LambdaLR(optimizer, lr_lambda=f)
 
 
 def get_scheduler(options, optimizer):
     if options.lr_scheduler == 'const':
         return const(optimizer)
     elif options.lr_scheduler == 'MultiStepLR':
-        half = options.train_epochs // 2
-        two_thirds = int(options.train_epochs * 2 / 3)
-        return MultiStepLR(optimizer, milestones=[half, two_thirds], gamma=0.1)
+        steps = options.train_epochs if options.lr_scheduler_level == 'epoch' \
+            else options.train_num_batches
+
+        milestone_percents = options.multisteplr_milestones.split(',')
+        milestones = [int(steps * float(ms)) for ms in milestone_percents]
+        return MultiStepLR(optimizer, milestones=milestones,
+                           gamma=options.multisteplr_gamma)
     else:
         raise NotImplementedError
 
@@ -56,15 +81,16 @@ def get_scheduler(options, optimizer):
 
 
 # def adjust_learning_rate_by_lars(args, global_lr, para):
-#     """Adjust the learning rate via Layer-Wise Adaptive Rate Scaling (LARS)
+#     """Adjust the learning rate via Layer-Wise Adaptive Rate Scaling (LARS).
 
-#     Layer-Wise Adaptive Rate Scaling (LARS) is proposed in
-#     @article{ginsburg2018large,
-#       title={Large Batch Training of Convolutional Networks with Layer-wise Adaptive Rate Scaling},
-#       author={Ginsburg, Boris and Gitman, Igor and You, Yang},
-#       year={2018}
-#     }
+#     The dataset is stored in [ginsburg2018large]_.
 #     """
+#     w = para.data
+#     g = para.grad.data
+
+#     local_lr = w.norm() / (w.norm() + beta * g.norm())
+#     # v  = m * v +
+
 #     lr = global_lr
 
 #     if args.lr_lars:

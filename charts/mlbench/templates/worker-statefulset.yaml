@@ -31,10 +31,12 @@ spec:
         - name: {{ template "mlbench.name" . }}-{{ .Values.worker.name }}
           image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"
           imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+          stdin: true
+          tty: true
           ports:
             - name: ssh
               containerPort: 22
-              hostPort: 22
+              hostPort: 16166
               protocol: TCP
           # livenessProbe:
           #   tcpSocket:

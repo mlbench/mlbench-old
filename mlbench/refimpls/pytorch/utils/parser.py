@@ -5,6 +5,8 @@ from __future__ import print_function
 import argparse
 import torch
 
+from optim.lr import SchedulerParser
+
 DTYPE_MAP = {
     "fp16": torch.float16,
     "fp32": torch.float32,
@@ -142,7 +144,7 @@ class ModelParser(argparse.ArgumentParser):
 
     def __init__(self, add_help=True, lr=True, momentum=True, criterion=True, nesterov=True,
                  weight_decay=True, opt_name=True, model_name=True, model_version=True,
-                 lr_scheduler=True, metrics=True):
+                 lr_scheduler=True, lr_scheduler_level=True, metrics=True):
         super(ModelParser, self).__init__(add_help=add_help)
 
         if opt_name:
@@ -164,6 +166,11 @@ class ModelParser(argparse.ArgumentParser):
         if lr_scheduler:
             self.add_argument("--lr_scheduler", type=str, default='const', metavar='<LS>',
                               help="[default: %(default)s] name of learning rate scheduler.")
+
+        if lr_scheduler_level:
+            self.add_argument("--lr_scheduler_level", type=str, choices=['epoch', 'batch'],
+                              default='epoch', metavar='<LSL>',
+                              help="[default: %(default)s] scheduling learning rate at epoch/batch level.")
 
         if momentum:
             self.add_argument("--momentum", type=float, default=0.9, metavar='<M>',
@@ -210,5 +217,6 @@ class MainParser(argparse.ArgumentParser):
             PerformanceParser(add_help=False),
             DatasetParser(add_help=False),
             ModelParser(add_help=False),
-            ControlflowParser(add_help=False)
+            ControlflowParser(add_help=False),
+            SchedulerParser(add_help=False)
         ])
