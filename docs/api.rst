@@ -1,11 +1,11 @@
-========
+
 REST API
-========
+^^^^^^^^
 
 MLBench provides a basic REST Api though which most functionality can also be used. It's accessible through the /api/ endpoints on the dashboard URL.
 
 Pods
-----
+""""
 
 .. http:get:: /api/pods/
 
@@ -49,7 +49,7 @@ Pods
    :statuscode 200: no error
 
 Metrics
--------
+"""""""
 
 .. http:get:: /api/metrics/
 
@@ -212,7 +212,7 @@ Metrics
    :statuscode 201: no error
 
 Runs
-----
+""""
 .. http:get:: /api/runs/
 
    Gets all active/failed/finished runs
@@ -306,8 +306,8 @@ Runs
       POST /api/runs/ HTTP/1.1
       Host: example.com
       Accept: application/json, text/javascript
-      
-    
+
+
 
    :<json string name:       Name of the run
    :<json int num_workers:   Number of worker nodes for the run

@@ -7,11 +7,8 @@
    self
    prerequisites
    installation
-   usage
    divisions
    overview
-   dashboard
-   api
    devguide
    contributing
    authors
