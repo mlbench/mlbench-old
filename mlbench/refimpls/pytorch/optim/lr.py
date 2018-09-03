@@ -9,25 +9,43 @@
 .. [leslie2017cyclical] Leslie N. Smith
     Cyclical Learning Rates for Training Neural Networks
 
+.. [goyal2017accurate] Goyal, Priya, et al.
+    Accurate, large minibatch SGD: training imagenet in 1 hour.
+
 """
 from torch.optim.lr_scheduler import LambdaLR, MultiStepLR
 import argparse
 import numpy as np
+from bisect import bisect_right
 
 
 class SchedulerParser(argparse.ArgumentParser):
     def __init__(self, add_help=False, multisteplr_milestones=True, multisteplr_gamma=True,
+                 warmup=True, warmup_scaling_factor=True, warmup_scaling_iters=True,
                  clr_cycle_length=True, clr_base_lr=True, clr_max_lr=True, clr_mode=True,
                  clr_gamma=True):
         super(SchedulerParser, self).__init__(add_help=add_help)
 
         if multisteplr_milestones:
-            self.add_argument('--multisteplr_milestones', type=str, default='0.5,0.67', metavar='<MSLRMS>',
-                              help="[default: %(default)s] milestones in terms of percentage of total epochs/batches.")
+            self.add_argument('--multisteplr_milestones', type=lambda x: [float(i) for i in x.split(",")],
+                              default='32000,48000', metavar='<MSLRMS>',
+                              help="[default: %(default)s] milestones for multistep learning rate schedule.")
 
         if multisteplr_gamma:
             self.add_argument('--multisteplr_gamma', type=float, default=0.1, metavar='<MSLRG>',
                               help="[default: %(default)s] Multiplicative factor of learning rate decay.")
+        if warmup:
+            self.add_argument("--warmup", default=False, action="store_true",
+                              help="[default: %(default)s] linearly warmup learning rate before other scheduling."
+                              "For the moment, only implemented for multistep learning rate with warmup.")
+
+        if warmup_scaling_factor:
+            self.add_argument("--warmup_scaling_factor", type=float, default=1.0, metavar='<MLSRSF>',
+                              help="[default: %(default)s] scaling_factor * base_lr is the lr after warmup.")
+
+        if warmup_scaling_iters:
+            self.add_argument("--warmup_scaling_iters", type=float, default=1, metavar='<MLSRSI>',
+                              help="[default: %(default)s] number of iterations for the warmup.")
 
         if clr_cycle_length:
             self.add_argument("--clr_cycle_length", type=str, default='batch:2000', metavar='<CLRCL>',
@@ -58,7 +76,7 @@ def const(optimizer):
     return LambdaLR(optimizer, lr_lambda=lambda x: 1.0)
 
 
-def linear_learning_rates(optimizer, base_lr, max_lr, cycle_length, scale_fn):
+def triangular_learning_rates(optimizer, base_lr, max_lr, cycle_length, scale_fn):
     """Linearly scale the learning rates.
 
     :param optimizer: an optimizer whose learning rate is scheduled.
@@ -115,9 +133,51 @@ def cyclical_learning_rates(options, optimizer):
     cycle_length = int(_cycle_length) if _cycle_unit == 'batch' \
         else float(_cycle_length) * options.train_num_batches
 
-    return linear_learning_rates(optimizer, options.clr_base_lr, options.clr_max_lr,
-                                 cycle_length=cycle_length,
-                                 scale_fn=scale_fn)
+    return triangular_learning_rates(optimizer, options.clr_base_lr, options.clr_max_lr,
+                                     cycle_length=cycle_length, scale_fn=scale_fn)
+
+
+def multistep_learning_rates_with_warmup(options, optimizer):
+    """Use multistep learning rate schedule with warmup.
+
+    In goyal2017accurate_, warmup is used in order to apply the ``Linear Scaling Rule``.
+    Starting from the ``base_lr``, lr gradually increases to ``base_lr * scaling_factor``.
+    Then use multiply the learning rate by ``gamma`` at specified milestones.
+
+    :param options: all configs
+    :type options: argparse.Namespace
+    :param optimizer: optimizer associated with the scheduler
+    :type optimizer: torch.nn.optim.optimizer
+    :returns: a learning rate scheduler
+    :rtype: LambdaLR
+    :raises: ValueError, ValueError, ValueError
+    """
+    if options.lr_scheduler_level != 'batch':
+        raise ValueError("The scheduler should be updated at batch level. Got {}."
+                         .format(options.lr_scheduler_level))
+
+    base_lr = options.lr
+    scaling_factor = options.warmup_scaling_factor
+    scaling_iters = options.warmup_scaling_iters
+    milestones = options.multisteplr_milestones
+    gamma = options.multisteplr_gamma
+    warmup = options.warmup
+
+    if not list(milestones) == sorted(milestones):
+        raise ValueError('Milestones should be a list of'
+                         ' increasing integers. Got {}', milestones)
+
+    if scaling_iters >= milestones[0]:
+        raise ValueError("The scaling phase should be earlier than "
+                         "the first milestone. Got {} and {}".format(scaling_iters, milestones[0]))
+
+    def f(iterations):
+        if warmup and iterations <= scaling_iters:
+            lr = base_lr + base_lr * (scaling_factor - 1) * iterations / scaling_iters
+        else:
+            lr = base_lr * scaling_factor * gamma ** bisect_right(milestones, iterations)
+        return lr / base_lr
+    return LambdaLR(optimizer, lr_lambda=f)
 
 
 def get_scheduler(options, optimizer):
@@ -127,12 +187,12 @@ def get_scheduler(options, optimizer):
         steps = options.train_epochs if options.lr_scheduler_level == 'epoch' \
             else options.train_num_batches * options.train_epochs
 
-        milestone_percents = options.multisteplr_milestones.split(',')
-        milestones = [int(steps * float(ms)) for ms in milestone_percents]
-        return MultiStepLR(optimizer, milestones=milestones,
-                           gamma=options.multisteplr_gamma)
+        milestones = options.multisteplr_milestones
+        return MultiStepLR(optimizer, milestones=milestones, gamma=options.multisteplr_gamma)
     elif options.lr_scheduler == 'CLR':
         return cyclical_learning_rates(options, optimizer)
+    elif options.lr_scheduler == 'MultiStepLRW':
+        return multistep_learning_rates_with_warmup(options, optimizer)
     else:
         raise NotImplementedError
 
