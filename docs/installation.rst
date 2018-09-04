@@ -18,16 +18,27 @@ Set the following helm properties (via cmd or custom values.yaml):
      cpu:
      maximumWorkers:
      bandwidth:
+     gpu:
 
 - `limits.cpu` is the maximum number of CPUs (Cores) available on each worker node. Uses Kubernetes notation (`8` or `8000m` for 8 cpus/cores)
 - `limits.maximumWorkers` is the maximum number of Nodes available to mlbench as workers.
 - `limits.bandwidth` is the maximum network bandwidth available between workers, in mbit per second
+- `limits.gpu` is the number of gpus requested by each worker node.
 
 Use helm to install the mlbench chart:
 
 .. code-block:: bash
 
    $ helm install mlbench
+
+
+Plugins
+"""""""
+In `values.yaml`, one can optionally install Kubernetes plugins by turning on/off the following flags:
+
+- ``weave.enabled``: If true, install the `weave network plugin <https://github.com/weaveworks/weave>`_.
+- ``nvidiaDevicePlugin.enabled``: If true, install the `nvidia device plugin <https://github.com/NVIDIA/k8s-device-plugin>`_.
+
 
 From sources
 ------------
