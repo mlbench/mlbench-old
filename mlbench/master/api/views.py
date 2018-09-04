@@ -143,7 +143,7 @@ class KubeMetricsView(ViewSet):
                             until)
                         pod_file.write(json.dumps(pod_metrics, indent=4))
                         zf.writestr('{}.json'.format(pod.name),
-                                    metrics_file.getvalue())
+                                    pod_file.getvalue())
 
                 else:
                     pod = KubePod.objects.filter(name=pk).first()

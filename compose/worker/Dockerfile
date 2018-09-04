@@ -16,5 +16,5 @@ ENV PYTHONPATH /codes
 ADD ./compose/worker/requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
 
-# On google cloud `libnvidia-ml.so` could be in `/usr/local/nvidia/lib64`
+# To find `libnvidia-ml.so` on google cloud.
 ENV LD_LIBRARY_PATH="/usr/local/nvidia/lib64:$LD_LIBRARY_PATH"
