@@ -90,6 +90,9 @@ def config_pytorch(options):
         torch.backends.cudnn.enabled = True
         torch.backends.cudnn.benchmark = True
 
+        if torch.backends.cudnn.version() is None:
+            log.warning("CUDNN not found on device.")
+
 
 def config_path(options):
     """Config the path used during the experiments."""

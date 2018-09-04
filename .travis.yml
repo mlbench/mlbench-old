@@ -71,6 +71,7 @@ jobs:
           --set limits.cpu=1000m \
           --set limits.maximumWorkers=2 \
           --set limits.bandwidth=100 \
+          --set limits.gpu=0 \
           --wait \
           --timeout 900 \
           charts/mlbench/

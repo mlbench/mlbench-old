@@ -2,6 +2,9 @@
 weave:
   enabled: false
 
+nvidiaDevicePlugin:
+  enabled: false
+
 master:
   enabled: true
 
@@ -69,3 +72,4 @@ limits:
   cpu:
   maximumWorkers:
   bandwidth:
+  gpu:
