@@ -76,23 +76,23 @@ Install mlbench (Replace ``${RELEASE_NAME}`` with a name of your choice):
 
 .. code-block:: bash
 
-   helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
+   $ helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
 
 To access mlbench, run these commands and open the URL that is returned (**Note**: The default instructions returned by `helm` on the commandline return the internal cluster ip only):
 
 .. code-block:: bash
 
-   export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services ${RELEASE_NAME}-mlbench-master)
-   export NODE_IP=$(gcloud compute instances list|grep $(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}") |awk '{print $5}')
-   gcloud compute firewall-rules create --quiet mlbench --allow tcp:$NODE_PORT,tcp:$NODE_PORT
-   echo http://$NODE_IP:$NODE_PORT
+   $ export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services ${RELEASE_NAME}-mlbench-master)
+   $ export NODE_IP=$(gcloud compute instances list|grep $(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}") |awk '{print $5}')
+   $ gcloud compute firewall-rules create --quiet mlbench --allow tcp:$NODE_PORT,tcp:$NODE_PORT
+   $ echo http://$NODE_IP:$NODE_PORT
 
 .. danger::
    The last command opens up a firewall rule to the google cloud. Make sure to delete the rule once it's not needed anymore:
 
    .. code-block:: bash
 
-      gcloud compute firewall-rules delete --quiet mlbench
+      $ gcloud compute firewall-rules delete --quiet mlbench
 
 .. hint::
    If you want to build the docker images yourself and host it in the GC registry, follow these steps:
@@ -101,14 +101,14 @@ To access mlbench, run these commands and open the URL that is returned (**Note*
 
    .. code-block:: bash
 
-      gcloud auth configure-docker
+      $ gcloud auth configure-docker
 
    Build docker images (Replace **<gcloud project name>** with the name of your project):
 
    .. code-block:: bash
 
-      make publish-docker component=master docker_registry=gcr.io/<gcloud project name>
-      make publish-docker component=worker docker_registry=gcr.io/<gcloud project name>
+      $ make publish-docker component=master docker_registry=gcr.io/<gcloud project name>
+      $ make publish-docker component=worker docker_registry=gcr.io/<gcloud project name>
 
    Use the following settings for your `myvalues.yaml` file when installing with helm:
 
@@ -176,9 +176,9 @@ Once the installation is finished, one can obtain the url
 
 .. code-block:: bash
 
-    export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services ${RELEASE_NAME}-mlbench-master)
-    export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
-    echo http://$NODE_IP:$NODE_PORT
+    $ export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services ${RELEASE_NAME}-mlbench-master)
+    $ export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+    $ echo http://$NODE_IP:$NODE_PORT
 
 Now the mlbench dashboard should be available at :code:`http://${NODE_IP}:${NODE_PORT}`.
 
@@ -190,3 +190,94 @@ Now the mlbench dashboard should be available at :code:`http://${NODE_IP}:${NODE
       $ ssh -i ${MINIKUBE_HOME}/.minikube/machines/minikube/id_rsa -N -f -L localhost:${NODE_PORT}:${NODE_IP}:${NODE_PORT} docker@$(minikube ip)
 
   where :code:`$MINIKUBE_HOME` is by default :code:`$HOME`. One can view mlbench dashboard at :code:`http://localhost:${NODE_PORT}`
+
+
+Docker-in-Docker (DIND)
+-----------------------
+
+Docker-in-Docker allows simulating multiple nodes locally on a single machine. This is useful for development.
+
+.. hint::
+   For development purposes, it makes sense to use a local docker registry as well with DIND.
+
+   Describing how to set up a local registry would be too long for this guide, so here are some pointers:
+
+   - You can find a guide `here <https://docs.docker.com/registry/deploying/#deploy-your-registry-using-a-compose-file>`_.
+   - `This page <https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/>`_ details setting up an image pull secret.
+   - `This <https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account>`_ details adding an image pull secret to a kubernetes service account.
+   - You can use ``dind-proxy.sh`` in the mlbench repository to forward the registry port (5000) to kubernetes DIND.
+
+Download the kubeadm-dind-cluster script.
+
+.. code-block:: bash
+
+   $ wget https://cdn.rawgit.com/kubernetes-sigs/kubeadm-dind-cluster/master/fixed/dind-cluster-v1.11.sh
+   $ chmod +x dind-cluster-v1.11.sh
+
+
+For networking to work in DIND, we need to set a `CNI Plugin <https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/>`_. In our experience, ``weave`` works well with DIND.
+
+.. code-block:: bash
+
+   $ export CNI_PLUGIN=weave
+
+
+Now we can start the local cluster with
+
+.. code-block:: bash
+
+   $ ./dind-cluster-v1.11.sh up
+
+
+This might take a couple of minutes.
+
+.. hint::
+   If you're using a local docker registry, run ``dind-proxy.sh`` after the previous step.
+
+
+
+Install ``helm`` (See :doc:`prerequisites`) and set the :ref:`helm-charts`.
+
+.. hint::
+   For a local registry, build and push the ``master`` and ``worker`` images:
+
+   .. code-block:: bash
+
+      $ make publish-docker component=master docker_registry=localhost:5000
+      $ make publish-docker component=worker docker_registry=localhost:5000
+
+   Also, make sure you have an ``imagePullSecret`` added to the kubernetes serviceaccount and set the repository and secret in the ``values.yaml`` file (``regcred`` in this example):
+
+   .. code-block:: yaml
+
+      master:
+        imagePullSecret: regcred
+
+        image:
+          repository: localhost:5000/mlbench_master
+          tag: latest
+          pullPolicy: Always
+
+
+      worker:
+        imagePullSecret: regcred
+
+        image:
+          repository: localhost:5000/mlbench_worker
+          tag: latest
+          pullPolicy: Always
+
+Install mlbench (Replace ``${RELEASE_NAME}`` with a name of your choice):
+
+.. code-block:: bash
+   :emphasize-lines: 5,6,7
+
+   $ helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install rel charts/mlbench
+     [...]
+     NOTES:
+     1. Get the application URL by running these commands:
+        export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services rel-mlbench-master)
+        export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+        echo http://$NODE_IP:$NODE_PORT
+
+This outputs the URL the Dashboard is accessible at.
