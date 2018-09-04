@@ -11,6 +11,7 @@ from .partition_data import DataPartitioner
 
 _DATASET_MAP = {
     "cifar10v1": "CIFAR10V1",
+    "cifar10v2": "CIFAR10V2",
     "mnistv1": "MNISTV1"
 }
 
@@ -27,7 +28,7 @@ class MNISTV1(datasets.MNIST):
                                       download=download)
 
 
-class CIFAR10V1(datasets.CIFAR10):
+class CIFAR10V2(datasets.CIFAR10):
     """CIFAR10 with default preprocessing.
 
     https://github.com/bkj/basenet/blob/49b2b61e5b9420815c64227c5a10233267c1fb14/examples/cifar10.py
@@ -57,19 +58,38 @@ class CIFAR10V1(datasets.CIFAR10):
                 transforms.ToTensor(),
                 transforms.Normalize(cifar10_stats['mean'], cifar10_stats['std']),
             ])
-        super(CIFAR10V1, self).__init__(root=root, train=train,
+        super(CIFAR10V2, self).__init__(root=root, train=train,
                                         transform=transform,
                                         download=download)
 
 
-class CIFAR10V2(datasets.CIFAR10):
+class CIFAR10V1(datasets.CIFAR10):
     """
-    # https://github.com/IamTao/dl-benchmarking/blob/master/tasks/cv/pytorch/code/dataset/create_data.py
-    # https://github.com/kuangliu/pytorch-cifar/blob/master/main.py
+    * https://github.com/IamTao/dl-benchmarking/blob/master/tasks/cv/pytorch/code/dataset/create_data.py
+    * https://github.com/kuangliu/pytorch-cifar/blob/master/main.py
     """
 
     def __init__(self, root, train=True, download=False):
-        raise NotImplementedError
+        cifar10_stats = {
+            "mean": (0.4914, 0.4822, 0.4465),
+            "std": (0.2023, 0.1994, 0.2010),
+        }
+
+        if train:
+            transform = transforms.Compose([
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(cifar10_stats['mean'], cifar10_stats['std']),
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(cifar10_stats['mean'], cifar10_stats['std']),
+            ])
+        super(CIFAR10V1, self).__init__(root=root, train=train,
+                                        transform=transform,
+                                        download=download)
 
 
 def maybe_download(name, datasets_path, train=True, download=True, preprocessing_version='v1'):

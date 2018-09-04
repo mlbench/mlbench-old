@@ -92,9 +92,10 @@ class PerformanceParser(argparse.ArgumentParser):
             self.add_argument("--max_train_steps", type=int, default=None, metavar="<MTS>",
                               help="[default: %(default)s] The model will stop training if the "
                                    "global_step reaches this value. If not set, training will run"
-                                   "until the specified number of epochs have run as usual. It is"
-                                   "generally recommended to set --train_epochs=1 when using this"
-                                   "flag.")
+                                   "until the specified number of epochs have run as usual."
+                                   "Note that `max_train_steps` should only be used to control the "
+                                   "number of epochs to run. Objectis like Learning rate schedule should "
+                                   "use `train_epochs`.")
 
         if dtype:
             self.add_argument("--dtype", type=str, default="fp32", choices=list(DTYPE_MAP.keys()),
