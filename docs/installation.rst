@@ -1,48 +1,100 @@
 .. highlight:: shell
 
-============
 Installation
 ============
 
+Make sure to read :doc:`prerequisites` before installing mlbench.
 
-Stable release
---------------
+All guides assume you have checked out the mlbench github repository and have a terminal open in the checked-out ``mlbench`` directory.
 
-Install `Helm <https://helm.sh/>`_
+.. _helm-charts:
 
-Set the following helm properties (via cmd or custom values.yaml):
+Helm Chart values
+-----------------
+
+Since every Kubernetes is different, there are no reasonable defaults for some values, so the following properties have to be set.
+You can save them in a yaml file of your chosing. This guide will assume you saved them in `myvalues.yaml`.
 
 .. code-block:: yaml
 
    limits:
-     cpu:
      maximumWorkers:
+     cpu:
      bandwidth:
 
-- `limits.cpu` is the maximum number of CPUs (Cores) available on each worker node. Uses Kubernetes notation (`8` or `8000m` for 8 cpus/cores)
-- `limits.maximumWorkers` is the maximum number of Nodes available to mlbench as workers.
-- `limits.bandwidth` is the maximum network bandwidth available between workers, in mbit per second
+- ``limits.maximumWorkers`` is the maximum number of Nodes available to mlbench as workers. This sets the maximum number of nodes that can be chosen for an experiment in the UI. By default mlbench starts 2 workers on startup.
+- ``limits.cpu`` is the maximum number of CPUs (Cores) available on each worker node. Uses Kubernetes notation (`8` or `8000m` for 8 cpus/cores). This is also the maximum number of Cores that can be selected for an experiment in the UI
+- ``limits.bandwidth`` is the maximum network bandwidth available between workers, in mbit per second. This is the default bandwidth used and the maximum number selectable in the UI.
 
-Use helm to install the mlbench chart:
+.. Caution::
+   If you set ``maximumWorkers`` or ``cpu`` higher than available in your cluster, Kubernetes will not be able to allocate nodes to mlbench and the deployment will hang indefinitely, without throwing an exception.
+   Kubernetes will just wait until nodes that fit the requirements become available. So make sure your cluster actually has the requirements avilable that you requested.
+
+
+Basic Install
+-------------
+
+Set the :ref:`helm-charts`
+
+Use helm to install the mlbench chart (Replace ``${RELEASE_NAME}`` with a name of your choice):
 
 .. code-block:: bash
 
-   $ helm install mlbench
+   $ helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
 
-From sources
-------------
+Follow the instructions at the end of the helm install to get the dashboard URL. E.g.:
 
-TODO:
+.. code-block:: bash
+   :emphasize-lines: 5,6,7
+
+   $ helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install rel charts/mlbench
+     [...]
+     NOTES:
+     1. Get the application URL by running these commands:
+        export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services rel-mlbench-master)
+        export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+        echo http://$NODE_IP:$NODE_PORT
+
+This outputs the URL the Dashboard is accessible at.
 
 
-Google Cloud
-------------
+Google Cloud / Google Kubernetes Engine (GKE)
+---------------------------------------------
 
-How to install mlbench on the Google Kubernetes Engines (GKE)
+Set the :ref:`helm-charts`
 
-Install `Google Cloud SDK <https://cloud.google.com/sdk/>`_
+.. important::
+   Make sure to read the prerequisites for :ref:`google-cloud`
 
-.. note::
+Please make sure that ``kubectl`` is configured `correctly <https://cloud.google.com/kubernetes-engine/docs/quickstart>`_.
+
+.. caution::
+   Google installs several pods on each node by default, limiting the available CPU. This can take up to 0.5 CPU cores per node. So make sure to provision VM's that have at least 1 more core than the amount of cores you want to use for you mlbench experiment.
+   See `here <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#memory_cpu>`_ for further details on node limits.
+
+Install mlbench (Replace ``${RELEASE_NAME}`` with a name of your choice):
+
+.. code-block:: bash
+
+   helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
+
+To access mlbench, run these commands and open the URL that is returned (**Note**: The default instructions returned by `helm` on the commandline return the internal cluster ip only):
+
+.. code-block:: bash
+
+   export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services ${RELEASE_NAME}-mlbench-master)
+   export NODE_IP=$(gcloud compute instances list|grep $(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}") |awk '{print $5}')
+   gcloud compute firewall-rules create --quiet mlbench --allow tcp:$NODE_PORT,tcp:$NODE_PORT
+   echo http://$NODE_IP:$NODE_PORT
+
+.. danger::
+   The last command opens up a firewall rule to the google cloud. Make sure to delete the rule once it's not needed anymore:
+
+   .. code-block:: bash
+
+      gcloud compute firewall-rules delete --quiet mlbench
+
+.. hint::
    If you want to build the docker images yourself and host it in the GC registry, follow these steps:
 
    Authenticate with GC registry:
@@ -58,14 +110,14 @@ Install `Google Cloud SDK <https://cloud.google.com/sdk/>`_
       make publish-docker component=master docker_registry=gcr.io/<gcloud project name>
       make publish-docker component=worker docker_registry=gcr.io/<gcloud project name>
 
-   Use the following settings for your `values.yaml` file when installing with helm:
+   Use the following settings for your `myvalues.yaml` file when installing with helm:
 
    .. code-block:: yaml
 
       master:
 
         image:
-          repository: gcr.io/mlbench-214014/mlbench_master
+          repository: gcr.io/<gcloud project name>/mlbench_master
           tag: latest
           pullPolicy: Always
 
@@ -73,75 +125,19 @@ Install `Google Cloud SDK <https://cloud.google.com/sdk/>`_
       worker:
 
         image:
-          repository: gcr.io/mlbench-214014/mlbench_worker
+          repository: gcr.io/<gcloud project name>/mlbench_worker
           tag: latest
           pullPolicy: Always
-
-`Create a Kubernetes Cluster on GKE <https://cloud.google.com/kubernetes-engine/docs/how-to/creating-a-cluster>`_. We will assume the cluster is called `mlbench` for the remainder of this section.
-
-.. note::
-   Google installs several pods on each node by default, limiting the available CPU. This can take up to 0.5 CPU cores per node. So make sure to provision VM's that have at least 1 more core than the amount of cores you want to use for you mlbench experiment.
-   See `here <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#memory_cpu>`_ for further details on node limits.
-
-Install the credentials for your cluster (use the correct zone for your cluster):
-
-.. code-block:: bash
-
-   gcloud container clusters get-credentials mlbench --zone us-central1-a
-
-Grant cluster-admin rights to the service account mlbench is running under (in this case `default`):
-
-.. code-block:: bash
-
-   cat <<EOF | kubectl apply -f -
-   apiVersion: rbac.authorization.k8s.io/v1beta1
-   kind: ClusterRoleBinding
-   metadata:
-     name: default
-   roleRef:
-     apiGroup: rbac.authorization.k8s.io
-     kind: ClusterRole
-     name: cluster-admin
-   subjects:
-     - kind: ServiceAccount
-       name: default
-       namespace: kube-system
-   EOF
-
-Install `Helm <https://helm.sh/>`_ and initialize it:
-
-.. code-block:: bash
-
-   helm init
-
-
-Finally, install mlbench (Assuming your custom values are in the file `values.yaml`). `rel` is the release name.
-
-.. code-block:: bash
-
-   helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install rel charts/mlbench
-
-To access mlbench, run these commands and open the URL that's returned:
-
-.. code-block:: bash
-
-   export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services rel-mlbench-master)
-   export NODE_IP=$(gcloud compute instances list|grep $(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}") |awk '{print $5}')
-   gcloud compute firewall-rules create --quiet mlbench --allow tcp:$NODE_PORT,tcp:$NODE_PORT
-   echo http://$NODE_IP:$NODE_PORT
-
-.. warning::
-   The last command opens up a firewall rule to the google cloud. Make sure to delete the rule once it's not needed anymore:
-
-   .. code-block:: bash
-
-      gcloud compute firewall-rules delete --quiet mlbench
 
 
 Minikube
 --------
 
+Minikube allows running a single-node Kubernetes cluster inside a VM on your laptop, for users looking to try out Kubernetes or to develop with it.
+
 Installing mlbench to `minikube <https://github.com/kubernetes/minikube>`_.
+
+Set the :ref:`helm-charts`
 
 First build docker images and push them to private registry `localhost:5000`.
 
@@ -171,7 +167,7 @@ Next install or upgrade a helm chart with desired configurations with name `${RE
 .. code-block:: bash
 
     $ helm init --kube-context minikube --wait
-    $ helm upgrade --wait --recreate-pods -f values.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
+    $ helm upgrade --wait --recreate-pods -f myvalues.yaml --timeout 900 --install ${RELEASE_NAME} charts/mlbench
 
 .. note::
     The minikube runs a single-node Kubernetes cluster inside a VM. So we need to fix the :code:`replicaCount=1` in `values.yaml`.

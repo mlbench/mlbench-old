@@ -1,6 +1,6 @@
-========
-Overview
-========
+
+Component Overview
+=====================
 
 .. figure:: images/DeploymentArchitecture.png
    :alt: Deployment Architecture Overview
@@ -14,15 +14,16 @@ Master
 -----------
 The master contains the Dashboard, the  main interface for the project. The dashboard allows
 you to start and run a distributed ML experiment and visualizes the progress and result of the
-experiment. It allows management of the mlbench nodes in the kubernetes cluster and for most
+experiment. It allows management of the mlbench nodes in the Kubernetes cluster and for most
 users constitutes the sole way they interact with the mlbench project.
 
-It also contains a decidated metrics API that is used for the nodes to report their state back
-to the Master.
+It also contains a REST API that can be use instead of the Dashboard, as well as being used for receiving data from the Dashboard.
 
-The Master can also be granted access to the Kubernetes API to manage cluster settings
-relevant to the workers.
+The Master also manages the ``StatefulSet`` of worker through the Kubernetes API.
 
+.. include:: dashboard.rst
+
+.. include:: api.rst
 
 Worker
 ----------
