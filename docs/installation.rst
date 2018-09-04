@@ -21,14 +21,19 @@ You can save them in a yaml file of your chosing. This guide will assume you sav
      maximumWorkers:
      cpu:
      bandwidth:
+     gpu:
 
 - ``limits.maximumWorkers`` is the maximum number of Nodes available to mlbench as workers. This sets the maximum number of nodes that can be chosen for an experiment in the UI. By default mlbench starts 2 workers on startup.
 - ``limits.cpu`` is the maximum number of CPUs (Cores) available on each worker node. Uses Kubernetes notation (`8` or `8000m` for 8 cpus/cores). This is also the maximum number of Cores that can be selected for an experiment in the UI
 - ``limits.bandwidth`` is the maximum network bandwidth available between workers, in mbit per second. This is the default bandwidth used and the maximum number selectable in the UI.
+- ``limits.gpu`` is the number of gpus requested by each worker pod.
 
 .. Caution::
-   If you set ``maximumWorkers`` or ``cpu`` higher than available in your cluster, Kubernetes will not be able to allocate nodes to mlbench and the deployment will hang indefinitely, without throwing an exception.
+   If you set ``maximumWorkers``, ``cpu`` or ``gpu`` higher than available in your cluster, Kubernetes will not be able to allocate nodes to mlbench and the deployment will hang indefinitely, without throwing an exception.
    Kubernetes will just wait until nodes that fit the requirements become available. So make sure your cluster actually has the requirements avilable that you requested.
+
+.. note::
+   To use ``gpu`` in the cluster, the `nvidia device plugin <https://github.com/NVIDIA/k8s-device-plugin>`_ should be installed. See :ref:`plugins` for details
 
 
 Basic Install
@@ -57,6 +62,14 @@ Follow the instructions at the end of the helm install to get the dashboard URL.
 
 This outputs the URL the Dashboard is accessible at.
 
+.. _plugins:
+
+Plugins
+"""""""
+In ``values.yaml``, one can optionally install Kubernetes plugins by turning on/off the following flags:
+
+- ``weave.enabled``: If true, install the `weave network plugin <https://github.com/weaveworks/weave>`_.
+- ``nvidiaDevicePlugin.enabled``: If true, install the `nvidia device plugin <https://github.com/NVIDIA/k8s-device-plugin>`_.
 
 Google Cloud / Google Kubernetes Engine (GKE)
 ---------------------------------------------

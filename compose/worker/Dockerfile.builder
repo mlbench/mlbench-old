@@ -92,9 +92,10 @@ RUN git clone --recursive https://github.com/pytorch/pytorch && \
     rm -rf /pytorch
 
 
+
 RUN git clone https://github.com/pytorch/vision.git && cd vision && pip install -v .
 
-RUN pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
+# RUN pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
 
 # RUN conda install -y -c anaconda msgpack
 # RUN conda install -y -c anaconda msgpack msgpack-numpy pyzmq pillow

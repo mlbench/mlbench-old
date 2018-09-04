@@ -2,6 +2,9 @@ Credits
 -------
 
 * `docker.openmpi <https://github.com/oweidner/docker.openmpi>`_ for good open-mpi templates
+* `torchvision <https://github.com/pytorch/vision>`_ for model and metrics templates.
+* `mlperf <https://github.com/mlperf/reference>`_ for some of the argument parsing options.
+* `jekyllrb <https://jekyllrb.com/>`_ for good blog templates
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
