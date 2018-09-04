@@ -33,7 +33,7 @@ You can save them in a yaml file of your chosing. This guide will assume you sav
    Kubernetes will just wait until nodes that fit the requirements become available. So make sure your cluster actually has the requirements avilable that you requested.
 
 .. note::
-   To use ``gpu`` in the cluster, the `nvidia device plugin <https://github.com/NVIDIA/k8s-device-plugin>`_ should be installed.
+   To use ``gpu`` in the cluster, the `nvidia device plugin <https://github.com/NVIDIA/k8s-device-plugin>`_ should be installed. See :ref:`plugins` for details
 
 
 Basic Install
@@ -61,6 +61,8 @@ Follow the instructions at the end of the helm install to get the dashboard URL.
         echo http://$NODE_IP:$NODE_PORT
 
 This outputs the URL the Dashboard is accessible at.
+
+.. _plugins:
 
 Plugins
 """""""
