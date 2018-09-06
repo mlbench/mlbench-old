@@ -108,7 +108,7 @@ def maybe_download(name, datasets_path, train=True, download=True, preprocessing
 
 
 def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_size,
-                      reshuffle_per_epoch, preprocessing_version, train=True, download=True):
+                      reshuffle_per_epoch, preprocessing_version, train=True, download=True, pin_memory=True):
     """ Load a partition of dataset from by the rank. """
     dataset = maybe_download(name, root_folder, train=train, download=download,
                              preprocessing_version=preprocessing_version)
@@ -123,7 +123,7 @@ def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_si
     # create a data loader.
     data_loader = torch.utils.data.DataLoader(
         data_to_load, batch_size=batch_size, shuffle=train,
-        num_workers=num_workers, pin_memory=True, drop_last=False)
+        num_workers=num_workers, pin_memory=pin_memory, drop_last=False)
 
     return {'loader': data_loader,
             'num_samples_per_device': num_samples_per_device,
@@ -141,7 +141,8 @@ def create_dataset(options, train=True):
                                 world_size=options.world_size,
                                 reshuffle_per_epoch=options.reshuffle_per_epoch,
                                 train=train,
-                                preprocessing_version=options.preprocessing_version)
+                                preprocessing_version=options.preprocessing_version,
+                                pin_memory=options.use_cuda)
 
     options.num_classes = dataset['num_classes']
     if train:
