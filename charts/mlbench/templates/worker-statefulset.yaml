@@ -27,6 +27,16 @@ spec:
         role: worker
     spec:
       serviceAccountName: {{ template "mlbench.worker.fullname" . }}-sa
+      affinity:
+        podAntiAffinity: 
+          requiredDuringSchedulingIgnoredDuringExecution: 
+          - labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - "{{ .Values.worker.name }}"
+            topologyKey: kubernetes.io/hostname
       containers:
         - name: {{ template "mlbench.name" . }}-{{ .Values.worker.name }}
           image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"
@@ -64,10 +74,6 @@ spec:
           defaultMode: 256
     {{- with .Values.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
 {{ toYaml . | indent 8 }}
     {{- end }}
     {{- with .Values.tolerations }}
