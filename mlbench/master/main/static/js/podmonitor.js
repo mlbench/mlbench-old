@@ -48,7 +48,7 @@ var PodMonitor = function(parent_id, metric_selector, target_element, metric_typ
         var el = $(element);
         d3.select(el[0]).selectAll("*").remove();
 
-        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S.%fZ");
+        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
 
         var cumulative = metrics['node_metrics'][value][0]['cumulative'];
 
