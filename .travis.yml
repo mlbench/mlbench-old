@@ -34,8 +34,8 @@ jobs:
         - docker build -f compose/master/Dockerfile -t ${docker_url}/${docker_repository}/mlbench-master:travis-ci-test .
         - docker pull mlbench/mlbench-worker:mlbench-worker-base && docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench-worker:travis-ci-test .
       after_success:
-        - docker push ${docker_url}/${docker_repository}//mlbench-master:travis-ci-test
-        - docker push ${docker_url}/${docker_repository}//mlbench-worker:travis-ci-test
+        - docker push ${docker_url}/${docker_repository}/mlbench-master:travis-ci-test
+        - docker push ${docker_url}/${docker_repository}/mlbench-worker:travis-ci-test
     - stage: test helm
       language: bash
       sudo: required
