@@ -70,6 +70,6 @@ worker:
 
 limits:
   cpu:
-  maximumWorkers:
+  worker:
   bandwidth:
   gpu:

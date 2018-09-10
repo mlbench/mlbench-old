@@ -18,18 +18,18 @@ You can save them in a yaml file of your chosing. This guide will assume you sav
 .. code-block:: yaml
 
    limits:
-     maximumWorkers:
+     worker:
      cpu:
      bandwidth:
      gpu:
 
-- ``limits.maximumWorkers`` is the maximum number of Nodes available to mlbench as workers. This sets the maximum number of nodes that can be chosen for an experiment in the UI. By default mlbench starts 2 workers on startup.
+- ``limits.worker`` is the maximum number of Nodes available to mlbench as workers. This sets the maximum number of nodes that can be chosen for an experiment in the UI. By default mlbench starts 2 workers on startup.
 - ``limits.cpu`` is the maximum number of CPUs (Cores) available on each worker node. Uses Kubernetes notation (`8` or `8000m` for 8 cpus/cores). This is also the maximum number of Cores that can be selected for an experiment in the UI
 - ``limits.bandwidth`` is the maximum network bandwidth available between workers, in mbit per second. This is the default bandwidth used and the maximum number selectable in the UI.
 - ``limits.gpu`` is the number of gpus requested by each worker pod.
 
 .. Caution::
-   If you set ``maximumWorkers``, ``cpu`` or ``gpu`` higher than available in your cluster, Kubernetes will not be able to allocate nodes to mlbench and the deployment will hang indefinitely, without throwing an exception.
+   If you set ``worker``, ``cpu`` or ``gpu`` higher than available in your cluster, Kubernetes will not be able to allocate nodes to mlbench and the deployment will hang indefinitely, without throwing an exception.
    Kubernetes will just wait until nodes that fit the requirements become available. So make sure your cluster actually has the requirements avilable that you requested.
 
 .. note::
