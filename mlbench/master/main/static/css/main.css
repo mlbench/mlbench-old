@@ -167,11 +167,12 @@ body {
 
 #nodes-list .card{
     flex-direction:row;
-    min-width: 18rem;
-    width: 18rem;
-    max-width:18rem;
+    min-width: 22rem;
+    width: 22rem;
+    max-width:22rem;
     border-left: 1px solid rgba(0,0,0,.125);
     margin: 3px;
+    display:block;
 }
 #nodes-list {
     display:flex;
