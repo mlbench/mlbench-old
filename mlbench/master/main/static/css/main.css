@@ -164,3 +164,16 @@ body {
 #add-run-modal .form-group span {
   margin-left: 15px;
 }
+
+#nodes-list .card{
+    flex-direction:row;
+    min-width: 18rem;
+    width: 18rem;
+    max-width:18rem;
+    border-left: 1px solid rgba(0,0,0,.125);
+    margin: 3px;
+}
+#nodes-list {
+    display:flex;
+    flex-wrap:wrap;
+}
