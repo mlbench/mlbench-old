@@ -22,7 +22,7 @@ def get_options():
     args = parser.parse_args()
 
     with open(args.config_file, 'r') as f:
-        arguments = ' '.join(f.readlines())
+        arguments = ' '.join(f.readlines()).strip()
         config_list = re.split('\s+', arguments)
 
     config_list += ['--run_id', str(args.run_id)]
