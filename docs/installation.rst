@@ -293,4 +293,4 @@ Install mlbench (Replace ``${RELEASE_NAME}`` with a name of your choice):
         export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
         echo http://$NODE_IP:$NODE_PORT
 
-This outputs the URL the Dashboard is accessible at.
+Run the 3 commands printed by the last command. This outputs the URL the Dashboard is accessible at.
