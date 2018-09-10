@@ -143,10 +143,12 @@ class DatasetParser(argparse.ArgumentParser):
 class ModelParser(argparse.ArgumentParser):
     """Arguments related to model, optimizer, lr-scheduler, training, etc."""
 
-    def __init__(self, add_help=True, lr=True, momentum=True, criterion=True, nesterov=True,
+    def __init__(self, add_help=True, lr=True, lr_per_sample=True, momentum=True, criterion=True, nesterov=True,
                  weight_decay=True, opt_name=True, model_name=True, model_version=True,
                  lr_scheduler=True, lr_scheduler_level=True, metrics=True):
         super(ModelParser, self).__init__(add_help=add_help)
+
+        lr_group = self.add_mutually_exclusive_group()
 
         if opt_name:
             self.add_argument("--opt_name", type=str, default='sgd', metavar="<ON>",
@@ -161,8 +163,17 @@ class ModelParser(argparse.ArgumentParser):
                               help="[default: %(default)s] version of model.")
 
         if lr:
-            self.add_argument("--lr", type=float, default=0.1, metavar='<LR>',
-                              help="[default: %(default)s] initial learning rate.")
+            lr_group.add_argument("--lr", type=float, default=0.1, metavar='<LR>',
+                                  help="[default: %(default)s] initial learning rate for the optimizer."
+                                  "This learning rate is mutual exclusive with lr_per_sample."
+                                  "Note that if warmup is applied, then this lr means the lr after warmup.")
+
+        if lr_per_sample:
+            lr_group.add_argument("--lr_per_sample", type=float, default=None, metavar='<LRPS>',
+                                  help="[default: %(default)s] initial learning rate per sample for the optimizer."
+                                  "This learning rate is mutual exclusive with --lr."
+                                  "Note that lr_per_sample is similar to --lr in usage except for the batch size."
+                                  "The batch size here refers to --minibatch, not (--minibatch * machines).")
 
         if lr_scheduler:
             self.add_argument("--lr_scheduler", type=str, default='const', metavar='<LS>',

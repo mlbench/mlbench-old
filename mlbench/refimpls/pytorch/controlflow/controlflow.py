@@ -15,6 +15,9 @@ def train_epoch(model, optimizer, criterion, scheduler, options):
 
     for batch_idx, (data, target) in zip(maybe_range(options.max_batch_per_epoch),
                                          options.train_loader):
+        if options.lr_scheduler_level == 'batch':
+            scheduler.step()
+
         if options.use_cuda:
             data, target = data.cuda(), target.cuda()
 
@@ -25,13 +28,11 @@ def train_epoch(model, optimizer, criterion, scheduler, options):
         aggregate_gradients(model, options.world_size)
         optimizer.step()
 
-        if options.lr_scheduler_level == 'batch':
-            scheduler.step()
-
         with torch.no_grad():
             loss = loss.item()
+            loss = global_average(loss, 1).item()
             log.debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss))
-            log.post_metrics(options, 'Train Loss @ {}'.format(options.rank), loss)
+            log.post_metrics(options, 'Train Loss', loss)
             options.runtime['train_loss_hist'].append(loss)
 
 

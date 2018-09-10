@@ -15,9 +15,11 @@ def get_optimizer(options, model):
     :rtype: optimizer
     :raises: NotImplementedError
     """
+    lr = options.lr if hasattr(options, 'lr') else options.lr_per_sample * options.batch_size
+
     if options.opt_name == 'sgd':
         optimizer = optim.SGD(model.parameters(),
-                              lr=options.lr,
+                              lr=lr,
                               momentum=options.momentum,
                               weight_decay=options.weight_decay,
                               nesterov=options.nesterov)
