@@ -31,11 +31,11 @@ jobs:
 
       before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
       script:
-        - docker build -f compose/master/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_master:travis-ci-test .
-        - docker pull mlbench/mlbench_worker:mlbench-worker-base && docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_worker:travis-ci-test .
+        - docker build -f compose/master/Dockerfile -t ${docker_url}/${docker_repository}/mlbench-master:travis-ci-test .
+        - docker pull mlbench/mlbench-worker:mlbench-worker-base && docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench-worker:travis-ci-test .
       after_success:
-        - docker push ${docker_url}/${docker_repository}//mlbench_master:travis-ci-test
-        - docker push ${docker_url}/${docker_repository}//mlbench_worker:travis-ci-test
+        - docker push ${docker_url}/${docker_repository}//mlbench-master:travis-ci-test
+        - docker push ${docker_url}/${docker_repository}//mlbench-worker:travis-ci-test
     - stage: test helm
       language: bash
       sudo: required
@@ -62,9 +62,9 @@ jobs:
       script:
         - |
           helm install --kube-context dind \
-          --set master.image.repository=${docker_url}/${docker_repository}/mlbench_master \
+          --set master.image.repository=${docker_url}/${docker_repository}/mlbench-master \
           --set master.image.tag=travis-ci-test \
-          --set worker.image.repository=${docker_url}/${docker_repository}/mlbench_worker \
+          --set worker.image.repository=${docker_url}/${docker_repository}/mlbench-worker \
           --set worker.image.tag=travis-ci-test \
           --set worker.imagePullSecret=regcred \
           --set master.imagePullSecret=regcred \
@@ -87,13 +87,13 @@ jobs:
       before_install:
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
       before_script:
-        - docker pull ${docker_repository}/mlbench_master:travis-ci-test
-        - docker pull ${docker_repository}/mlbench_worker:travis-ci-test
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:develop
-        - docker tag ${docker_repository}/mlbench_worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench_worker:develop
+        - docker pull ${docker_repository}/mlbench-master:travis-ci-test
+        - docker pull ${docker_repository}/mlbench-worker:travis-ci-test
+        - docker tag ${docker_repository}/mlbench-master:travis-ci-test ${docker_url}/${docker_repository}/mlbench-master:develop
+        - docker tag ${docker_repository}/mlbench-worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench-worker:develop
       script:
-        - docker push ${docker_url}/${docker_repository}/mlbench_master:develop
-        - docker push ${docker_url}/${docker_repository}/mlbench_worker:develop
+        - docker push ${docker_url}/${docker_repository}/mlbench-master:develop
+        - docker push ${docker_url}/${docker_repository}/mlbench-worker:develop
 
     - stage: deploy
       if: branch = master
@@ -103,17 +103,17 @@ jobs:
         - master_version=$(awk '$1 == "version:" { print $2; exit }' charts/mlbench/Chart.yaml)
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${docker_url}
       before_script:
-        - docker pull ${docker_repository}/mlbench_master:travis-ci-test
-        - docker pull ${docker_repository}/mlbench_worker:travis-ci-test
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:latest
-        - docker tag ${docker_repository}/mlbench_worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench_worker:latest
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:${version}
-        - docker tag ${docker_repository}/mlbench_worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench_worker:${version}
+        - docker pull ${docker_repository}/mlbench-master:travis-ci-test
+        - docker pull ${docker_repository}/mlbench-worker:travis-ci-test
+        - docker tag ${docker_repository}/mlbench-master:travis-ci-test ${docker_url}/${docker_repository}/mlbench-master:latest
+        - docker tag ${docker_repository}/mlbench-worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench-worker:latest
+        - docker tag ${docker_repository}/mlbench-master:travis-ci-test ${docker_url}/${docker_repository}/mlbench-master:${version}
+        - docker tag ${docker_repository}/mlbench-worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench-worker:${version}
       script:
-        - docker push ${docker_url}/${docker_repository}/mlbench_master:latest
-        - docker push ${docker_url}/${docker_repository}/mlbench_master:${version}
-        - docker push ${docker_url}/${docker_repository}/mlbench_worker:latest
-        - docker push ${docker_url}/${docker_repository}/mlbench_worker:${version}
+        - docker push ${docker_url}/${docker_repository}/mlbench-master:latest
+        - docker push ${docker_url}/${docker_repository}/mlbench-master:${version}
+        - docker push ${docker_url}/${docker_repository}/mlbench-worker:latest
+        - docker push ${docker_url}/${docker_repository}/mlbench-worker:${version}
 
 
 stages:

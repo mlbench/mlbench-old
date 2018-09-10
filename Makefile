@@ -81,9 +81,9 @@ servedocs: docs ## compile the docs watching for changes
 
 
 publish-docker: ## Build, Tag and Publish a docker file to a local repository. Usage: make publish-docker component=master docker_registry=localhost:5000
-	docker build -f compose/$(component)/Dockerfile -t mlbench_$(component):latest .
-	docker tag mlbench_$(component):latest $(docker_registry)/mlbench_$(component):latest
-	docker push $(docker_registry)/mlbench_$(component):latest
+	docker build -f compose/$(component)/Dockerfile -t mlbench-$(component):latest .
+	docker tag mlbench-$(component):latest $(docker_registry)/mlbench-$(component):latest
+	docker push $(docker_registry)/mlbench-$(component):latest
 
 release: ## Install or upgrade a release with specified ${name}
 	helm upgrade --wait --recreate-pods ${args} --install ${name} charts/mlbench

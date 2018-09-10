@@ -1,6 +1,6 @@
 # ********************************** STAGE 2 **********************************************
 # later we will use the remote ones
-FROM mlbench/mlbench_worker:mlbench-worker-base
+FROM mlbench/mlbench-worker:mlbench-worker-base
 
 # -------------------- Debug --------------------
 RUN apt-get update && apt-get install -y vim net-tools iproute2

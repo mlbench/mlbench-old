@@ -130,7 +130,7 @@ To access mlbench, run these commands and open the URL that is returned (**Note*
       master:
 
         image:
-          repository: gcr.io/<gcloud project name>/mlbench_master
+          repository: gcr.io/<gcloud project name>/mlbench-master
           tag: latest
           pullPolicy: Always
 
@@ -138,7 +138,7 @@ To access mlbench, run these commands and open the URL that is returned (**Note*
       worker:
 
         image:
-          repository: gcr.io/<gcloud project name>/mlbench_worker
+          repository: gcr.io/<gcloud project name>/mlbench-worker
           tag: latest
           pullPolicy: Always
 
@@ -173,7 +173,7 @@ so that one can pull images from local registry.
     $ minikube ssh
     $ docker run --name registry-proxy -d -e LISTEN=':5000' -e TALK="$(/sbin/ip route|awk '/default/ { print $3 }'):5000" -p 5000:5000 tecnativa/tcp-proxy
 
-Now we can pull images from private registry inside the cluster, check :code:`docker pull localhost:5000/mlbench_master:latest`.
+Now we can pull images from private registry inside the cluster, check :code:`docker pull localhost:5000/mlbench-master:latest`.
 
 Next install or upgrade a helm chart with desired configurations with name `${RELEASE_NAME}`
 
@@ -267,7 +267,7 @@ Install ``helm`` (See :doc:`prerequisites`) and set the :ref:`helm-charts`.
         imagePullSecret: regcred
 
         image:
-          repository: localhost:5000/mlbench_master
+          repository: localhost:5000/mlbench-master
           tag: latest
           pullPolicy: Always
 
@@ -276,7 +276,7 @@ Install ``helm`` (See :doc:`prerequisites`) and set the :ref:`helm-charts`.
         imagePullSecret: regcred
 
         image:
-          repository: localhost:5000/mlbench_worker
+          repository: localhost:5000/mlbench-worker
           tag: latest
           pullPolicy: Always
 
