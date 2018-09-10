@@ -8,7 +8,8 @@ from rest_framework import status
 import django_rq
 from rq.job import Job
 from django.utils.dateparse import parse_datetime
-from django.core.files import File
+from django.db.models import Q
+from django.core.serializers.json import DjangoJSONEncoder
 
 from itertools import groupby
 from datetime import datetime
@@ -35,17 +36,39 @@ class KubeMetricsView(ViewSet):
     """Handles the /api/metrics endpoint
     """
 
-    def __format_result(self, metrics, since, until=None):
-        return {
-            g[0]: [
-                KubeMetricsSerializer(e).data
-                for e in sorted(g[1], key=lambda x: x.date)
-                if ((since is None or e.date > since)
-                    and (until is None or e.date > until))
-            ] for g in groupby(
-                sorted(metrics, key=lambda m: m.name),
-                key=lambda m: m.name)
-        }
+    def __format_result(self, metrics, q):
+        # get available kind of metrics
+        names = metrics.values('name').distinct()
+
+        result = {}
+
+        for name in names:
+            name = name['name']
+            temp_filter = q & Q(name=name)
+            filtered_metrics = metrics.filter(temp_filter).order_by('date')\
+                .values('date', 'value', 'cumulative')
+            result[name] = list(filtered_metrics)
+
+        return result
+
+    def __format_zip_result(self, metrics, q, prefix, zf):
+        names = metrics.values('name').distinct()
+
+        for name in names:
+            name = name['name']
+            temp_filter = q & Q(name=name)
+            filtered_metrics = metrics.filter(temp_filter).order_by('date')\
+                .values('date', 'value', 'cumulative')
+            data = json.dumps(list(filtered_metrics), indent=4,
+                              cls=DjangoJSONEncoder)
+
+            with io.StringIO() as metrics_file:
+                metrics_file.write(data)
+
+                zf.writestr('{}_{}.json'.format(prefix, name),
+                            metrics_file.getvalue())
+
+        return zf
 
     def list(self, request, format=None):
         """Get all metrics
@@ -96,70 +119,69 @@ class KubeMetricsView(ViewSet):
         Returns:
             Json -- Object containing all metrics for the pod
         """
+        q = Q()
         since = self.request.query_params.get('since', None)
 
         if since is not None:
             since = datetime.strptime(since, "%Y-%m-%dT%H:%M:%S.%fZ")
             since = pytz.utc.localize(since)
+            q &= Q(date__gte=since)
 
         metric_type = self.request.query_params.get('metric_type', 'pod')
 
         if metric_type == 'pod':
             pod = KubePod.objects.filter(name=pk).first()
-            metrics = pod.metrics.all()
+            metrics = pod.metrics
         else:
             run = ModelRun.objects.get(pk=pk)
-            metrics = run.metrics.all()
+            metrics = run.metrics
 
-        result = self.__format_result(metrics, since)
+        if request.accepted_renderer.format != 'zip':
+            # generate json
+            result = self.__format_result(metrics, q)
 
-        if request.accepted_renderer.format == 'zip':
-            result_file = io.BytesIO()
+            return Response(result, status=status.HTTP_200_OK)
 
-            with zipfile.ZipFile(result_file,
-                                 mode='w',
-                                 compression=zipfile.ZIP_DEFLATED) as zf:
+        result_file = io.BytesIO()
 
-                metrics_file = io.StringIO()
-                metrics_file.write(json.dumps(result, indent=4))
+        with zipfile.ZipFile(result_file,
+                             mode='w',
+                             compression=zipfile.ZIP_DEFLATED) as zf:
 
-                zf.writestr('result.json', metrics_file.getvalue())
+            if metric_type == 'run':
+                run = ModelRun.objects.get(pk=pk)
+                pods = run.pods.all()
 
-                if metric_type == 'run':
-                    run = ModelRun.objects.get(pk=pk)
-                    pods = run.pods.all()
+                filename = secure_filename(run.name)
 
-                    filename = secure_filename(run.name)
+                since = run.created_at
+                until = run.finished_at
 
-                    since = run.created_at
-                    until = run.finished_at
+                q &= Q(date__gte=since)
 
-                    for pod in pods:
-                        pod_file = io.StringIO()
-                        pod_metrics = pod.metrics.all()
-                        pod_metrics = self.__format_result(
-                            metrics,
-                            since,
-                            until)
-                        pod_file.write(json.dumps(pod_metrics, indent=4))
-                        zf.writestr('{}.json'.format(pod.name),
-                                    pod_file.getvalue())
+                if until:
+                    q &= Q(date__lte=until)
 
-                else:
-                    pod = KubePod.objects.filter(name=pk).first()
-                    filename = secure_filename(pod.name)
+                zf = self.__format_zip_result(metrics, q, 'result', zf)
 
-                zf.close()
+                for pod in pods:
+                    pod_metrics = pod.metrics
+                    zf = self.__format_zip_result(pod_metrics, q, pod.name, zf)
 
-                response = Response(result_file.getvalue(),
-                                    status=status.HTTP_200_OK)
+            else:
+                zf = self.__format_zip_result(metrics, q, 'result', zf)
+                pod = KubePod.objects.filter(name=pk).first()
+                filename = secure_filename(pod.name)
 
-                response['content-disposition'] = (
-                    'attachment; '
-                    'filename=metrics_{}.zip'.format(filename))
-                return response
+            zf.close()
 
-        return Response(result, status=status.HTTP_200_OK)
+            response = Response(result_file.getvalue(),
+                                status=status.HTTP_200_OK)
+
+            response['content-disposition'] = (
+                'attachment; '
+                'filename=metrics_{}.zip'.format(filename))
+            return response
 
     def create(self, request):
         """Create a new metric

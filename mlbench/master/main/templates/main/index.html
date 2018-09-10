@@ -40,7 +40,7 @@
         this.metricsRefreshInterval = 5 * 1000;
         this.renderInterval = 1 * 1000;
 
-        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S.%fZ");
+        var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
 
         this.updateNodes = function(){
             var nodes = this.nodes;
