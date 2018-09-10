@@ -18,18 +18,18 @@ You can save them in a yaml file of your chosing. This guide will assume you sav
 .. code-block:: yaml
 
    limits:
-     worker:
+     workers:
      cpu:
      bandwidth:
      gpu:
 
-- ``limits.worker`` is the maximum number of Nodes available to mlbench as workers. This sets the maximum number of nodes that can be chosen for an experiment in the UI. By default mlbench starts 2 workers on startup.
+- ``limits.workers`` is the maximum number of worker nodes available to mlbench. This sets the maximum number of nodes that can be chosen for an experiment in the UI. By default mlbench starts 2 workers on startup.
 - ``limits.cpu`` is the maximum number of CPUs (Cores) available on each worker node. Uses Kubernetes notation (`8` or `8000m` for 8 cpus/cores). This is also the maximum number of Cores that can be selected for an experiment in the UI
 - ``limits.bandwidth`` is the maximum network bandwidth available between workers, in mbit per second. This is the default bandwidth used and the maximum number selectable in the UI.
 - ``limits.gpu`` is the number of gpus requested by each worker pod.
 
 .. Caution::
-   If you set ``worker``, ``cpu`` or ``gpu`` higher than available in your cluster, Kubernetes will not be able to allocate nodes to mlbench and the deployment will hang indefinitely, without throwing an exception.
+   If you set ``workers``, ``cpu`` or ``gpu`` higher than available in your cluster, Kubernetes will not be able to allocate nodes to mlbench and the deployment will hang indefinitely, without throwing an exception.
    Kubernetes will just wait until nodes that fit the requirements become available. So make sure your cluster actually has the requirements avilable that you requested.
 
 .. note::
@@ -71,8 +71,8 @@ In ``values.yaml``, one can optionally install Kubernetes plugins by turning on/
 - ``weave.enabled``: If true, install the `weave network plugin <https://github.com/weaveworks/weave>`_.
 - ``nvidiaDevicePlugin.enabled``: If true, install the `nvidia device plugin <https://github.com/NVIDIA/k8s-device-plugin>`_.
 
-Google Cloud / Google Kubernetes Engine (GKE)
----------------------------------------------
+Google Cloud / Google Kubernetes Engine
+---------------------------------------
 
 Set the :ref:`helm-charts`
 
