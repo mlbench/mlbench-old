@@ -39,6 +39,7 @@ jobs:
     - stage: test helm
       language: bash
       sudo: required
+      dist: trusty
       env:
         - CNI_PLUGIN=weave
 
@@ -87,6 +88,8 @@ jobs:
         #check state for debugging
         - ./kubectl --context=dind get pods --namespace kube-system
         - ./kubectl --context=dind get pods
+        - free -h
+        - df -h
 
     - stage: deploy develop
       if: branch = develop
