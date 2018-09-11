@@ -79,7 +79,7 @@ jobs:
           --set limits.bandwidth=100 \
           --set limits.gpu=0 \
           --name travis-test \
-          charts/mlbench/ | ./kubectl --context=dind --v=5 apply -f -
+          charts/mlbench/ | ./kubectl --context=dind --v=5 apply --wait -f -
         - ./kubectl --context=dind get services |grep 'mlbench-master'
         - ./kubectl --context=dind get pods |grep "mlbench-master.*Running"
         - ./kubectl --context=dind get pods |grep "mlbench-worker.*Running"
