@@ -78,7 +78,7 @@ jobs:
           --set limits.bandwidth=100 \
           --set limits.gpu=0 \
           --wait \
-          --timeout 900 \
+          --timeout 1800 \
           charts/mlbench/
         - ./kubectl --context=dind get services |grep 'mlbench-master'
         - ./kubectl --context=dind get pods |grep "mlbench-master.*Running"
