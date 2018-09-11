@@ -21,21 +21,21 @@ jobs:
       script:
         - tox
 
-    # - stage: build docker
-    #   language: bash
-    #   sudo: required
+    - stage: build docker
+      language: bash
+      sudo: required
 
-    #   services:
-    #     - docker
-    #   install: true
+      services:
+        - docker
+      install: true
 
-    #   before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
-    #   script:
-    #     - docker build -f compose/master/Dockerfile -t ${docker_url}/${docker_repository}/mlbench-master:travis-ci-test .
-    #     - docker pull mlbench/mlbench-worker:mlbench-worker-base && docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench-worker:travis-ci-test .
-    #   after_success:
-    #     - docker push ${docker_url}/${docker_repository}/mlbench-master:travis-ci-test
-    #     - docker push ${docker_url}/${docker_repository}/mlbench-worker:travis-ci-test
+      before_script: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin ${docker_url}
+      script:
+        - docker build -f compose/master/Dockerfile -t ${docker_url}/${docker_repository}/mlbench-master:travis-ci-test .
+        - docker pull mlbench/mlbench-worker:mlbench-worker-base && docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench-worker:travis-ci-test .
+      after_success:
+        - docker push ${docker_url}/${docker_repository}/mlbench-master:travis-ci-test
+        - docker push ${docker_url}/${docker_repository}/mlbench-worker:travis-ci-test
     - stage: test helm
       language: bash
       sudo: required
@@ -76,6 +76,7 @@ jobs:
           --set master.imagePullSecret=regcred \
           --set limits.cpu=1000m \
           --set limits.worker=1 \
+          --set worker.replicaCount=1 \
           --set limits.bandwidth=100 \
           --set limits.gpu=0 \
           --wait \
