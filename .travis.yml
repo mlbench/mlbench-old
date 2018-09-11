@@ -42,6 +42,7 @@ jobs:
       dist: trusty
       env:
         - CNI_PLUGIN=weave
+        - NUM_NODES=1
 
       before_install:
         # install kubeadm-dind
