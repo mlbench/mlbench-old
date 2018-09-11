@@ -59,9 +59,6 @@ jobs:
         - chmod 700 get_helm.sh
         - ./get_helm.sh
         - helm init --kube-context dind --wait
-        #check state before install, for debugging
-        - ./kubectl --context=dind get pods --namespace kube-system
-        - ./kubectl --context=dind get pods
       script:
         - |
           helm install --kube-context dind \
@@ -81,10 +78,7 @@ jobs:
         - ./kubectl --context=dind get services |grep 'mlbench-master'
         - ./kubectl --context=dind get pods |grep "mlbench-master.*Running"
         - ./kubectl --context=dind get pods |grep "mlbench-worker.*Running"
-      after_failure:
-        #check state for debugging
-        - ./kubectl --context=dind get pods --namespace kube-system
-        - ./kubectl --context=dind get pods
+      after_failure: ./kubectl --context=dind get pods --namespace kube-system
 
     - stage: deploy develop
       if: branch = develop
