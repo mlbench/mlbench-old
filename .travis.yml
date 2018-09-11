@@ -64,8 +64,6 @@ jobs:
         - ./kubectl --context=dind get pods --namespace kube-system
         - ./kubectl --context=dind get pods
       script:
-        - docker pull ${docker_url}/${docker_repository}/mlbench-master:travis-ci-test
-        - docker pull ${docker_url}/${docker_repository}/mlbench-worker:travis-ci-test
         - |
           helm install --kube-context dind \
           --set master.image.repository=${docker_url}/${docker_repository}/mlbench-master \
