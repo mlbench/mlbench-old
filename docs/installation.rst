@@ -13,7 +13,7 @@ Helm Chart values
 -----------------
 
 Since every Kubernetes is different, there are no reasonable defaults for some values, so the following properties have to be set.
-You can save them in a yaml file of your chosing. This guide will assume you saved them in `myvalues.yaml`. For a reference file for all configurable values, see the `charts/mlbench/values.yaml` file.
+You can save them in a yaml file of your chosing. This guide will assume you saved them in `myvalues.yaml`. For a reference file for all configurable values, you can copy the `charts/mlbench/values.yaml` file to `myvalues.yaml`.
 
 .. code-block:: yaml
 
