@@ -17,9 +17,9 @@ class FCGraph(object):
         return torch.device(self.current_device_name())
 
     def assigned_gpu_id(self):
-        # TODO: now only consider there is
-        if self.world_size == torch.cuda.device_count():
-            torch.cuda.set_device(self.rank)
+        num_gpus_on_device = torch.cuda.device_count()
+        assigned_id = self.rank % num_gpus_on_device
+        torch.cuda.set_device(assigned_id)
 
     def __str__(self):
         return "{}".format(self.current_device_name)

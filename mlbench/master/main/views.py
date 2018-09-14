@@ -34,7 +34,8 @@ def runs(request):
         max_cpu = int(max_cpu)
 
     max_workers = int(max_workers)
-    max_bandwidth = int(float(max_bandwidth))
+    # In runs.html we have a hardcoded bound 10000.
+    max_bandwidth = max(int(float(max_bandwidth)), 10000)
 
     return render(request, 'main/runs.html', {
         'runs': runs,

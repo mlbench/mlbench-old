@@ -58,7 +58,6 @@ def main():
     if options.use_cuda:
         model.cuda()
         criterion.cuda()
-        # TODO: add accuracy metrics to cuda?
 
     options = checkpoint.maybe_resume(options, model, optimizer, scheduler)
 

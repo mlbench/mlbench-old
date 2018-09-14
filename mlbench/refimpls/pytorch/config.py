@@ -4,6 +4,7 @@ import os
 import random
 import torch
 import shutil
+import socket
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 
@@ -92,6 +93,12 @@ def config_pytorch(options):
 
         if torch.backends.cudnn.version() is None:
             log.warning("CUDNN not found on device.")
+
+        log.info("World size={}, Rank={}, hostname={}, cuda_available={}, cuda_device={}".format(
+            options.world_size, options.rank, socket.gethostname(), torch.cuda.is_available(),
+            torch.cuda.current_device()))
+
+        # raise NotImplementedError('Pause')
 
 
 def config_path(options):
