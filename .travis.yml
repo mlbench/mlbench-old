@@ -54,10 +54,10 @@ jobs:
         - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
         - chmod 700 get_helm.sh
         - ./get_helm.sh
-        - helm init --kube-context dind --wait
+        - helm init --wait
       script:
         - |
-          helm template --kube-context dind \
+          helm template  \
           --set master.image.repository=${docker_url}/${docker_repository}/mlbench-master \
           --set master.image.tag=travis-ci-test \
           --set worker.image.repository=${docker_url}/${docker_repository}/mlbench-worker \
