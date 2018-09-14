@@ -178,11 +178,22 @@ def run_model_job(model_run, experiment="test_mpi"):
         job.meta['pods'] = pods
         job.save()
 
+        # Write hostfile
+        max_gpu_per_worker = int(os.environ.get('MLBENCH_MAX_GPU_PER_WORKER', 0))
+        slots = max_gpu_per_worker or 1
+
+        hosts_with_slots = []
+        for host in hosts:
+            for _ in range(slots):
+                hosts_with_slots.append(host)
+
+        # Use `question 22 <https://www.open-mpi.org/faq/?category=running#mpirun-hostfile`_ to
+        # add slots
         exec_command = [
             '/.openmpi/bin/mpirun',
-            "--mca", "btl_tcp_if_exclude", "docker0,lo",
-            "-x", "LD_LIBRARY_PATH=/usr/local/nvidia/lib64",
-            '--host', ",".join(hosts),
+            '--mca', 'btl_tcp_if_exclude', 'docker0,lo',
+            '-x', 'LD_LIBRARY_PATH=/usr/local/nvidia/lib64',
+            '--host', ','.join(hosts_with_slots),
             '/conda/bin/python', "/codes/main.py",
             '--experiment', experiment,
             '--run_id',

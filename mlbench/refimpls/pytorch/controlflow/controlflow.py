@@ -31,7 +31,7 @@ def train_epoch(model, optimizer, criterion, scheduler, options):
         with torch.no_grad():
             loss = loss.item()
             loss = global_average(loss, 1).item()
-            log.debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss))
+            log.debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss), 0)
             log.post_metrics(options, 'Train Loss', loss)
             options.runtime['train_loss_hist'].append(loss)
 
