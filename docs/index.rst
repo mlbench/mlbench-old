@@ -7,9 +7,8 @@
    self
    prerequisites
    installation
-   divisions
    overview
-   tasks
+   benchmark-tasks
    devguide
    contributing
    authors
