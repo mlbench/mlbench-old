@@ -92,20 +92,20 @@ jobs:
       language: bash
       services: docker
       before_install:
-        - master_version=$(awk '$1 == "version:" { print $2; exit }' charts/mlbench/Chart.yaml)
+        - export MASTER_VERSION=$(awk '$1 == "version:" { print $2; exit }' charts/mlbench/Chart.yaml)
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ${docker_url}
       before_script:
         - docker pull ${docker_repository}/mlbench_master:travis-ci-test
         - docker pull ${docker_repository}/mlbench_worker:travis-ci-test
         - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:latest
         - docker tag ${docker_repository}/mlbench_worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench_worker:latest
-        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:${version}
-        - docker tag ${docker_repository}/mlbench_worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench_worker:${version}
+        - docker tag ${docker_repository}/mlbench_master:travis-ci-test ${docker_url}/${docker_repository}/mlbench_master:${MASTER_VERSION}
+        - docker tag ${docker_repository}/mlbench_worker:travis-ci-test ${docker_url}/${docker_repository}/mlbench_worker:${MASTER_VERSION}
       script:
         - docker push ${docker_url}/${docker_repository}/mlbench_master:latest
-        - docker push ${docker_url}/${docker_repository}/mlbench_master:${version}
+        - docker push ${docker_url}/${docker_repository}/mlbench_master:${MASTER_VERSION}
         - docker push ${docker_url}/${docker_repository}/mlbench_worker:latest
-        - docker push ${docker_url}/${docker_repository}/mlbench_worker:${version}
+        - docker push ${docker_url}/${docker_repository}/mlbench_worker:${MASTER_VERSION}
 
 
 stages:
