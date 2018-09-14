@@ -33,6 +33,9 @@ def runs(request):
     else:
         max_cpu = int(max_cpu)
 
+    max_workers = int(max_workers)
+    max_bandwidth = int(float(max_bandwidth))
+
     return render(request, 'main/runs.html', {
         'runs': runs,
         'max_workers': max_workers,
