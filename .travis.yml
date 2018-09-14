@@ -49,7 +49,8 @@ jobs:
         - chmod +x kubectl
         - sudo cp kubectl /usr/local/bin/
         - rm kubectl
-        - minikube start --vm-driver=none
+        # https://github.com/kubernetes/minikube/issues/1899
+        - sudo minikube start --vm-driver=none
       install:
         # install helm
         - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
