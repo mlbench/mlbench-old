@@ -49,12 +49,12 @@ jobs:
         - chmod +x kubectl
         - sudo cp kubectl /usr/local/bin/
         - rm kubectl
+        - minikube start --vm-driver=none
       install:
         # install helm
         - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
         - chmod 700 get_helm.sh
         - ./get_helm.sh
-        - helm init --wait
       script:
         - |
           helm template  \
