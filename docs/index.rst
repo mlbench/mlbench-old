@@ -9,6 +9,7 @@
    installation
    divisions
    overview
+   tasks
    devguide
    contributing
    authors
