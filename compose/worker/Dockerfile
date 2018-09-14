@@ -20,4 +20,4 @@ RUN pip install --no-cache-dir -r /requirements.txt
 # ENV LD_LIBRARY_PATH="/usr/local/nvidia/lib64:$LD_LIBRARY_PATH"
 
 # Remove empty ld
-RUN rm $(ldconfig 2>&1 | awk '{print $3}') 2> /dev/null
+RUN rm $(ldconfig 2>&1 | grep 'is empty, not checked' | awk '{print $3}') 2> /dev/null || true
