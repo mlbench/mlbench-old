@@ -13,7 +13,7 @@
    contributing
    authors
    credits
-   history
+   changelog
 
 Indices and tables
 ==================
