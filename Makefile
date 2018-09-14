@@ -51,7 +51,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	flake8 mlbench tests
+	flake8 --max-line-length=120 mlbench tests
 
 test: ## run tests quickly with the default Python
 	py.test
@@ -66,9 +66,12 @@ coverage: ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/mlbench.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ mlbench
+	# rm -f docs/mlbench.rst
+	# rm -f docs/modules.rst
+	# sphinx-apidoc -o docs/ mlbench
+	# rm -rf docs/refimpls/*
+	# sphinx-apidoc -o docs/refimpls mlbench/refimpls/pytorch
+	# echo "   refimpls" >> docs/modules.rst
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
@@ -76,13 +79,11 @@ docs: ## generate Sphinx HTML documentation, including API docs
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
-release: dist ## package and upload a release
-	twine upload dist/*
 
-dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
-	ls -l dist
+publish-docker: ## Build, Tag and Publish a docker file to a local repository. Usage: make publish-docker component=master docker_registry=localhost:5000
+	docker build -f compose/$(component)/Dockerfile -t mlbench_$(component):latest .
+	docker tag mlbench_$(component):latest $(docker_registry)/mlbench_$(component):latest
+	docker push $(docker_registry)/mlbench_$(component):latest
 
-install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+release: ## Install or upgrade a release with specified ${name}
+	helm upgrade --wait --recreate-pods ${args} --install ${name} charts/mlbench

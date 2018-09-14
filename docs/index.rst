@@ -1,17 +1,19 @@
-Welcome to mlbench's documentation!
-======================================
+.. include:: ../README.rst
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   readme
+   self
+   prerequisites
    installation
-   usage
-   modules
+   divisions
+   overview
+   devguide
    contributing
    authors
-   history
+   credits
+   changelog
 
 Indices and tables
 ==================

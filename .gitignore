@@ -100,3 +100,15 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+#vscode
+.vscode
+/docs/mlbench.rst
+/docs/modules.rst
+/docs/refimpls/
+
+# helm
+**/charts/*.tgz
+myvalues.yaml
+
+setup_telepresence.sh

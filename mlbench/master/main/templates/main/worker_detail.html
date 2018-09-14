@@ -1,0 +1,33 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block content %}
+<h1>{{ worker.name }}</h1>
+<div class="dropdown" id="metric-dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Metric
+    </button>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        {% for metric in metrics %}
+            <a class="dropdown-item {% if forloop.first %}active {% endif %}" href="#">{{metric.name}}</a>
+        {% endfor %}
+    </div>
+</div>
+<svg class="d-flex w-100" style="height:50rem;" id="metric-svg"></svg>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/podmonitor.js' %}"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $.views.settings.delimiters("<%", "%>");
+
+        var monitor = PodMonitor('{{worker.name}}', function(){return $("#metric-dropdown a.active").text()}, "#metric-svg", 'pod', '{% url 'api:metrics-list' %}');
+
+        $("#metric-dropdown a").click(function(){
+            $("#metric-dropdown a").removeClass("active");
+            $(this).addClass("active");
+        });
+    });
+</script>
+{% endblock %}

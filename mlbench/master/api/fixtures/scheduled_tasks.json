@@ -1,0 +1,44 @@
+[
+    {
+      "model": "scheduler.RepeatableJob",
+      "pk": 1,
+      "fields": {
+        "name": "CheckNewPods",
+        "queue": "default",
+        "callable": "api.utils.pod_monitor.check_new_pods",
+        "enabled": true,
+        "interval": 30,
+        "interval_unit": "seconds",
+        "scheduled_time": "2018-01-01T00:00:00.000+00:00",
+        "result_ttl": 120
+      }
+    },
+    {
+        "model": "scheduler.RepeatableJob",
+        "pk": 2,
+        "fields": {
+          "name": "CheckPodStatus",
+          "queue": "default",
+          "callable": "api.utils.pod_monitor.check_pod_status",
+          "enabled": true,
+          "interval": 5,
+          "interval_unit": "seconds",
+          "scheduled_time": "2018-01-01T00:00:20.000+00:00",
+          "result_ttl": 120
+        }
+    },
+    {
+        "model": "scheduler.RepeatableJob",
+        "pk": 3,
+        "fields": {
+          "name": "CheckPodMetrics",
+          "queue": "default",
+          "callable": "api.utils.pod_monitor.check_pod_metrics",
+          "enabled": true,
+          "interval": 5,
+          "interval_unit": "seconds",
+          "scheduled_time": "2018-01-01T00:00:40.000+00:00",
+          "result_ttl": 120
+        }
+    }
+]

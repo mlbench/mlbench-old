@@ -1,0 +1,4 @@
+sphinxcontrib-httpdomain==1.7.0
+sphinx-rtd-theme==0.4.1
+#torch==0.4.1
+#numpy=1.15.1

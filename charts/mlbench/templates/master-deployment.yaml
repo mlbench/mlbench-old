@@ -1,0 +1,70 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "mlbench.master.fullname" . }}
+  labels:
+    app: {{ template "mlbench.name" . }}
+    chart: {{ template "mlbench.chart" . }}
+    component: "{{ .Values.master.name }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  serviceAccountName: {{ template "mlbench.master.fullname" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "mlbench.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "mlbench.name" . }}
+        component: "{{ .Values.master.name }}"
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "mlbench.master.fullname" . }}
+      containers:
+        - name: {{ template "mlbench.name" . }}-{{ .Values.master.name }}
+          image: "{{ .Values.master.image.repository }}:{{ .Values.master.image.tag }}"
+          imagePullPolicy: {{ .Values.master.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              hostPort: 80
+              protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          env:
+            - name: MLBENCH_KUBE_SERVICENAME
+              value: {{ template "mlbench.master.fullname" . }}
+            - name: MLBENCH_KUBE_RELEASENAME
+              value: {{ .Release.Name }}
+            - name: MLBENCH_NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: MLBENCH_MAX_WORKERS
+              value: !!string {{required "Please enter the maximum number of nodes available to mlbench with the .Values.limits.workers setting!" .Values.limits.workers }}
+            - name: MLBENCH_WORKER_MAX_CPU
+              value: !!string {{required "Please enter the maximum number of cpus (cores) available per node with the .Values.limits.cpu setting! E.g. Kubernetes 8 or 8000m notation for 8 cpus"  .Values.limits.cpu }}
+            - name: MLBENCH_MAX_BANDWIDTH
+              value: !!string {{required "Please enter the maximum network bandwidth (in mbit/s) available to mlbench with the .Values.limits.bandwidth setting!" .Values.limits.bandwidth }}
+          resources:
+          serviceAccountName: {{ template "mlbench.master.fullname" . }}
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

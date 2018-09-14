@@ -1,13 +1,9 @@
-========
+===============================================
 mlbench: Distributed Machine Learning Benchmark
-========
+===============================================
 
-
-.. image:: https://img.shields.io/pypi/v/mlbench.svg
-        :target: https://pypi.python.org/pypi/mlbench
-
-.. image:: https://img.shields.io/travis/mlbench/mlbench.svg
-        :target: https://travis-ci.org/mlbench/mlbench
+.. image:: https://travis-ci.com/mlbench/mlbench.svg?branch=develop
+    :target: https://travis-ci.com/mlbench/mlbench
 
 .. image:: https://readthedocs.org/projects/mlbench/badge/?version=latest
         :target: https://mlbench.readthedocs.io/en/latest/?badge=latest
@@ -16,10 +12,10 @@ mlbench: Distributed Machine Learning Benchmark
 
 
 
-A public and reproducible collection of reference implementations and benchmark suite for distributed machine learning systems. Benchmark for large scale solvers, implemented on different software frameworks & systems.
-This is a work in progress and not usable so far
+A public and reproducible collection of reference implementations and benchmark suite for distributed machine learning algorithms, frameworks and systems.
 
 
+* Project website: https://mlbench.github.io/
 * Free software: Apache Software License 2.0
 * Documentation: https://mlbench.readthedocs.io.
 
@@ -27,23 +23,20 @@ This is a work in progress and not usable so far
 Features
 --------
 
-* For reproducibility and simplicity, we currently focus on standard **supervised ML**, namely classification and regression solvers.
+* For reproducibility and simplicity, we currently focus on standard **supervised ML**, including standard deep learning tasks as well as classic linear ML models.
 * We provide **reference implementations** for each algorithm, to make it easy to port to a new framework.
-* Our goal is to benchmark all/most currently relevant **distributed execution frameworks**. We welcome contributions of new frameworks in the benchmark suite
-* We provide **precisely defined tasks** and datasets to have a fair and precise comparison of all algorithms and frameworks.
+* Our goal is to benchmark all/most currently relevant **distributed execution frameworks**. We welcome contributions of new frameworks in the benchmark suite.
+* We provide **precisely defined tasks** and datasets to have a fair and precise comparison of all algorithms, frameworks and hardware.
 * Independently of all solver implementations, we provide universal **evaluation code** allowing to compare the result metrics of different solvers and frameworks.
-* Our benchmark code is easy to run on the **public cloud**.
-* Here is an older [design doc](https://docs.google.com/document/d/1jM4zXRDezEJmIKwoDOKNlGvuNNJk5_FxcBrn1mfYp0E/edit#) for this project.
+* Our benchmark code is easy to run on **public clouds**.
 
-TODO
-----
 
-Everything
 
-Credits
--------
+Community
+---------
 
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+About us: See :doc:`Authors </authors>`
 
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+Mailing list: https://groups.google.com/d/forum/mlbench
+
+Contact Email: mlbench-contact@googlegroups.com
