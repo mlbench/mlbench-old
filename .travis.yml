@@ -33,26 +33,22 @@ jobs:
       script:
         - docker build -f compose/master/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_master:travis-ci-test .
         - docker pull mlbench/mlbench_worker:mlbench-worker-base && docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_worker:travis-ci-test .
-      after_success:
-        - docker push ${docker_url}/${docker_repository}//mlbench_master:travis-ci-test
-        - docker push ${docker_url}/${docker_repository}//mlbench_worker:travis-ci-test
-    - stage: test helm
+    - stage: test kubernetes
       language: bash
       sudo: required
       env:
         - CNI_PLUGIN=weave
 
       before_install:
-        # install kubeadm-dind
-        - curl https://raw.githubusercontent.com/kubernetes-sigs/kubeadm-dind-cluster/master/fixed/dind-cluster-v1.11.sh > dind-cluster.sh
-        - chmod 700 dind-cluster.sh
-        - ./dind-cluster.sh up
-        # install kubectl
-        - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.11.0/bin/linux/amd64/kubectl
-        - chmod +x ./kubectl
-        # setup credentials
-        - ./kubectl --context=dind create secret docker-registry regcred --docker-server=${docker_url} --docker-username=${DOCKER_USERNAME} --docker-password=${DOCKER_PASSWORD}
-        - "./kubectl --context=dind patch serviceaccount default -p '{\"imagePullSecrets\": [{\"name\": \"regcred\"}]}'"
+        # install Minikube + kubectl
+        - curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        - chmod +x minikube
+        - sudo cp minikube /usr/local/bin/
+        - rm minikube
+        - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+        - chmod +x kubectl
+        - sudo cp kubectl /usr/local/bin/
+        - rm kubectl
       install:
         # install helm
         - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
@@ -61,24 +57,20 @@ jobs:
         - helm init --kube-context dind --wait
       script:
         - |
-          helm install --kube-context dind \
-          --set master.image.repository=${docker_url}/${docker_repository}/mlbench_master \
+          helm template --kube-context dind \
+          --set master.image.repository=${docker_url}/${docker_repository}/mlbench-master \
           --set master.image.tag=travis-ci-test \
-          --set worker.image.repository=${docker_url}/${docker_repository}/mlbench_worker \
+          --set worker.image.repository=${docker_url}/${docker_repository}/mlbench-worker \
           --set worker.image.tag=travis-ci-test \
           --set worker.imagePullSecret=regcred \
           --set master.imagePullSecret=regcred \
           --set limits.cpu=1000m \
-          --set limits.workers=2 \
+          --set limits.worker=1 \
+          --set worker.replicaCount=1 \
           --set limits.bandwidth=100 \
           --set limits.gpu=0 \
-          --wait \
-          --timeout 900 \
-          charts/mlbench/
-        - ./kubectl --context=dind get services |grep 'mlbench-master'
-        - ./kubectl --context=dind get pods |grep "mlbench-master.*Running"
-        - ./kubectl --context=dind get pods |grep "mlbench-worker.*Running"
-      after_failure: ./kubectl --context=dind get pods --namespace kube-system
+          --name travis-test \
+          charts/mlbench/ | ./kubectl apply --v=5 --validate --dry-run -f -
 
     - stage: deploy develop
       if: branch = develop
