@@ -98,8 +98,7 @@ def maybe_download(name, datasets_path, train=True, download=True, preprocessing
     given localtion, then choose to download or not depending on `download`.
     """
     root = os.path.join(datasets_path, name)
-    if not os.path.exists(root):
-        os.makedirs(root)
+    os.makedirs(root, exist_ok=True)
 
     current_module = sys.modules[__name__]
     dataset_class = _DATASET_MAP[name + preprocessing_version]
