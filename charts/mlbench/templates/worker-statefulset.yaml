@@ -65,6 +65,8 @@ spec:
           volumeMounts:
           - name: mlbench-ssh-key
             mountPath: /ssh-key/root
+          - name: nfs-volume
+            mountPath: /datasets
           securityContext:
             privileged: true
       volumes:
@@ -72,6 +74,9 @@ spec:
         secret:
           secretName: {{ .Release.Name }}-ssh-key
           defaultMode: 256
+      - name: nfs-volume
+        persistentVolumeClaim:
+          claimName: nfs-pvc
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}

@@ -5,6 +5,7 @@ Credits
 * `torchvision <https://github.com/pytorch/vision>`_ for model and metrics templates.
 * `mlperf <https://github.com/mlperf/reference>`_ for some of the argument parsing options.
 * `jekyllrb <https://jekyllrb.com/>`_ for good blog templates
+* `kubernetes-nfs-volume-on-gke <https://github.com/mappedinn/kubernetes-nfs-volume-on-gke>`_ for NFS volume on GKE
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 

@@ -23,10 +23,16 @@ You can save them in a yaml file of your chosing. This guide will assume you sav
      bandwidth:
      gpu:
 
+   gcePersistentDisk:
+     enabled:
+     pdName:
+
 - ``limits.workers`` is the maximum number of worker nodes available to mlbench. This sets the maximum number of nodes that can be chosen for an experiment in the UI. By default mlbench starts 2 workers on startup.
 - ``limits.cpu`` is the maximum number of CPUs (Cores) available on each worker node. Uses Kubernetes notation (`8` or `8000m` for 8 cpus/cores). This is also the maximum number of Cores that can be selected for an experiment in the UI
 - ``limits.bandwidth`` is the maximum network bandwidth available between workers, in mbit per second. This is the default bandwidth used and the maximum number selectable in the UI.
 - ``limits.gpu`` is the number of gpus requested by each worker pod.
+- ``gcePersistentDisk.enabled`` create resources related to NFS persistentVolume and persistentVolumeClaim.
+- ``gcePersistentDisk.pdName`` is the name of persistent disk existed in GKE.
 
 .. Caution::
    If you set ``workers``, ``cpu`` or ``gpu`` higher than available in your cluster, Kubernetes will not be able to allocate nodes to mlbench and the deployment will hang indefinitely, without throwing an exception.
@@ -35,6 +41,11 @@ You can save them in a yaml file of your chosing. This guide will assume you sav
 .. note::
    To use ``gpu`` in the cluster, the `nvidia device plugin <https://github.com/NVIDIA/k8s-device-plugin>`_ should be installed. See :ref:`plugins` for details
 
+.. note::
+   Use commands like ``gcloud compute disks create --size=10G --zone=europe-west1-b my-pd-name`` to create persistent disk.
+
+.. note::
+   The GCE persistent disk will be mounted to `/datasets/` directory on each worker.
 
 Basic Install
 -------------
