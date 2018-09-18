@@ -50,7 +50,10 @@ jobs:
         - sudo cp kubectl /usr/local/bin/
         - rm kubectl
         # https://github.com/kubernetes/minikube/issues/1899
-        - sudo minikube start --vm-driver=none --apiserver-ips 127.0.0.1 --apiserver-name localhost
+        # - sudo minikube start --vm-driver=none --apiserver-ips 127.0.0.1 --apiserver-name localhost
+        - sudo chown -R $USER $HOME/.minikube
+        - sudo chgrp -R $USER $HOME/.minikube
+        - minikube start --vm-driver=none
       install:
         # install helm
         - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
