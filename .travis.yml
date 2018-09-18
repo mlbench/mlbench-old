@@ -50,7 +50,7 @@ jobs:
         - sudo cp kubectl /usr/local/bin/
         - rm kubectl
         # https://github.com/kubernetes/minikube/issues/1899
-        - minikube start
+        - minikube start--vm-driver=none --apiserver-ips 127.0.0.1 --apiserver-name localhost
       install:
         # install helm
         - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
@@ -72,6 +72,8 @@ jobs:
           --set limits.gpu=0 \
           --name travis-test \
           charts/mlbench/ | ./kubectl apply --v=5 --validate --dry-run -f -
+      after_failure:
+        - cat ~/.kube/config
 
     - stage: deploy develop
       if: branch = develop
