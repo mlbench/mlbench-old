@@ -153,12 +153,15 @@ def log_val(options, best_metric_name):
 
 
 def post_metrics(options, metric_name, value):
-    _post_metrics({
+    data = {
         "run_id": options.run_id,
+        "rank": options.rank,
         "name": metric_name,
-        "value": "{:.3f}".format(value),
+        "value": "{:.6f}".format(value),
         "date": str(datetime.datetime.now()),
-        "cumulative": False,
-        "metadata": "Validation {} at epoch {}".format(
-            metric_name, options.runtime['current_epoch'])
-    }, options.rank, options.dont_post_to_dashboard)
+        "epoch": str(options.runtime['current_epoch']),
+        "cumulative": "False",
+        "metadata": ""
+    }
+    _post_metrics(data, options.rank, options.dont_post_to_dashboard)
+    options.runtime['records'].append(data)

@@ -32,8 +32,8 @@ def train_epoch(model, optimizer, criterion, scheduler, options):
             loss = loss.item()
             loss = global_average(loss, 1).item()
             log.debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss), 0)
-            log.post_metrics(options, 'Train Loss', loss)
-            options.runtime['train_loss_hist'].append(loss)
+
+            log.post_metrics(options, 'train_loss', loss)
 
 
 def validate(model, optimizer, criterion, metrics, options):
@@ -58,7 +58,7 @@ def validate(model, optimizer, criterion, metrics, options):
                 metric_value = metric(output, target)
                 metric.update(metric_value, data.size(0))
 
-    metrics_averages = [metric.average().item() for metric in metrics]
+    metrics_averages = {metric.name: metric.average().item() for metric in metrics}
     loss_average = global_average(losses.sum, losses.count).item()
     return metrics_averages, loss_average
 
@@ -73,20 +73,17 @@ def do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit
     if len(metrics_values) > 0:
         # Assume the first metric is used to determine the best model to checkpoint.
         prim_metric = metrics[0]
-        prim_metric_value = metrics_values[0]
+        prim_metric_value = metrics_values[prim_metric.name]
 
         is_best, best_metric_name = update_best_runtime_metric(options, prim_metric_value, prim_metric.name)
 
         checkpoint.save(options, model, optimizer, scheduler, is_best)
         log.log_val(options, best_metric_name)
 
-        for metric, value in zip(metrics, metrics_values):
-            log.post_metrics(options, metric.name, value)
+        for name, value in metrics_values.items():
+            log.post_metrics(options, name, value)
 
-    log.post_metrics(options, 'Validation Loss', loss)
-    options.runtime['val_loss_hist'].append(loss)
-    options.runtime['val_metrics_hist'].append(metrics_values)
-    options.runtime['val_time'].append(timeit.cumu)
+    log.post_metrics(options, 'val_loss', loss)
     timeit.resume()
 
 
@@ -112,11 +109,7 @@ class TrainValidation(object):
         max_epochs = min(options.train_epochs, options.max_train_steps)\
             if options.max_train_steps else options.train_epochs
         start_epoch = options.runtime['current_epoch'] if options.resume else 0
-
-        options.runtime['train_loss_hist'] = options.runtime.get('train_loss_hist', [])
-        options.runtime['val_loss_hist'] = options.runtime.get('val_loss_hist', [])
-        options.runtime['val_metrics_hist'] = options.runtime.get('val_metrics_hist', [])
-        options.runtime['val_time'] = options.runtime.get('val_time', [])
+        options.runtime['records'] = options.runtime.get('records', [])
 
         dist.barrier()
 
