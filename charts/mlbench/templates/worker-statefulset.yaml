@@ -65,8 +65,10 @@ spec:
           volumeMounts:
           - name: mlbench-ssh-key
             mountPath: /ssh-key/root
+{{ if .Values.gcePersistentDisk.enabled }}
           - name: nfs-volume
             mountPath: /datasets
+{{ end }}
           securityContext:
             privileged: true
       volumes:
@@ -74,9 +76,11 @@ spec:
         secret:
           secretName: {{ .Release.Name }}-ssh-key
           defaultMode: 256
+{{ if .Values.gcePersistentDisk.enabled }}
       - name: nfs-volume
         persistentVolumeClaim:
           claimName: nfs-pvc
+{{ end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
