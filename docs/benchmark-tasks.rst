@@ -2,6 +2,10 @@
 Benchmarking Tasks
 ==================
 
+
+Benchmark Divisions
+-------------------
+
 There are two divisions of benchmarking, the closed one which is restrictive to allow fair comparisons of specific training algorithms and systems,
 and the open divisions, which allows users to run their own models and code while still providing a reasonably fair comparison.
 
@@ -99,6 +103,7 @@ Image classification is one of the most important problems in computer vision an
 
 
 Implementation details:
+
 * Data preprocessing
 We followed the same approach as mentioned `here <https://arxiv.org/abs/1512.03385>`_.
 
