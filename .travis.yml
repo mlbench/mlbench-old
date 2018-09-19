@@ -35,9 +35,11 @@ jobs:
         - docker pull mlbench/mlbench_worker:mlbench-worker-base && docker build -f compose/worker/Dockerfile -t ${docker_url}/${docker_repository}/mlbench_worker:travis-ci-test .
     - stage: test kubernetes
       language: bash
+      # https://kinvolk.io/blog/2017/10/running-kubernetes-on-travis-ci-with-minikube/
       sudo: required
       env:
         - CNI_PLUGIN=weave
+        - CHANGE_MINIKUBE_NONE_USER=true
 
       before_install:
         # install Minikube + kubectl
@@ -51,9 +53,10 @@ jobs:
         - rm kubectl
         # https://github.com/kubernetes/minikube/issues/1899
         # - sudo minikube start --vm-driver=none --apiserver-ips 127.0.0.1 --apiserver-name localhost
-        - sudo chown -R $USER $HOME/.minikube
-        - sudo chgrp -R $USER $HOME/.minikube
-        - minikube start --vm-driver=none
+        - sudo minikube start --vm-driver=none
+        - minikube update-context
+        - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
+
       install:
         # install helm
         - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
