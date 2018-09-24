@@ -123,8 +123,8 @@ class AsyncMetricsPost(object):
 async_post = AsyncMetricsPost()
 
 
-def _post_metrics(payload, rank):
-    if rank == 0 and async_post._incluster:
+def _post_metrics(payload, rank, dont_post_to_dashboard):
+    if rank == 0 and not dont_post_to_dashboard and async_post._incluster:
         async_post.post(payload)
 
 
@@ -161,4 +161,4 @@ def post_metrics(options, metric_name, value):
         "cumulative": False,
         "metadata": "Validation {} at epoch {}".format(
             metric_name, options.runtime['current_epoch'])
-    }, options.rank)
+    }, options.rank, options.dont_post_to_dashboard)

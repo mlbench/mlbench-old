@@ -70,7 +70,7 @@ class BaseParser(argparse.ArgumentParser):
 
 class PerformanceParser(argparse.ArgumentParser):
     def __init__(self, add_help=True, num_parallel_workers=True, use_synthetic_data=True,
-                 max_train_steps=True, dtype=True, max_batch_per_epoch=True):
+                 max_train_steps=True, dtype=True, max_batch_per_epoch=True, dont_post_to_dashboard=True):
         super(PerformanceParser, self).__init__(add_help=add_help)
 
         if num_parallel_workers:
@@ -107,6 +107,11 @@ class PerformanceParser(argparse.ArgumentParser):
         if max_batch_per_epoch:
             self.add_argument("--max_batch_per_epoch", type=int, default=None, metavar="<MBPE>",
                               help="[default: %(default)s] maximum number of batchs in one peoch.")
+
+        if dont_post_to_dashboard:
+            self.add_argument('--dont_post_to_dashboard', action='store_true', default=False,
+                              help='[default: %(default)s] decide whether or not post metrics to dashboard '
+                              'if there is one. This can be usefule when lauching the mpi jobs from worker.')
 
 
 class DatasetParser(argparse.ArgumentParser):

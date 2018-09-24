@@ -9,7 +9,6 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  serviceAccountName: {{ template "mlbench.master.fullname" . }}
   replicas: 1
   selector:
     matchLabels:
@@ -53,8 +52,9 @@ spec:
               value: !!string {{required "Please enter the maximum number of cpus (cores) available per node with the .Values.limits.cpu setting! E.g. Kubernetes 8 or 8000m notation for 8 cpus"  .Values.limits.cpu }}
             - name: MLBENCH_MAX_BANDWIDTH
               value: !!string {{required "Please enter the maximum network bandwidth (in mbit/s) available to mlbench with the .Values.limits.bandwidth setting!" .Values.limits.bandwidth }}
+            - name: MLBENCH_MAX_GPU_PER_WORKER
+              value: !!string {{required "Please enter the maximum number of gpus available to mlbench with the .Values.limits.gpu setting!" .Values.limits.gpu }}
           resources:
-          serviceAccountName: {{ template "mlbench.master.fullname" . }}
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}
       nodeSelector:

@@ -60,7 +60,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget \
     && apt-get remove -y wget
 
 ENV PATH /.openmpi/bin:$PATH
-ENV LD_LIBRARY_PATH /.openmpi/lib
+ENV LD_LIBRARY_PATH /.openmpi/lib:$LD_LIBRARY_PATH
 
 RUN mv /.openmpi/bin/mpirun /.openmpi/bin/mpirun.real && \
     echo '#!/bin/bash' > /.openmpi/bin/mpirun && \

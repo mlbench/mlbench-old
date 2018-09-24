@@ -73,3 +73,7 @@ limits:
   cpu:
   bandwidth:
   gpu:
+
+gcePersistentDisk:
+  enabled: false
+  pdName:

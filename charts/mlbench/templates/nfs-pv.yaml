@@ -1,0 +1,15 @@
+{{ if .Values.gcePersistentDisk.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv
+spec:
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    # FIXED: Use internal DNS name
+    server: nfs-server.default.svc.cluster.local
+    path: "/"
+{{ end }}

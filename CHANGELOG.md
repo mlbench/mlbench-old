@@ -1,5 +1,20 @@
 # Change Log
 
+## [0.1.1](https://github.com/mlbench/mlbench/tree/0.1.1) (2018-09-24)
+[Full Changelog](https://github.com/mlbench/mlbench/compare/0.1.0...0.1.1)
+
+**Implemented enhancements:**
+
+- Add scripts and helm charts to setup NFS in Gcloud. [\#69](https://github.com/mlbench/mlbench/issues/69)
+
+**Fixed bugs:**
+
+- Automated Build broken due to Travis-Ci Memory limits [\#67](https://github.com/mlbench/mlbench/issues/67)
+
+**Closed issues:**
+
+- Potential Bottleneck: Throughput of Persistent Disk for NFS [\#72](https://github.com/mlbench/mlbench/issues/72)
+
 ## [0.1.0](https://github.com/mlbench/mlbench/tree/0.1.0) (2018-09-14)
 **Implemented enhancements:**
 
