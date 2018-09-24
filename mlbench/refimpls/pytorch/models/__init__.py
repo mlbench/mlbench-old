@@ -7,8 +7,11 @@ def get_model(options):
     if options.model_name == 'testnet':
         model = models.testnet.TestNet()
     elif options.model_name.startswith('resnet'):
-        # Use the resnet18 used in https://github.com/bkj/basenet/
-        model = models.resnet.get_model(options)
+        from models.resnet import get_model
+        model = get_model(options)
+    elif options.model_name == 'logistic_regression':
+        from models.logistic_regression import get_model
+        model = get_model(options)
     else:
         raise NotImplementedError
 

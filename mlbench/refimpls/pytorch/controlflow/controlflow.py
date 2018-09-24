@@ -7,6 +7,8 @@ from utils.metrics import AverageMeter
 from utils.helper import Timeit, maybe_range, update_best_runtime_metric
 from utils.communication import aggregate_gradients, global_average
 
+from utils.utils import convert_dtype
+
 
 def train_epoch(model, optimizer, criterion, scheduler, options):
     """Train model for one epoch of data."""
@@ -18,6 +20,8 @@ def train_epoch(model, optimizer, criterion, scheduler, options):
         if options.lr_scheduler_level == 'batch':
             scheduler.step()
 
+        data = convert_dtype(options, data)
+        target = convert_dtype(options, target)
         if options.use_cuda:
             data, target = data.cuda(), target.cuda()
 
@@ -45,6 +49,8 @@ def validate(model, optimizer, criterion, metrics, options):
 
     for batch_idx, (data, target) in zip(maybe_range(options.max_batch_per_epoch),
                                          options.val_loader):
+        data = convert_dtype(options, data)
+        target = convert_dtype(options, target)
         if options.use_cuda:
             data, target = data.cuda(), target.cuda()
 
@@ -126,7 +132,9 @@ class TrainValidation(object):
                      .format(epoch, scheduler.get_lr(), timeit.cumu), 0)
 
             train_epoch(model, optimizer, criterion, scheduler, options)
-            do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit)
+
+            if not options.no_validation:
+                do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit)
 
 
 def get_controlflow(options):

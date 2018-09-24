@@ -116,7 +116,8 @@ class PerformanceParser(argparse.ArgumentParser):
 
 class DatasetParser(argparse.ArgumentParser):
     def __init__(self, add_help=True, batch_size=True, root_data_dir=True, name=True,
-                 reshuffle_per_epoch=True, preprocessing_version=True, download_dataset=True):
+                 reshuffle_per_epoch=True, preprocessing_version=True, download_dataset=True,
+                 libsvm_dataset=True, sparse_dataset=True, lmdb=True):
         super(DatasetParser, self).__init__(add_help=add_help)
 
         if batch_size:
@@ -143,6 +144,19 @@ class DatasetParser(argparse.ArgumentParser):
         if reshuffle_per_epoch:
             self.add_argument("--reshuffle_per_epoch", action='store_true', default=True,
                               help="[default: %(default)s] reshuffle the dataset per epoch.")
+
+        if libsvm_dataset:
+            self.add_argument("--libsvm_dataset", action='store_true', default=False,
+                              help="[default: %(default)s] dataset of LIBSVM format.")
+
+        if sparse_dataset:
+            self.add_argument("--sparse_dataset", action='store_true', default=False,
+                              help="[default: %(default)s] The dataset contains sparse matrix.")
+
+        if lmdb:
+            self.add_argument("--lmdb", action='store_true', default=False,
+                              help="[default: %(default)s] The dataset is already in lmdb database. "
+                              "root_data_dir is the lmdb database.")
 
 
 class ModelParser(argparse.ArgumentParser):
@@ -212,7 +226,7 @@ class ModelParser(argparse.ArgumentParser):
 
 
 class ControlflowParser(argparse.ArgumentParser):
-    def __init__(self, add_help=True, train_epochs=True, epochs_between_evals=True):
+    def __init__(self, add_help=True, train_epochs=True, epochs_between_evals=True, no_validation=True):
         super(ControlflowParser, self).__init__(add_help=add_help)
 
         if train_epochs:
@@ -223,6 +237,9 @@ class ControlflowParser(argparse.ArgumentParser):
             self.add_argument("--epochs_between_evals", type=int, default=1, metavar="<EBE>",
                               help="[default: %(default)s] The number of training epochs to run "
                               "between evaluations.")
+        if no_validation:
+            self.add_argument("--no_validation", action='store_true', default=False,
+                              help="[default: %(default)s] Do not perform validation during training.")
 
 
 class MainParser(argparse.ArgumentParser):

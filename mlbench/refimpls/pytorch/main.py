@@ -2,7 +2,7 @@ import argparse
 import re
 
 from config import initialize
-from datasets.load_dataset import create_dataset
+from datasets import create_dataset
 from utils.parser import MainParser
 from models import get_model
 from optim.lr import get_scheduler
@@ -11,6 +11,7 @@ from controlflow.controlflow import get_controlflow
 from utils.criterions import get_criterion
 from utils.metrics import get_metrics
 from utils import checkpoint
+from utils.utils import convert_dtype
 
 
 def get_options():
@@ -55,6 +56,8 @@ def main():
 
     metrics = get_metrics(options)
 
+    model = convert_dtype(options, model)
+    criterion = convert_dtype(options, criterion)
     if options.use_cuda:
         model.cuda()
         criterion.cuda()

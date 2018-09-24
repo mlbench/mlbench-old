@@ -118,8 +118,8 @@ def config_path(options):
 
 def initialize(options):
     """Initialize environment and add additional information."""
-    # if not dist._initialized:
-    dist.init_process_group(options.comm_backend)
+    if not (hasattr(dist, '_initialized') and dist._initialized):
+        dist.init_process_group(options.comm_backend)
 
     config_logging(options)
 
