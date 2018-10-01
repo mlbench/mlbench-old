@@ -4,9 +4,9 @@ from utils import log
 
 
 class Timeit(object):
-    def __init__(self):
+    def __init__(self, cumu=0):
         self.t = time.time()
-        self._cumu = 0
+        self._cumu = cumu
         self._paused = False
 
     def pause(self):

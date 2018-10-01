@@ -18,7 +18,8 @@ _LIBSVM_DATASETS = [
     {'name': 'epsilon-train', 'n_samples': 400000, 'n_features': 2000, 'sparse': False},
     {'name': 'duke-train', 'n_samples': 44, 'n_features': 7129, 'sparse': True},
     {'name': 'australian-train', 'n_samples': 690, 'n_features': 14, 'sparse': False},
-    {'name': 'rcv1-train', 'n_samples': 677399, 'n_features': 47236, 'sparse': True}
+    {'name': 'rcv1-train', 'n_samples': 677399, 'n_features': 47236, 'sparse': True},
+    {'name': 'synthetic-dense', 'n_samples': 10000, 'n_features': 100, 'sparse': False},
 ]
 
 
@@ -164,12 +165,9 @@ class LMDBPTClass(torch.utils.data.Dataset):
         if self.is_image:
             image = self._image_decode(image)
 
-        # print('image', image)
         if self.transform is not None:
             image = self.transform(image)
 
-        # print('self.transform', self.transform)
-        # print('image', image)
         if self.target_transform is not None:
             target = self.target_transform(target)
         return image, target
@@ -201,20 +199,19 @@ def get_dataset_info(name):
 
 def load_libsvm_lmdb(name, lmdb_path):
     stats = get_dataset_info(name)
-    # print('maybe_transform_sparse(stats)', maybe_transform_sparse(stats))
-
-    dataset = IMDBPT(lmdb_path, transform=maybe_transform_sparse(stats), is_image=False)
+    dataset = IMDBPT(lmdb_path, transform=maybe_transform_sparse(stats),
+                     target_transform=lambda x: torch.Tensor(x), is_image=False)
     return dataset
 
 
 def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_size,
-                      reshuffle_per_epoch, preprocessing_version, train=True, download=True, pin_memory=True):
+                      repartition_per_epoch, preprocessing_version, train=True, download=True, pin_memory=True):
     """ Load a partition of dataset from by the rank. """
     dataset = load_libsvm_lmdb(name, root_folder)
 
     # Partition dataset and use the one corresponding to `rank`.
     partition_sizes = [1.0 / world_size for _ in range(world_size)]
-    partition = DataPartitioner(dataset, rank, reshuffle_per_epoch, partition_sizes)
+    partition = DataPartitioner(dataset, rank, repartition_per_epoch, partition_sizes)
     data_to_load = partition.use(rank)
     num_samples_per_device = len(data_to_load)
 
@@ -236,11 +233,11 @@ def create_dataset(options, train=True):
     """Create a dataset and add information to options."""
     dataset = partition_dataset(name=options.dataset_name,
                                 root_folder=options.root_data_dir,
-                                batch_size=options.batch_size,
+                                batch_size=options.batch_size if train else options.val_batch_size,
                                 num_workers=options.num_parallel_workers,
                                 rank=options.rank,
                                 world_size=options.world_size,
-                                reshuffle_per_epoch=options.reshuffle_per_epoch,
+                                repartition_per_epoch=options.repartition_per_epoch,
                                 train=train,
                                 preprocessing_version=options.preprocessing_version,
                                 pin_memory=options.use_cuda)

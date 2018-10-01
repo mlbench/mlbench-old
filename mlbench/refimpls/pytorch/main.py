@@ -7,7 +7,7 @@ from utils.parser import MainParser
 from models import get_model
 from optim.lr import get_scheduler
 from optim.optimizer import get_optimizer
-from controlflow.controlflow import get_controlflow
+from controlflow import get_controlflow
 from utils.criterions import get_criterion
 from utils.metrics import get_metrics
 from utils import checkpoint
@@ -52,7 +52,7 @@ def main():
     scheduler = get_scheduler(options, optimizer)
 
     # Criterions are like `torch.nn.CrossEntropyLoss()`
-    criterion = get_criterion(options)
+    criterion = get_criterion(options, model)
 
     metrics = get_metrics(options)
 

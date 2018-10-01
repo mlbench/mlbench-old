@@ -25,6 +25,8 @@ from os.path import join
 from sklearn.datasets import load_svmlight_file
 from tensorpack.dataflow import dataset, PrefetchDataZMQ, LMDBSerializer
 
+from sklearn.datasets import make_classification
+
 
 def get_args():
     parser = argparse.ArgumentParser(description='aug data.')
@@ -150,9 +152,59 @@ class LIBSVMDataset(object):
         pass
 
 
+class SyntheticLIBSVMDataset(object):
+    def __init__(self, features, labels):
+        self.features, self.labels = features, labels
+
+    def __len__(self):
+        return self.features.shape[0]
+
+    def __iter__(self):
+        idxs = list(range(self.__len__()))
+        for k in idxs:
+            features = self.features[k]
+            label = [self.labels[k]]
+            yield [features, label]
+
+    def get_data(self):
+        return self.__iter__()
+
+    def size(self):
+        return self.__len__()
+
+    def reset_state(self):
+        """
+        Reset state of the dataflow.
+        It **has to** be called once and only once before producing datapoints.
+        Note:
+            1. If the dataflow is forked, each process will call this method
+               before producing datapoints.
+            2. The caller thread of this method must remain alive to keep this dataflow alive.
+        For example, RNG **has to** be reset if used in the DataFlow,
+        otherwise it won't work well with prefetching, because different
+        processes will have the same RNG state.
+        """
+        pass
+
+
 def sequential_epsilon_or_rcv1(root_path, name, data_type, is_sparse):
     data = LIBSVMDataset(root_path, name, data_type, is_sparse)
     lmdb_file_path = join(root_path, '{}_{}.lmdb'.format(name, data_type))
+
+    print('dump_dataflow_to_lmdb for {}'.format(lmdb_file_path))
+    ds1 = PrefetchDataZMQ(data, nr_proc=1)
+    LMDBSerializer.save(ds1, lmdb_file_path)
+
+
+def sequential_synthetic_dataset(root_path, dataset_name):
+    """Generate a synthetic dataset for regression."""
+    if 'dense' in dataset_name:
+        X, y = make_classification(n_samples=10000, n_features=100, n_informative=90, n_classes=2, random_state=42)
+    else:
+        raise NotImplementedError("{} synthetic dataset is not supported.".format(dataset_name))
+
+    data = SyntheticLIBSVMDataset(X, y)
+    lmdb_file_path = join(root_path, '{}.lmdb'.format(dataset_name))
 
     print('dump_dataflow_to_lmdb for {}'.format(lmdb_file_path))
     ds1 = PrefetchDataZMQ(data, nr_proc=1)
@@ -165,6 +217,8 @@ def main(args):
     elif 'australian' in args.data or 'duke' in args.data:
         # These two are small datasets for testing purpose.
         sequential_epsilon_or_rcv1(args.data_dir, args.data, args.data_type, args.sparse)
+    elif 'synthetic' in args.data:
+        sequential_synthetic_dataset(args.data_dir, args.data)
     else:
         raise NotImplementedError("Dataset {} not supported.".format(args.data))
 

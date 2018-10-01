@@ -5,6 +5,8 @@ import numpy as np
 import torch
 from torch._six import string_classes, int_classes, FileNotFoundError
 
+_use_shared_memory = False
+
 
 def _default_collate(batch):
     r"""Puts each data field into a tensor with outer dimension batch size"""
@@ -43,7 +45,12 @@ def _default_collate(batch):
         transposed = zip(*batch)
         return [_default_collate(samples) for samples in transposed]
     elif 'scipy.sparse' in str(elem_type):
-        return sp.vstack(batch)
+        data = sp.vstack(batch)
+        i = torch.LongTensor(data.nonzero())
+        v = torch.Tensor(data.data)
+        shape = (len(batch), batch[0].shape[1])
+        output = torch.sparse_coo_tensor(i, v, shape)
+        return output
 
     raise TypeError((error_msg.format(type(batch[0]))))
 
@@ -52,6 +59,4 @@ def numpy_sparse_collate(batch):
     r"""Puts each data field into a tensor with outer dimension batch size"""
     # https://pytorch.org/docs/stable/_modules/torch/utils/data/dataloader.html#DataLoader
     batch = _default_collate(batch)
-    if isinstance(batch, torch.Tensor):
-        return batch.numpy()
     return batch

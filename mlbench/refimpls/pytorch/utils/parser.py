@@ -70,7 +70,8 @@ class BaseParser(argparse.ArgumentParser):
 
 class PerformanceParser(argparse.ArgumentParser):
     def __init__(self, add_help=True, num_parallel_workers=True, use_synthetic_data=True,
-                 max_train_steps=True, dtype=True, max_batch_per_epoch=True, dont_post_to_dashboard=True):
+                 max_train_steps=True, dtype=True, force_target_dtype=True, max_batch_per_epoch=True,
+                 dont_post_to_dashboard=True):
         super(PerformanceParser, self).__init__(add_help=add_help)
 
         if num_parallel_workers:
@@ -103,6 +104,9 @@ class PerformanceParser(argparse.ArgumentParser):
                               "used for calculations. Variables may be cast to a higher"
                               "precision on a case-by-case basis for numerical stability.",
                               metavar="<DT>")
+        if force_target_dtype:
+            self.add_argument("--force_target_dtype", action='store_true', default=False,
+                              help="[default: %(default)s] convert target to dtype if enabled.")
 
         if max_batch_per_epoch:
             self.add_argument("--max_batch_per_epoch", type=int, default=None, metavar="<MBPE>",
@@ -115,14 +119,18 @@ class PerformanceParser(argparse.ArgumentParser):
 
 
 class DatasetParser(argparse.ArgumentParser):
-    def __init__(self, add_help=True, batch_size=True, root_data_dir=True, name=True,
-                 reshuffle_per_epoch=True, preprocessing_version=True, download_dataset=True,
-                 libsvm_dataset=True, sparse_dataset=True, lmdb=True):
+    def __init__(self, add_help=True, batch_size=True, val_batch_size=True, root_data_dir=True, name=True,
+                 repartition_per_epoch=True, shuffle_partition_indices=True, preprocessing_version=True,
+                 download_dataset=True, libsvm_dataset=True, sparse_dataset=True, lmdb=True):
         super(DatasetParser, self).__init__(add_help=add_help)
 
         if batch_size:
             self.add_argument("--batch_size", type=int, default=32, metavar="<BS>",
                               help="[default: %(default)s] default batch size for training and evaluation.")
+
+        if val_batch_size:
+            self.add_argument("--val_batch_size", type=int, default=32, metavar="<VBS>",
+                              help="[default: %(default)s] If enabled, set default batch size for evaluation.")
 
         if root_data_dir:
             self.add_argument("--root_data_dir", type=str, default="/datasets/torch", metavar="<DD>",
@@ -141,9 +149,15 @@ class DatasetParser(argparse.ArgumentParser):
             self.add_argument("--preprocessing_version", type=str, default="v1", metavar="<PV>",
                               help="[default: %(default)s] versions for preprocessing methods.")
 
-        if reshuffle_per_epoch:
-            self.add_argument("--reshuffle_per_epoch", action='store_true', default=True,
-                              help="[default: %(default)s] reshuffle the dataset per epoch.")
+        if repartition_per_epoch:
+            self.add_argument("--repartition_per_epoch", action='store_true', default=True,
+                              help="[default: %(default)s] repartition datasets among workers at the end of each"
+                              "epoch.")
+
+        if shuffle_partition_indices:
+            self.add_argument("--shuffle_partition_indices", action='store_true', default=True,
+                              help="[default: %(default)s] reshuffle indices of datasets for the partitions."
+                              "If False, repartition_per_epoch gives same partition.")
 
         if libsvm_dataset:
             self.add_argument("--libsvm_dataset", action='store_true', default=False,
@@ -242,6 +256,20 @@ class ControlflowParser(argparse.ArgumentParser):
                               help="[default: %(default)s] Do not perform validation during training.")
 
 
+class LinearModelParser(argparse.ArgumentParser):
+    def __init__(self, add_help=True, l1_coef=True, l2_coef=True):
+        super(LinearModelParser, self).__init__(add_help=add_help)
+        if l1_coef:
+            self.add_argument("--l1_coef", type=float, default=0.0, metavar='<L1C>',
+                              help="[default: %(default)s] Coefficient of L1 regularizer. This coefficient is used"
+                              "in the criterion.")
+
+        if l2_coef:
+            self.add_argument("--l2_coef", type=float, default=0.0, metavar='<L2C>',
+                              help="[default: %(default)s] Coefficient of L1 regularizer. This coefficient is used"
+                              "in the criterion. Note that weight_decay should be 0 to avoid duplication.")
+
+
 class MainParser(argparse.ArgumentParser):
     """An example of main parser."""
 
@@ -252,5 +280,6 @@ class MainParser(argparse.ArgumentParser):
             DatasetParser(add_help=False),
             ModelParser(add_help=False),
             ControlflowParser(add_help=False),
-            SchedulerParser(add_help=False)
+            SchedulerParser(add_help=False),
+            LinearModelParser(add_help=False),
         ])

@@ -22,8 +22,9 @@ class Partition(object):
 
 
 class Partitioner(object):
-    def consistent_indices(self, rank, indices, reshuffle_per_epoch):
-        if rank == 0 and reshuffle_per_epoch:
+    def consistent_indices(self, rank, indices, shuffle):
+        """ synchronize indices among workers. """
+        if rank == 0 and shuffle:
             random.shuffle(indices)
 
         # broadcast.
@@ -35,7 +36,7 @@ class Partitioner(object):
 class DataPartitioner(Partitioner):
     """ Partitions a dataset into different chuncks. """
 
-    def __init__(self, data, rank, reshuffle_per_epoch, sizes=[0.7, 0.2, 0.1]):
+    def __init__(self, data, rank, shuffle, sizes=[0.7, 0.2, 0.1]):
         # prepare info.
         self.data = data
         self.data_size = len(self.data)
@@ -43,7 +44,7 @@ class DataPartitioner(Partitioner):
 
         # get shuffled/unshuffled data.
         indices = [x for x in range(0, self.data_size)]
-        indices = self.consistent_indices(rank, indices, reshuffle_per_epoch)
+        indices = self.consistent_indices(rank, indices, shuffle)
 
         # partition indices.
         sizes = np.cumsum(sizes)

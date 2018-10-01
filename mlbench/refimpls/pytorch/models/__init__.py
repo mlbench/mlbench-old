@@ -9,8 +9,8 @@ def get_model(options):
     elif options.model_name.startswith('resnet'):
         from models.resnet import get_model
         model = get_model(options)
-    elif options.model_name == 'logistic_regression':
-        from models.logistic_regression import get_model
+    elif options.model_name in ['logistic_regression']:
+        from models.linear_models import get_model
         model = get_model(options)
     else:
         raise NotImplementedError

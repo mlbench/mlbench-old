@@ -37,11 +37,6 @@ def warning(content, who='all'):
         logger.warning("{}".format(content))
 
 
-def critical(content, who='all'):
-    if who == 'all' or who == dist.get_rank():
-        logger.critical("{}".format(content))
-
-
 class AsyncMetricsPost(object):
     """Post metrics payload to endpoint in an asynchronized way."""
 
@@ -126,11 +121,6 @@ async_post = AsyncMetricsPost()
 def _post_metrics(payload, rank, dont_post_to_dashboard):
     if rank == 0 and not dont_post_to_dashboard and async_post._incluster:
         async_post.post(payload)
-
-
-def todo(content, who='all'):
-    if who == 'all' or who == dist.get_rank():
-        logger.warning("{}".format(content))
 
 
 def configuration_information(options):

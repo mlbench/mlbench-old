@@ -53,4 +53,9 @@ class TopKAccuracy(object):
 
 
 def get_metrics(options):
-    return [TopKAccuracy(topk=1), TopKAccuracy(topk=5)]
+    if options.metrics == 'topk':
+        return [TopKAccuracy(topk=1), TopKAccuracy(topk=5)]
+    if options.metrics == 'none':
+        return []
+    else:
+        raise NotImplementedError('No metrics name {} found.'.format(options.metrics))
