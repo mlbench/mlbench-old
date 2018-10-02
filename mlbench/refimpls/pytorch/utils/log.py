@@ -37,11 +37,6 @@ def warning(content, who='all'):
         logger.warning("{}".format(content))
 
 
-def critical(content, who='all'):
-    if who == 'all' or who == dist.get_rank():
-        logger.critical("{}".format(content))
-
-
 class AsyncMetricsPost(object):
     """Post metrics payload to endpoint in an asynchronized way."""
 
@@ -128,11 +123,6 @@ def _post_metrics(payload, rank, dont_post_to_dashboard):
         async_post.post(payload)
 
 
-def todo(content, who='all'):
-    if who == 'all' or who == dist.get_rank():
-        logger.warning("{}".format(content))
-
-
 def configuration_information(options):
     centering("Configuration Information", 0)
     options.log('meta')
@@ -153,12 +143,15 @@ def log_val(options, best_metric_name):
 
 
 def post_metrics(options, metric_name, value):
-    _post_metrics({
+    data = {
         "run_id": options.run_id,
+        "rank": options.rank,
         "name": metric_name,
-        "value": "{:.3f}".format(value),
+        "value": "{:.6f}".format(value),
         "date": str(datetime.datetime.now()),
-        "cumulative": False,
-        "metadata": "Validation {} at epoch {}".format(
-            metric_name, options.runtime['current_epoch'])
-    }, options.rank, options.dont_post_to_dashboard)
+        "epoch": str(options.runtime['current_epoch']),
+        "cumulative": "False",
+        "metadata": ""
+    }
+    _post_metrics(data, options.rank, options.dont_post_to_dashboard)
+    options.runtime['records'].append(data)

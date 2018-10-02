@@ -98,8 +98,7 @@ def maybe_download(name, datasets_path, train=True, download=True, preprocessing
     given localtion, then choose to download or not depending on `download`.
     """
     root = os.path.join(datasets_path, name)
-    if not os.path.exists(root):
-        os.makedirs(root)
+    os.makedirs(root, exist_ok=True)
 
     current_module = sys.modules[__name__]
     dataset_class = _DATASET_MAP[name + preprocessing_version]
@@ -108,7 +107,7 @@ def maybe_download(name, datasets_path, train=True, download=True, preprocessing
 
 
 def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_size,
-                      reshuffle_per_epoch, preprocessing_version, train=True, download=True, pin_memory=True):
+                      shuffle_partition_indices, preprocessing_version, train=True, download=True, pin_memory=True):
     """ Load a partition of dataset from by the rank. """
     dataset = maybe_download(name, root_folder, train=train, download=download,
                              preprocessing_version=preprocessing_version)
@@ -116,7 +115,7 @@ def partition_dataset(name, root_folder, batch_size, num_workers, rank, world_si
 
     # Partition dataset and use the one corresponding to `rank`.
     partition_sizes = [1.0 / world_size for _ in range(world_size)]
-    partition = DataPartitioner(dataset, rank, reshuffle_per_epoch, partition_sizes)
+    partition = DataPartitioner(dataset, rank, shuffle_partition_indices, partition_sizes)
     data_to_load = partition.use(rank)
     num_samples_per_device = len(data_to_load)
 
@@ -139,7 +138,7 @@ def create_dataset(options, train=True):
                                 num_workers=options.num_parallel_workers,
                                 rank=options.rank,
                                 world_size=options.world_size,
-                                reshuffle_per_epoch=options.reshuffle_per_epoch,
+                                shuffle_partition_indices=options.shuffle_partition_indices,
                                 train=train,
                                 preprocessing_version=options.preprocessing_version,
                                 pin_memory=options.use_cuda)

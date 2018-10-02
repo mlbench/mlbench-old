@@ -21,3 +21,4 @@ RUN pip install --no-cache-dir -r /requirements.txt
 
 # Remove empty ld
 RUN rm $(ldconfig 2>&1 | grep 'is empty, not checked' | awk '{print $3}') 2> /dev/null || true
+RUN pip install tensorpack

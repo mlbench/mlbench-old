@@ -1,0 +1,24 @@
+--use_cuda
+--max_train_steps 164
+--train_epochs 164
+--checkpoint all
+--num_parallel_workers 2
+--dataset_name cifar10
+--preprocessing_version v1
+--batch_size 128
+--opt_name sgd
+--model_name resnet20
+--model_version 2
+--lr 0.1
+--momentum 0.9
+--nesterov
+--weight_decay 0.0001
+--lr_scheduler MultiStepLRW
+--lr_scheduler_level epoch
+--multisteplr_milestones epoch:82,109
+--multisteplr_gamma 0.1
+--dont_post_to_dashboard
+--shuffle_partition_indices
+--repartition_per_epoch
+--metrics topk
+--criterion CrossEntropyLoss
