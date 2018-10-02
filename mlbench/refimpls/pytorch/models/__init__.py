@@ -9,7 +9,7 @@ def get_model(options):
     elif options.model_name.startswith('resnet'):
         from models.resnet import get_model
         model = get_model(options)
-    elif options.model_name in ['logistic_regression']:
+    elif options.model_name in ['logistic_regression', 'ridge_regression']:
         from models.linear_models import get_model
         model = get_model(options)
     else:

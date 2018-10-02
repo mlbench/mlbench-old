@@ -240,7 +240,7 @@ class ModelParser(argparse.ArgumentParser):
 
 
 class ControlflowParser(argparse.ArgumentParser):
-    def __init__(self, add_help=True, train_epochs=True, epochs_between_evals=True, no_validation=True):
+    def __init__(self, add_help=True, train_epochs=True, epochs_between_evals=True, validation=True):
         super(ControlflowParser, self).__init__(add_help=add_help)
 
         if train_epochs:
@@ -251,9 +251,13 @@ class ControlflowParser(argparse.ArgumentParser):
             self.add_argument("--epochs_between_evals", type=int, default=1, metavar="<EBE>",
                               help="[default: %(default)s] The number of training epochs to run "
                               "between evaluations.")
-        if no_validation:
-            self.add_argument("--no_validation", action='store_true', default=False,
-                              help="[default: %(default)s] Do not perform validation during training.")
+        if validation:
+            parser = self.add_mutually_exclusive_group()
+            parser.add_argument('--validation', dest='validation', action='store_true',
+                                help="[default: %(default)s] Perform validation during training.")
+            parser.add_argument("--no_validation", dest='validation', action='store_false',
+                                help="[default: %(default)s] Do not perform validation during training.")
+            self.set_defaults(validation=True)
 
 
 class LinearModelParser(argparse.ArgumentParser):
