@@ -21,7 +21,7 @@ from torch.optim.lr_scheduler import LambdaLR, MultiStepLR
 import argparse
 import numpy as np
 import re
-from bisect import bisect_right
+from bisect import bisect_left, bisect_right
 
 
 def parse_batch_epoch(s, sep=',', type_=int):
@@ -209,10 +209,14 @@ def multistep_learning_rates_with_warmup(options, optimizer):
     :raises: ValueError, ValueError, ValueError
     """
     scaling_factor = options.world_size if options.warmup_linear_scaling else 1
-    lr = options.lr if hasattr(options, 'lr') else options.lr_per_sample * options.batch_size
+    if options.warmup_init_lr_nonscale:
+        lr = options.lr_per_sample * options.batch_size
+    else:
+        lr = options.lr
+
     base_lr = lr * scaling_factor
 
-    warmup_durations = options.warmup_durations[options.lr_scheduler_level]
+    warmup_durations = options.warmup_durations.get(options.lr_scheduler_level, 0)
     milestones = options.multisteplr_milestones[options.lr_scheduler_level]
 
     gamma = options.multisteplr_gamma
@@ -238,6 +242,10 @@ def multistep_learning_rates_with_warmup(options, optimizer):
         else:
             lr = base_lr * gamma ** bisect_right(milestones, durations)
         return lr / base_lr
+
+    for group in optimizer.param_groups:
+        group['initial_lr'] = base_lr
+    optimizer.base_lrs = [base_lr for _ in optimizer.param_groups]
     return LambdaLR(optimizer, lr_lambda=f)
 
 
@@ -250,3 +258,7 @@ def get_scheduler(options, optimizer):
         return multistep_learning_rates_with_warmup(options, optimizer)
     else:
         raise NotImplementedError
+
+
+if __name__ == '__main__':
+    pass

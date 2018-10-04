@@ -6,9 +6,12 @@ from utils import log
 from utils.metrics import AverageMeter
 from utils.helper import Timeit, maybe_range, update_best_runtime_metric
 from utils.communication import aggregate_gradients, global_average
+from utils.utils import convert_dtype
+
+from datasets import create_dataset
 
 
-def train_epoch(model, optimizer, criterion, scheduler, options):
+def train_epoch(model, optimizer, criterion, scheduler, options, timeit):
     """Train model for one epoch of data."""
     # switch to train mode
     model.train()
@@ -17,6 +20,10 @@ def train_epoch(model, optimizer, criterion, scheduler, options):
                                          options.train_loader):
         if options.lr_scheduler_level == 'batch':
             scheduler.step()
+
+        data = convert_dtype(options.dtype, data)
+        if options.force_target_dtype:
+            target = convert_dtype(options.dtype, target)
 
         if options.use_cuda:
             data, target = data.cuda(), target.cuda()
@@ -32,8 +39,11 @@ def train_epoch(model, optimizer, criterion, scheduler, options):
             loss = loss.item()
             loss = global_average(loss, 1).item()
             log.debug("Train Batch {:5}: loss={:.3f}".format(batch_idx, loss), 0)
-
             log.post_metrics(options, 'train_loss', loss)
+
+            timeit.pause()
+            options.runtime['cumu_time_train'].append(timeit.cumu)
+            timeit.resume()
 
 
 def validate(model, optimizer, criterion, metrics, options):
@@ -45,6 +55,10 @@ def validate(model, optimizer, criterion, metrics, options):
 
     for batch_idx, (data, target) in zip(maybe_range(options.max_batch_per_epoch),
                                          options.val_loader):
+        data = convert_dtype(options.dtype, data)
+        if options.force_target_dtype:
+            target = convert_dtype(options.dtype, target)
+
         if options.use_cuda:
             data, target = data.cuda(), target.cuda()
 
@@ -68,7 +82,7 @@ def do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit
     # evaluate the model.
     metrics_values, loss = validate(model, optimizer, criterion, metrics, options)
 
-    timeit.pause()
+    options.runtime['cumu_time_val'].append(timeit.cumu)
 
     if len(metrics_values) > 0:
         # Assume the first metric is used to determine the best model to checkpoint.
@@ -77,14 +91,17 @@ def do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit
 
         is_best, best_metric_name = update_best_runtime_metric(options, prim_metric_value, prim_metric.name)
 
-        checkpoint.save(options, model, optimizer, scheduler, is_best)
         log.log_val(options, best_metric_name)
 
         for name, value in metrics_values.items():
             log.post_metrics(options, name, value)
+    else:
+        is_best = False
+        log.debug("Validation loss={:.3f}".format(loss), 0)
 
     log.post_metrics(options, 'val_loss', loss)
-    timeit.resume()
+
+    checkpoint.save(options, model, optimizer, scheduler, is_best)
 
 
 class TrainValidation(object):
@@ -110,10 +127,13 @@ class TrainValidation(object):
             if options.max_train_steps else options.train_epochs
         start_epoch = options.runtime['current_epoch'] if options.resume else 0
         options.runtime['records'] = options.runtime.get('records', [])
+        options.runtime['cumu_time_val'] = options.runtime.get('cumu_time_val', [])
+        options.runtime['cumu_time_train'] = options.runtime.get('cumu_time_train', [])
 
         dist.barrier()
 
-        timeit = Timeit()
+        timeit = Timeit(0 if len(options.runtime['cumu_time_val']) == 0
+                        else options.runtime['cumu_time_val'][-1])
         for epoch in range(start_epoch, max_epochs):
             options.runtime['current_epoch'] = epoch
 
@@ -125,8 +145,16 @@ class TrainValidation(object):
             log.info("Current epoch : {} : lr={} : time={:10.3e}"
                      .format(epoch, scheduler.get_lr(), timeit.cumu), 0)
 
-            train_epoch(model, optimizer, criterion, scheduler, options)
-            do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit)
+            train_epoch(model, optimizer, criterion, scheduler, options, timeit)
+
+            if options.validation:
+                timeit.pause()
+                do_validate(model, optimizer, criterion, metrics, scheduler, options, timeit)
+                timeit.resume()
+
+            if options.repartition_per_epoch:
+                options = create_dataset(options, train=True)
+                options = create_dataset(options, train=False)
 
 
 def get_controlflow(options):

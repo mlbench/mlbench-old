@@ -2,15 +2,16 @@ import argparse
 import re
 
 from config import initialize
-from datasets.load_dataset import create_dataset
+from datasets import create_dataset
 from utils.parser import MainParser
 from models import get_model
 from optim.lr import get_scheduler
 from optim.optimizer import get_optimizer
-from controlflow.controlflow import get_controlflow
+from controlflow import get_controlflow
 from utils.criterions import get_criterion
 from utils.metrics import get_metrics
 from utils import checkpoint
+from utils.utils import convert_dtype
 
 
 def get_options():
@@ -51,10 +52,12 @@ def main():
     scheduler = get_scheduler(options, optimizer)
 
     # Criterions are like `torch.nn.CrossEntropyLoss()`
-    criterion = get_criterion(options)
+    criterion = get_criterion(options, model)
 
     metrics = get_metrics(options)
 
+    model = convert_dtype(options.dtype, model)
+    criterion = convert_dtype(options.dtype, criterion)
     if options.use_cuda:
         model.cuda()
         criterion.cuda()
