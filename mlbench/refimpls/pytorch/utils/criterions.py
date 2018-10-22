@@ -17,7 +17,7 @@ class BCELossRegularized(nn.modules.loss._WeightedLoss):
 
     def forward(self, input, target):
         output = F.binary_cross_entropy(input, target, weight=self.weight, reduction=self.reduction)
-        l2_loss = sum(param.norm(2)**2 for param in self.model.parameters())
+        l2_loss = sum(param.norm(2) ** 2 for param in self.model.parameters())
         output += self.l2 / 2 * l2_loss
         l1_loss = sum(param.norm(1) for param in self.model.parameters())
         output += self.l1 * l1_loss
@@ -38,7 +38,7 @@ class MSELossRegularized(nn.modules.loss._WeightedLoss):
 
     def forward(self, input, target):
         output = F.mse_loss(input, target, reduction=self.reduction)
-        l2_loss = sum(param.norm(2)**2 for param in self.model.parameters())
+        l2_loss = sum(param.norm(2) ** 2 for param in self.model.parameters())
         output += self.l2 / 2 * l2_loss
         l1_loss = sum(param.norm(1) for param in self.model.parameters())
         output += self.l1 * l1_loss
