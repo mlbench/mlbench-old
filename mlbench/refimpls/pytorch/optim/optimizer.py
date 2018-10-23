@@ -38,6 +38,7 @@ def get_optimizer(options, model):
 
     return optimizer
 
+
 class sparsified_SGD(Optimizer):
     r"""Implements sparsified version of stochastic gradient descent.
 
@@ -67,7 +68,6 @@ class sparsified_SGD(Optimizer):
         self.num_coordinates = sparse_grad_size
         self.current_block = -1
 
-
     def __setstate__(self, state):
         super(sparsified_SGD, self).__setstate__(state)
 
@@ -77,6 +77,8 @@ class sparsified_SGD(Optimizer):
             for p in group['params']:
                 param_state = self.state[p]
                 param_state['estimated_w'] = torch.zeros_like(p.data)
+                p.data.normal_(0, 0.01)
+                param_state['estimated_w'].normal_(0, 0.01)
 
     def __create_gradients_memory(self):
         """ Create a memory for parameters. """
@@ -143,7 +145,7 @@ class sparsified_SGD(Optimizer):
 
             begin = self.current_block * self.num_coordinates
             end = begin + self.num_coordinates
-            #TODO do something for last block!
+            # TODO do something for last block!
             # if self.current_block == (num_blocks - 1):
             #     end = param_size
             # else:
@@ -179,14 +181,14 @@ class sparsified_SGD(Optimizer):
             sparse_tensor = torch.zeros([2, self.num_coordinates])
 
             for i in range(self.num_coordinates):
-                indices.append(random.randint(self.num_coordinates))
-                sparse_tensor[1, i] = gradients[0, i]
+                random_index = random.randint(0, self.num_coordinates)
+                indices.append(random_index)
+                sparse_tensor[1, i] = gradients[0, random_index]
                 self.state[param]['memory'][i] = 0
             sparse_tensor[0, :] = torch.tensor(indices)
 
             params_sparse_tensors.append(sparse_tensor)
 
-            self.current_block += 1
         return params_sparse_tensors
 
     def update_estimated_weights(self, model, iteration, sparse_vector_size):
@@ -202,8 +204,3 @@ class sparsified_SGD(Optimizer):
         for param in model.parameters():
             estimated_params.append(self.state[param]['estimated_w'])
         return estimated_params
-
-
-
-
-
