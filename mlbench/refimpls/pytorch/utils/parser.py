@@ -249,7 +249,7 @@ class ModelParser(argparse.ArgumentParser):
             self.add_argument("--param_estimate", type=str, default='final',
                               help="[default: %(default)s] parameter estimation method (final or weighted average).")
         if train_validation:
-            self.add_argument("--train_validate", action='store_true', default=True,
+            self.add_argument("--train_validate", action='store_true', default=False,
                               help="[default: %(default)s] to have validation on train dataset.")
             self.add_argument("--compute_loss_every", type=int, default=50000,
                               help="[default: %(default)s] determine when the train loss will be calculated.")

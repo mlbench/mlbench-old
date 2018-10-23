@@ -1,6 +1,7 @@
 import torch
 import torch.distributed as dist
 import numpy as np
+import torch.nn.functional as F
 
 from utils import checkpoint
 from utils import log
@@ -54,6 +55,7 @@ def train_epoch(model, optimizer, criterion, scheduler, options, timeit):
                 timeit.pause()
                 train_validate(optimizer, model, options)
                 timeit.resume()
+                print("Train validation is done!")
 
         with torch.no_grad():
             loss = loss.item()
@@ -76,7 +78,7 @@ def train_validate(optimizer, model, options):
     loss = 0
 
     for batch_idx, (data, target) in zip(maybe_range(options.max_batch_per_epoch),
-                                         options.train_loader):
+                                         options.val_loader):
         data = convert_dtype(options.dtype, data)
         if options.force_target_dtype:
             target = convert_dtype(options.dtype, target)
@@ -84,20 +86,27 @@ def train_validate(optimizer, model, options):
         if options.use_cuda:
             data, target = data.cuda(), target.cuda()
 
-        for weight in estimated_weights:
-            loss += np.log(1 + np.exp(-target * (data @ weight.transpose(0, 1)))).sum()[0].item()
+        # target = target * 2 - 1
 
-        l2_loss = sum(weight.norm(2) ** 2 for weight in estimated_weights)[0].item()
-        loss += l2 / 2 * l2_loss
-        l1_loss = sum(weight.norm(1) for weight in estimated_weights)[0].item()
-        loss += l1 * l1_loss
+        for weight in estimated_weights:
+            w = weight.squeeze()
+            loss += (np.log(1 + np.exp(data @ w)) - target * (data @ w)).sum()
+            # loss += np.log(1 + np.exp((data @ weight.transpose(0, 1)))) - target.transpose(1, 0) * data @ weight.transpose(0, 1)
+            # loss += np.log(1 + np.exp(-target * (data @ weight.transpose(0, 1)))).sum()[0].item()
+
         num_samples += data.size()[0]
 
-    train_loss = global_average(loss, num_samples)
-    print("Global Train Loss: " + str(train_loss[0].item()))
+    train_loss = global_average(loss, num_samples).item()
+
+    l2_loss = sum(weight.norm(2) ** 2 for weight in estimated_weights)[0].item()
+    train_loss += l2 / 2 * l2_loss
+    l1_loss = sum(weight.norm(1) for weight in estimated_weights)[0].item()
+    train_loss += l1 * l1_loss
+
+    print("Global Train Loss: " + str(train_loss))
 
     with open(options.ckpt_run_dir + "/" + str(dist.get_rank()) + "_train_validation.txt", "a+") as file:
-        file.write(str(train_loss[0].item()) + "\n")
+        file.write(str(train_loss) + "\n")
 
 
 def validate(model, optimizer, criterion, metrics, options):
