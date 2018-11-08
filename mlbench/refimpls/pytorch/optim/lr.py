@@ -290,7 +290,7 @@ def sparsified_sgd_optimal_learning_rate(options, optimizer):
     param options: all configs
     param optimizer: optimizer associated with the scheduler
     """
-    #TODO get feature from config file
+    # TODO get feature size from the config file
     a = 2000 / options.sparse_grad_size
     l2_coef = options.l2_coef
     gamma = options.sgd_lr_gamma
@@ -298,6 +298,7 @@ def sparsified_sgd_optimal_learning_rate(options, optimizer):
     def f(iterations):
         return 1 / max(1, (a + iterations))
 
+    optimizer.base_lrs = [gamma / l2_coef for _ in optimizer.param_groups]
     for group in optimizer.param_groups:
         group['initial_lr'] = gamma / l2_coef
 

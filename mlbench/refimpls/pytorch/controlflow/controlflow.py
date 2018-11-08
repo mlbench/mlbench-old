@@ -24,6 +24,7 @@ def train_epoch(model, optimizer, criterion, scheduler, options, timeit):
             scheduler.step()
 
         data = convert_dtype(options.dtype, data)
+
         if options.force_target_dtype:
             target = convert_dtype(options.dtype, target)
 
@@ -55,8 +56,6 @@ def train_epoch(model, optimizer, criterion, scheduler, options, timeit):
                 timeit.pause()
                 train_validate(optimizer, model, options)
                 timeit.resume()
-                print("Train validation is done!")
-
         with torch.no_grad():
             loss = loss.item()
             loss = global_average(loss, 1).item()
@@ -69,7 +68,7 @@ def train_epoch(model, optimizer, criterion, scheduler, options, timeit):
 
 
 def train_validate(optimizer, model, options):
-    """ Validation on train data by using estimated weights """
+    """ Validation on train data by using weighted average of parameters """
     estimated_weights = optimizer.get_estimated_weights(model)
     num_samples = 0
     l1 = options.l1_coef
@@ -85,22 +84,20 @@ def train_validate(optimizer, model, options):
 
         if options.use_cuda:
             data, target = data.cuda(), target.cuda()
-
-        # target = target * 2 - 1
+        target = target * 2 - 1
 
         for weight in estimated_weights:
             w = weight.squeeze()
-            loss += (np.log(1 + np.exp(data @ w)) - target * (data @ w)).sum()
-            # loss += np.log(1 + np.exp((data @ weight.transpose(0, 1)))) - target.transpose(1, 0) * data @ weight.transpose(0, 1)
-            # loss += np.log(1 + np.exp(-target * (data @ weight.transpose(0, 1)))).sum()[0].item()
+            batch_loss = np.log(1 + np.exp(-target * (data @ w)))
+            loss += batch_loss.sum().item()
 
         num_samples += data.size()[0]
 
     train_loss = global_average(loss, num_samples).item()
 
-    l2_loss = sum(weight.norm(2) ** 2 for weight in estimated_weights)[0].item()
+    l2_loss = sum(weight.norm(2) ** 2 for weight in estimated_weights).item()
     train_loss += l2 / 2 * l2_loss
-    l1_loss = sum(weight.norm(1) for weight in estimated_weights)[0].item()
+    l1_loss = sum(weight.norm(1) for weight in estimated_weights).item()
     train_loss += l1 * l1_loss
 
     print("Global Train Loss: " + str(train_loss))
@@ -197,6 +194,7 @@ class TrainValidation(object):
 
         timeit = Timeit(0 if len(options.runtime['cumu_time_val']) == 0
                         else options.runtime['cumu_time_val'][-1])
+
         for epoch in range(start_epoch, max_epochs):
             options.runtime['current_epoch'] = epoch
 

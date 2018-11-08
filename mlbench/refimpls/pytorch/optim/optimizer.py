@@ -1,7 +1,7 @@
 import torch
 import torch.optim as optim
 from torch.optim.optimizer import Optimizer, required
-import random
+import numpy as np
 
 
 def get_optimizer(options, model):
@@ -18,7 +18,6 @@ def get_optimizer(options, model):
     :rtype: optimizer
     :raises: NotImplementedError
     """
-    # lr = options.lr if hasattr(options, 'lr') else options.lr_per_sample * options.batch_size
     lr = options.lr if options.lr else options.lr_per_sample * options.batch_size
 
     if options.opt_name == 'sgd':
@@ -66,22 +65,21 @@ class sparsified_SGD(Optimizer):
         self.__create_weighted_average_params()
 
         self.num_coordinates = sparse_grad_size
-        self.current_block = -1
 
     def __setstate__(self, state):
         super(sparsified_SGD, self).__setstate__(state)
 
     def __create_weighted_average_params(self):
-
+        """ Create a memory to keep the weighted average of parameters in each iteration """
         for group in self.param_groups:
             for p in group['params']:
                 param_state = self.state[p]
                 param_state['estimated_w'] = torch.zeros_like(p.data)
                 p.data.normal_(0, 0.01)
-                param_state['estimated_w'].normal_(0, 0.01)
+                param_state['estimated_w'].copy_(p.data)
 
     def __create_gradients_memory(self):
-        """ Create a memory for parameters. """
+        """ Create a memory to keep gradients that are not used in each iteration """
         for group in self.param_groups:
             for p in group['params']:
                 param_state = self.state[p]
@@ -115,53 +113,11 @@ class sparsified_SGD(Optimizer):
         return loss
 
     def sparsify_gradients(self, model, lr, random_sparse):
-
+        """ Calls one of the sparsification functions (random or blockwise)"""
         if random_sparse:
             return self._random_sparsify(model, lr)
         else:
             return self._block_sparsify(model, lr)
-
-    def _block_sparsify(self, model, lr):
-        """
-        Sparsify the gradients vector by choosing a block of of them
-        :param model: learning model
-        :param lr: learning rate
-        :return: sparsified gradients vector (a block of gradients and the beginning index of the block)
-        """
-        params_sparse_tensors = []
-
-        for ind, param in enumerate(model.parameters()):
-
-            param_size = param.data.size()[1]
-            gradients = param.grad.data * lr[0] + self.state[param]['memory']
-            self.state[param]['memory'] += param.grad.data * lr[0]
-
-            num_blocks = int(param_size / self.num_coordinates)
-
-            if self.current_block == -1:
-                self.current_block = random.randint(0, num_blocks - 1)
-            elif self.current_block == num_blocks:
-                self.current_block = 0
-
-            begin = self.current_block * self.num_coordinates
-            end = begin + self.num_coordinates
-            # TODO do something for last block!
-            # if self.current_block == (num_blocks - 1):
-            #     end = param_size
-            # else:
-            #     end = begin + self.num_coordinates
-
-            self.state[param]['memory'][begin:end] = 0
-
-            sparse_tensor = torch.zeros([1, self.num_coordinates + 1])
-            sparse_tensor[0, 0:self.num_coordinates] = gradients[0, begin:end]
-            sparse_tensor[0, self.num_coordinates] = begin
-
-            params_sparse_tensors.append(sparse_tensor)
-
-            self.current_block += 1
-
-        return params_sparse_tensors
 
     def _random_sparsify(self, model, lr):
         """
@@ -173,22 +129,50 @@ class sparsified_SGD(Optimizer):
         params_sparse_tensors = []
 
         for ind, param in enumerate(model.parameters()):
-
-            gradients = param.grad.data * lr[0] + self.state[param]['memory']
             self.state[param]['memory'] += param.grad.data * lr[0]
 
-            indices = []
-            sparse_tensor = torch.zeros([2, self.num_coordinates])
+            indices = np.random.choice(param.data.size()[1], self.num_coordinates, replace=False)
+            sparse_tensor = torch.zeros(2, self.num_coordinates)
 
-            for i in range(self.num_coordinates):
-                random_index = random.randint(0, self.num_coordinates)
-                indices.append(random_index)
-                sparse_tensor[1, i] = gradients[0, random_index]
-                self.state[param]['memory'][i] = 0
+            for i, random_index in enumerate(indices):
+                sparse_tensor[1, i] = self.state[param]['memory'][0, random_index]
+                self.state[param]['memory'][0, random_index] = 0
             sparse_tensor[0, :] = torch.tensor(indices)
 
             params_sparse_tensors.append(sparse_tensor)
 
+        return params_sparse_tensors
+
+    def _block_sparsify(self, model, lr):
+        """
+        Sparsify the gradients vector by selecting a block of them.
+        param model: learning model
+        param lr: learning rate
+        return: sparsified gradients vector
+        """
+        params_sparse_tensors = []
+
+        for param in model.parameters():
+            self.state[param]['memory'] += param.grad.data * lr[0]
+
+            num_block = int(param.data.size()[1] / self.num_coordinates)
+
+            self.current_block = np.random.randint(0, num_block)
+            begin_index = self.current_block * self.num_coordinates
+
+            if self.current_block == (num_block - 1):
+                end_index = param.data.size()[1] - 1
+            else:
+                end_index = begin_index + self.num_coordinates - 1
+            output_size = 1 + end_index - begin_index + 1
+
+            sparse_tensor = torch.zeros(1, output_size)
+            sparse_tensor[0, 0] = begin_index
+            sparse_tensor[0, 1:] = self.state[param]['memory'][0, begin_index: end_index + 1]
+            self.state[param]['memory'][0, begin_index: end_index + 1] = 0
+
+            self.current_block += 1
+            params_sparse_tensors.append(sparse_tensor)
         return params_sparse_tensors
 
     def update_estimated_weights(self, model, iteration, sparse_vector_size):
@@ -200,6 +184,7 @@ class sparsified_SGD(Optimizer):
             self.state[param]['estimated_w'] = self.state[param]['estimated_w'] * (1 - rho) + param.data * rho
 
     def get_estimated_weights(self, model):
+        """ Returns the weighted average parameter tensor """
         estimated_params = []
         for param in model.parameters():
             estimated_params.append(self.state[param]['estimated_w'])

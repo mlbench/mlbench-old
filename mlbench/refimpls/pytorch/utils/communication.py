@@ -1,6 +1,6 @@
 import torch
 import torch.distributed as dist
-import timeit
+import time
 
 
 def elementwise_min(tensor):
@@ -13,9 +13,11 @@ def aggregate_gradients(model, world_size):
     # all_reduce the gradients.
     for ind, param in enumerate(model.parameters()):
         # all reduce.
-        # start = timeit.default_timer()
+
+        # dist.barrier()
+        # start = time.time()
         dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
-        # end = timeit.default_timer() - start
+        # end = time.time() - start
         # with open(str(dist.get_rank()) + "_communication_time.txt", "a+") as file:
         #     file.write(str(end) + "\n")
 
@@ -31,9 +33,10 @@ def aggregate_sparsified_gradients(model, world_size, sparse_vector_size, random
 
         gathered_list = [torch.zeros_like(params_sparse_tensors[ind]) for _ in range(world_size)]
         # all gather.
-        # start = timeit.default_timer()
+        # dist.barrier()
+        # start = time.time()
         dist.all_gather(gathered_list, params_sparse_tensors[ind])
-        # end = timeit.default_timer() - start
+        # end = time.time() - start
         # with open(str(dist.get_rank()) + "_communication_time.txt", "a+") as file:
         #     file.write(str(end) + "\n")
 
@@ -45,8 +48,9 @@ def aggregate_sparsified_gradients(model, world_size, sparse_vector_size, random
                     avg_grads[0, int(grad_tensor[0, index])] += grad_tensor[1, index]
         else:
             for grad_tensor in gathered_list:
-                begin = int(grad_tensor[0, sparse_vector_size])
-                avg_grads[0, begin:begin + sparse_vector_size] += grad_tensor[0, 0:sparse_vector_size]
+                tensor_size = grad_tensor.size()[1]
+                begin = int(grad_tensor[0, 0])
+                avg_grads[0, begin:(begin + tensor_size - 1)] += grad_tensor[0, 1:]
 
         avg_grads /= world_size
         param.grad.data = avg_grads
