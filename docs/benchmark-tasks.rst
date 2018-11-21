@@ -43,11 +43,9 @@ The shorter the better.
 
 .. _Deep Residual Learning for Image Recognition:
     https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf
+    
 
-.. _CIFAR-10:
-    http://www.cs.toronto.edu/~kriz/cifar.html
-
-Here is a plot of validation error training iterations for ResNet on `CIFAR-10`_ using the settings from `Deep Residual Learning for Image Recognition`_.
+Here is a plot of validation error training iterations for ResNet on `CIFAR-10<http://www.cs.toronto.edu/~kriz/cifar.html>`_ using the settings from `Deep Residual Learning for Image Recognition`_.
 
 .. image:: images/km2016deep.png
     :align: center
@@ -83,6 +81,7 @@ Image classification is one of the most important problems in computer vision an
     <https://arxiv.org/abs/1603.05027>`_.
     For each version we have the network implementations
     with 20, 32, 44, and 56 layers.
+
     TODO: only benchmark two most common architectures say (can support more, but they are not part of the official benchmark task)
 
 #. **Dataset**
@@ -94,25 +93,75 @@ Image classification is one of the most important problems in computer vision an
     airplanes, cars, birds, cats, deer, dogs, frogs, horses, ships, and trucks.
     
     The train / test split as provided in the dataset is used.
-    TODO: give precise details on distribution of data (or all access all in this case)
-
+    The test dataset contains 10,000 imagest with exactly 1000 randomly-selected images per each class.
+    The rest 50,000 images are training samples.
+    
 #. **Training Algorithm**
-    We use standard synchronous SGD as the optimizer (that is distributed mini-batch SGD with synchronous all-reduce communication after each mini-batch).
-    The learning rate scheduler decreases the learning rate over time, after initial increase (warmup).
-    TODO: details
+    We use standard synchronous SGD as the optimizer (that is distributed mini-batch SGD with synchronous all-reduce communication after each mini-batch). 
+
+    - number of machines :math:`k`: 2, 4, 8, 16, 32
+    - minibatch size per worker :math:`b`: 32
+    - maximum epochs: 164
+    - learning rate
+
+      + learning rate per sample :math:`\eta` : 0.1 / 256
+      + decay: similar to `Deep Residual Learning for Image Recognition`_, we reduce learning rate by 1/10 at the 82-th and 109-th epoch.
+      + scaling and warmup: apply ``linear scaling rule`` mentioned in goyal2017accurate_. The learning rate per worker is scaled from
+        :math:`\eta \times b` to :math:`\eta \times b \times k` within the first 5 epochs.
+
+    - momentum: 0.9
+    - nesterov: True
+    - weight decay: 0.0001
+
+    Besides, in each round workers access disjoint set of datapoints.
 
 
 Implementation details:
 
-* Data preprocessing
-We followed the same approach as mentioned `here <https://arxiv.org/abs/1512.03385>`_.
+#. **Data Preprocessing**
+    We followed the same approach as mentioned `here <https://arxiv.org/abs/1512.03385>`_.
 
-* Selection of Framework & Systems
-While our initial reference implementation is currently PyTorch, we will aim to provide the same algorithm in more frameworks very soon, starting with Tensorflow. For the systems, kubernetes allows easy transferability of our code. While initial results reported are from google kubernetes engine, AWS will be supported very soon.
+#. **Selection of Framework & Systems**
+    While our initial reference implementation is currently PyTorch, we will aim to provide the same algorithm in more frameworks very soon, starting with Tensorflow. For the systems, kubernetes allows easy transferability of our code. While initial results reported are from google kubernetes engine, AWS will be supported very soon.
 
-* Results
-Results come here!
+#. **Environments for Scaling Task**
+    For the scaling task, we use `n1-standard-4 <https://cloud.google.com/compute/pricing>`_ type instances with 50GB disk size.
+    There is only one worker per node; each worker uses 2.5 cpus. The bandwidth between two nodes is around 7.5Gbit/s.
+    Openmpi is used for communication. No accelerators are used for this task.
 
+**Results**
+
+Here we present the results for scaling task.
+
+* The left figure is an epoch to accuracy curve. For 2, 4, 8 nodes, scaling the size of cluster gives same accuracy.
+  For 16 or more nodes, the accuracy gradually drops. 
+
+* The right hand side compares expected throughput with the actual throughput. From the figure, we can see the actual
+  throughput is marginally below ideal scaling.
+
+|pic1| |pic2|
+
+.. |pic1| image:: images/scaling-epoch-prec1.png
+    :scale: 48 %
+
+.. |pic2| image:: images/scaling-throughput.png
+    :scale: 48 
+
+
+* The left figure hand side figure compares the time to 70% and 80% accuracy for different number of nodes.
+  70% accuracy is easy to reach for all of the tests and the time-to-accuracy decreases with the number of nodes.
+  For time-to-80%-accuracy, however, it spends more time on 64 nodes rather than 32 nodes.
+* The right figure compares the cost of experiment. Note that a regular n1-standard-4 instance costs $0.1900 per hour and 
+  a preemptible one costs only $0.04. For experiments with 16 nodes or more, the task finishes with 24 hours and thus we can
+  use preemptible instance. The cost can be reduced correspondingly.
+
+|pic3| |pic4|
+
+.. |pic4| image:: images/scaling-time-cost.png
+    :scale: 48 
+
+.. |pic3| image:: images/scaling-time-prec1.png
+    :scale: 48 
 
 1b. Image Classification (ResNet, ImageNet)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -125,3 +174,5 @@ TODO
 TODO
 (more data intensive compared to deep learning. again synchr SGD as main baseline)
 
+.. [goyal2017accurate] Goyal, Priya, et al.
+    Accurate, large minibatch SGD: training imagenet in 1 hour.

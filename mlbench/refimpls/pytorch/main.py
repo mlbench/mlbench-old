@@ -56,8 +56,8 @@ def main():
 
     metrics = get_metrics(options)
 
-    model = convert_dtype(options, model)
-    criterion = convert_dtype(options, criterion)
+    model = convert_dtype(options.dtype, model)
+    criterion = convert_dtype(options.dtype, criterion)
     if options.use_cuda:
         model.cuda()
         criterion.cuda()
