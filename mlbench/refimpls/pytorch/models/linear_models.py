@@ -2,6 +2,7 @@ import torch
 import math
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
+import numpy as np
 
 
 class LogisticRegression(torch.nn.Module):

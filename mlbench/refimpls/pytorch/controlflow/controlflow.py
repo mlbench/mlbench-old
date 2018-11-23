@@ -1,11 +1,13 @@
 import torch
 import torch.distributed as dist
+import numpy as np
+import torch.nn.functional as F
 
 from utils import checkpoint
 from utils import log
 from utils.metrics import AverageMeter
 from utils.helper import Timeit, maybe_range, update_best_runtime_metric
-from utils.communication import aggregate_gradients, global_average
+from utils.communication import aggregate_gradients, global_average, aggregate_sparsified_gradients
 from utils.utils import convert_dtype
 
 from datasets import create_dataset
@@ -22,6 +24,7 @@ def train_epoch(model, optimizer, criterion, scheduler, options, timeit):
             scheduler.step()
 
         data = convert_dtype(options.dtype, data)
+
         if options.force_target_dtype:
             target = convert_dtype(options.dtype, target)
 
@@ -32,9 +35,27 @@ def train_epoch(model, optimizer, criterion, scheduler, options, timeit):
         output = model(data)
         loss = criterion(output, target)
         loss.backward()
-        aggregate_gradients(model, options.world_size)
+
+        if options.opt_name == 'sparsified_sgd':
+            aggregate_sparsified_gradients(model, options.world_size,
+                                           options.sparse_grad_size,
+                                           options.random_sparse,
+                                           optimizer,
+                                           scheduler.get_lr())
+        else:
+            aggregate_gradients(model, options.world_size)
+
         optimizer.step()
 
+        if options.model_name == 'logistic_regression' and options.train_validate:
+            t = options.runtime['current_epoch'] * options.train_num_samples_per_device + batch_idx * options.batch_size
+            optimizer.update_estimated_weights(model, t, options.sparse_grad_size)
+
+            if t % options.compute_loss_every == 0:
+                print("Train validation....")
+                timeit.pause()
+                train_validate(optimizer, model, options)
+                timeit.resume()
         with torch.no_grad():
             loss = loss.item()
             loss = global_average(loss, 1).item()
@@ -44,6 +65,45 @@ def train_epoch(model, optimizer, criterion, scheduler, options, timeit):
             timeit.pause()
             options.runtime['cumu_time_train'].append(timeit.cumu)
             timeit.resume()
+
+
+def train_validate(optimizer, model, options):
+    """ Validation on train data by using weighted average of parameters """
+    estimated_weights = optimizer.get_estimated_weights(model)
+    num_samples = 0
+    l1 = options.l1_coef
+    l2 = options.l2_coef
+
+    loss = 0
+
+    for batch_idx, (data, target) in zip(maybe_range(options.max_batch_per_epoch),
+                                         options.val_loader):
+        data = convert_dtype(options.dtype, data)
+        if options.force_target_dtype:
+            target = convert_dtype(options.dtype, target)
+
+        if options.use_cuda:
+            data, target = data.cuda(), target.cuda()
+        target = target * 2 - 1
+
+        for weight in estimated_weights:
+            w = weight.squeeze()
+            batch_loss = np.log(1 + np.exp(-target * (data @ w)))
+            loss += batch_loss.sum().item()
+
+        num_samples += data.size()[0]
+
+    train_loss = global_average(loss, num_samples).item()
+
+    l2_loss = sum(weight.norm(2) ** 2 for weight in estimated_weights).item()
+    train_loss += l2 / 2 * l2_loss
+    l1_loss = sum(weight.norm(1) for weight in estimated_weights).item()
+    train_loss += l1 * l1_loss
+
+    print("Global Train Loss: " + str(train_loss))
+
+    with open(options.ckpt_run_dir + "/" + str(dist.get_rank()) + "_train_validation.txt", "a+") as file:
+        file.write(str(train_loss) + "\n")
 
 
 def validate(model, optimizer, criterion, metrics, options):
@@ -123,7 +183,7 @@ class TrainValidation(object):
                          options.batch_size), 0)
 
         # train the model and evaluate the model per args.eval_freq
-        max_epochs = min(options.train_epochs, options.max_train_steps)\
+        max_epochs = min(options.train_epochs, options.max_train_steps) \
             if options.max_train_steps else options.train_epochs
         start_epoch = options.runtime['current_epoch'] if options.resume else 0
         options.runtime['records'] = options.runtime.get('records', [])
@@ -134,6 +194,7 @@ class TrainValidation(object):
 
         timeit = Timeit(0 if len(options.runtime['cumu_time_val']) == 0
                         else options.runtime['cumu_time_val'][-1])
+
         for epoch in range(start_epoch, max_epochs):
             options.runtime['current_epoch'] = epoch
 

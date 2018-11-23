@@ -76,6 +76,7 @@ class IMDBPT(torch.utils.data.Dataset):
             for ind, (from_index, to_index) in from_to_indices:
                 if from_index <= x and x < to_index:
                     return ind, x - from_index
+
         return f
 
     def _get_matched_index(self, index):
@@ -200,7 +201,8 @@ def get_dataset_info(name):
 def load_libsvm_lmdb(name, lmdb_path):
     stats = get_dataset_info(name)
     dataset = IMDBPT(lmdb_path, transform=maybe_transform_sparse(stats),
-                     target_transform=lambda x: torch.Tensor(x), is_image=False)
+                     # target_transform=lambda x: torch.Tensor(x), is_image=False)
+                     target_transform=None, is_image=False)
     return dataset
 
 

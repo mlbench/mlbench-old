@@ -39,7 +39,8 @@ class DataPartitioner(Partitioner):
     def __init__(self, data, rank, shuffle, sizes=[0.7, 0.2, 0.1]):
         # prepare info.
         self.data = data
-        self.data_size = len(self.data)
+        # Drop a few of the last samples to make the dataset size divisible by the the number of workers
+        self.data_size = int(len(self.data)/len(sizes)) * len(sizes)
         self.partitions = []
 
         # get shuffled/unshuffled data.
